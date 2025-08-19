@@ -1,13 +1,15 @@
 import { Link } from "react-router-dom";
-import { Eye, Heart, Youtube, Star } from "lucide-react"; // Star icon ko import karein
+import { Eye, Heart, Youtube, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import house1 from "@/assets/house-1.jpg";
 import house2 from "@/assets/house-2.jpg";
 import house3 from "@/assets/house-3.jpg";
+import { useWishlist } from "@/contexts/WishlistContext";
 
 const FeaturedProducts = () => {
-  // Data ko naye design ke anusaar update kiya gaya hai
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+
   const products = [
     {
       id: "1",
@@ -101,101 +103,98 @@ const FeaturedProducts = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {products.map((product, index) => (
-            <motion.div
-              key={product.id}
-              className="bg-card rounded-2xl shadow-soft overflow-hidden group transition-all duration-300 hover:shadow-medium hover:-translate-y-2 flex flex-col"
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <div className="relative overflow-hidden">
-                <Link to={`/product/${product.id}`}>
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                </Link>
-
-                {/* --- SALE & YOUTUBE BADGE (TOP LEFT) --- */}
-                {product.isSale &&
-                  (product.hasVideo && product.youtubeLink ? (
-                    <a
-                      href={product.youtubeLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 z-10 hover:bg-red-600 transition-colors"
-                    >
-                      <span>Sale!</span>
-                      <Youtube size={14} />
-                    </a>
-                  ) : (
-                    <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg z-10">
-                      <span>Sale!</span>
-                    </div>
-                  ))}
-
-                {/* --- HEART & EYE ICONS (TOP RIGHT) --- */}
-                <div className="absolute top-4 right-4 flex space-x-2">
-                  <button className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center text-foreground hover:text-primary transition-colors shadow-sm">
-                    <Heart className="w-5 h-5" />
-                  </button>
-                  <Link
-                    to={`/product/${product.id}`}
-                    className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center text-foreground hover:text-primary transition-colors shadow-sm"
-                  >
-                    <Eye className="w-5 h-5" />
-                  </Link>
-                </div>
-
-                {/* --- STAR RATING (BOTTOM OF IMAGE) --- */}
-                <div className="absolute bottom-4 left-4 bg-black/50 text-white px-2 py-1 rounded-md flex items-center gap-1.5 text-xs font-semibold">
-                  <Star size={14} className="fill-yellow-400 text-yellow-400" />
-                  <span>{product.rating}</span>
-                </div>
-              </div>
-
-              <div className="p-6 flex flex-col flex-grow">
-                <h3 className="text-xl font-bold text-foreground mb-1">
-                  {product.name}
-                </h3>
-                <p className="text-muted-foreground text-sm mb-4">
-                  {product.size}
-                </p>
-
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-xl font-bold text-primary">
-                      ₹
-                      {product.isSale
-                        ? product.salePrice.toLocaleString()
-                        : product.price.toLocaleString()}
-                    </span>
-                    {product.isSale && (
-                      <s className="text-sm text-muted-foreground">
-                        ₹{product.price.toLocaleString()}
-                      </s>
-                    )}
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {product.reviews} reviews
-                  </span>
-                </div>
-
-                <div className="mt-auto">
+          {products.map((product, index) => {
+            const isWishlisted = isInWishlist(product.id);
+            return (
+              <motion.div
+                key={product.id}
+                className="bg-card rounded-2xl shadow-soft overflow-hidden group transition-all duration-300 hover:shadow-medium hover:-translate-y-2 flex flex-col"
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <div className="relative overflow-hidden">
                   <Link to={`/product/${product.id}`}>
-                    <Button className="w-full btn-primary text-base">
-                      View Details
-                    </Button>
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
                   </Link>
+                  <div className="absolute top-4 right-4 flex space-x-2 z-10">
+                    <button
+                      onClick={() => {
+                        if (isWishlisted) {
+                          removeFromWishlist(product.id);
+                        } else {
+                          addToWishlist(product);
+                        }
+                      }}
+                      className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${
+                        isWishlisted
+                          ? "text-red-500 scale-110"
+                          : "text-foreground hover:text-primary hover:scale-110"
+                      }`}
+                      aria-label="Toggle Wishlist"
+                    >
+                      <Heart
+                        className="w-5 h-5"
+                        fill={isWishlisted ? "currentColor" : "none"}
+                      />
+                    </button>
+                    <Link
+                      to={`/product/${product.id}`}
+                      className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center text-foreground hover:text-primary transition-colors shadow-sm"
+                    >
+                      <Eye className="w-5 h-5" />
+                    </Link>
+                  </div>
+                  <div className="absolute bottom-4 left-4 bg-black/50 text-white px-2 py-1 rounded-md flex items-center gap-1.5 text-xs font-semibold">
+                    <Star
+                      size={14}
+                      className="fill-yellow-400 text-yellow-400"
+                    />
+                    <span>{product.rating}</span>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+                <div className="p-6 flex flex-col flex-grow">
+                  <h3 className="text-xl font-bold text-foreground mb-1">
+                    {product.name}
+                  </h3>
+                  <p className="text-muted-foreground text-sm mb-4">
+                    {product.size}
+                  </p>
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xl font-bold text-primary">
+                        ₹
+                        {product.isSale
+                          ? product.salePrice.toLocaleString()
+                          : product.price.toLocaleString()}
+                      </span>
+                      {product.isSale && (
+                        <s className="text-sm text-muted-foreground">
+                          ₹{product.price.toLocaleString()}
+                        </s>
+                      )}
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {product.reviews} reviews
+                    </span>
+                  </div>
+                  <div className="mt-auto">
+                    <Link to={`/product/${product.id}`}>
+                      <Button className="w-full btn-primary text-base">
+                        View Details
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
-
         <div className="text-center">
           <Link to="/products">
             <Button variant="outline" size="lg" className="px-10">

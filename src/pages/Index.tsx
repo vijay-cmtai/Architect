@@ -12,6 +12,7 @@ import CustomDesignSection from "../components/CustomDesignSection";
 import StandardPackagesSection from "../components/StandardPackagesSection";
 import PremiumPackagesSection from "../components/PremiumPackagesSection";
 import CorporatePackagesSection from "../components/CorporatePackagesSection";
+import BrandPartnersSection from "@/components/BrandPartnersSection";
 
 const Index = () => {
   return (
@@ -23,11 +24,10 @@ const Index = () => {
       <StandardPackagesSection />
       <PremiumPackagesSection />
       <CorporatePackagesSection />
-
-      <Services />
       <FeaturedProducts />
       <CategoriesSection />
       <RegionalPlansSection />
+      <BrandPartnersSection />
       <Testimonials />
       <CTA />
       <Footer />

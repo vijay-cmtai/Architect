@@ -1,80 +1,127 @@
+import { useRef } from "react";
 import { motion } from "framer-motion";
-import { Building2, Store, Factory } from "lucide-react";
-import { Link } from "react-router-dom"; // 1. Import Link
+import { Link } from "react-router-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const corporatePackages = [
+const categories = [
   {
-    title: "Builders & Colonizers",
-    icon: <Building2 size={48} className="text-primary" />,
-    description:
-      "Comprehensive architectural solutions for large-scale housing and colony projects.",
-    // 2. Change href to a URL-friendly slug
-    slug: "builders-colonizers",
+    name: "Corner house plans",
+    image:
+      "https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=600",
+    href: "/category/corner-house",
   },
   {
-    title: "Offices & Shops",
-    icon: <Store size={48} className="text-primary" />,
-    description:
-      "Modern and functional designs for commercial spaces, offices, and retail stores.",
-    slug: "offices-shops",
+    name: "Duplex",
+    image:
+      "https://images.pexels.com/photos/2089698/pexels-photo-2089698.jpeg?auto=compress&cs=tinysrgb&w=600",
+    href: "/category/duplex",
   },
   {
-    title: "Factories & Educational",
-    icon: <Factory size={48} className="text-primary" />,
-    description:
-      "Specialized plans for industrial buildings, schools, colleges, and other institutions.",
-    slug: "factories-educational",
+    name: "Bungalows",
+    image:
+      "https://images.pexels.com/photos/259588/pexels-photo-259588.jpeg?auto=compress&cs=tinysrgb&w=600",
+    href: "/category/bungalows",
+  },
+  {
+    name: "Apartments Of Flats",
+    image:
+      "https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=600",
+    href: "/category/apartments",
+  },
+  {
+    name: "Classic House",
+    image:
+      "https://images.pexels.com/photos/221540/pexels-photo-221540.jpeg?auto=compress&cs=tinysrgb&w=600",
+    href: "/category/classic-house",
+  },
+  {
+    name: "Modern Villa",
+    image: "https.jpeg?auto=compress&cs=tinysrgb&w=600",
+    href: "/category/modern-villa",
   },
 ];
 
-const CorporatePackagesSection = () => {
+const CategoriesSection = () => {
+  const scrollContainerRef = useRef(null);
+
+  const scroll = (direction) => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 300;
+      scrollContainerRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
   return (
-    <section className="py-20 bg-cyan-50">
+    // --- BADLAAV YAHAN KIYA GAYA HAI ---
+    // 'bg-background' ko 'bg-soft-teal' se badal diya gaya hai.
+    <section className="py-20 bg-soft-teal">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-16"
+          className="text-center mb-12"
         >
-          <h2 className="text-4xl font-bold text-dark">
-            Corporate Packages (Projects)
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+            Categories
           </h2>
-          <p className="mt-2 text-lg text-dark-light">
-            Tailored solutions for your business and large-scale needs.
-          </p>
+          <div className="mt-4 h-1 w-24 bg-primary mx-auto rounded-full"></div>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {corporatePackages.map((pkg, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-white border-2 border-transparent rounded-xl p-8 text-center flex flex-col items-center transition-all duration-300 hover:border-primary hover:shadow-xl hover:-translate-y-2"
-            >
-              <div className="mb-6">{pkg.icon}</div>
-              <h3 className="text-2xl font-bold text-dark mb-4">{pkg.title}</h3>
-              <p className="text-dark-light flex-grow mb-6">
-                {pkg.description}
-              </p>
+        <div className="relative">
+          <button
+            onClick={() => scroll("left")}
+            className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 bg-card p-2 rounded-full shadow-md hover:bg-muted transition"
+          >
+            <ChevronLeft className="text-foreground" />
+          </button>
 
-              {/* 3. Replace <a> with <Link> */}
-              <Link
-                to={`/corporate-inquiry/${pkg.slug}`}
-                className="mt-auto bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-primary-dark transition-colors"
+          <div
+            ref={scrollContainerRef}
+            className="flex items-stretch gap-8 overflow-x-auto pb-4"
+            style={{ msOverflowStyle: "none", scrollbarWidth: "none" }}
+          >
+            <style>{`.flex.items-stretch.gap-8.overflow-x-auto.pb-4::-webkit-scrollbar { display: none; }`}</style>
+
+            {categories.map((category, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="flex-shrink-0 w-64"
               >
-                Learn More
-              </Link>
-            </motion.div>
-          ))}
+                <Link to={category.href} className="group flex flex-col h-full">
+                  <div className="overflow-hidden rounded-lg shadow-md">
+                    <img
+                      src={category.image}
+                      alt={category.name}
+                      className="w-full h-56 object-cover transform group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground mt-4 text-center group-hover:text-primary transition-colors">
+                    {category.name}
+                  </h3>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+
+          <button
+            onClick={() => scroll("right")}
+            className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 bg-card p-2 rounded-full shadow-md hover:bg-muted transition"
+          >
+            <ChevronRight className="text-foreground" />
+          </button>
         </div>
       </div>
     </section>
   );
 };
 
-export default CorporatePackagesSection;
+export default CategoriesSection;

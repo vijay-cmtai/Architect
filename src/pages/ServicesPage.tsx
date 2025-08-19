@@ -1,89 +1,114 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import Footer from "../components/Footer";
-import Header from "../components/Navbar";
+import Footer from "@/components/Footer";
+import Navbar from "@/components/Navbar";
 import {
   Users,
-  PencilRuler,
   MessageSquare,
-  FileCheck2,
+  FileEdit,
   ChevronDown,
   CheckCircle,
   Star,
   Building2,
   Store,
   Factory,
+  PhoneCall,
+  ClipboardCheck,
+  Trophy,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+// Section 1: Naya Process Section (Aapke handwritten note ke anusaar)
 const processSteps = [
   {
-    step: "01",
+    icon: PhoneCall,
     title: "Consultation",
     description:
-      "We start with a detailed discussion to understand your vision, requirements, and budget.",
-    icon: <Users size={32} className="text-primary" />,
+      "We start with a detailed call to understand your vision, requirements, and budget perfectly.",
   },
   {
-    step: "02",
-    title: "Design & Draft",
+    icon: Users,
+    title: "WhatsApp Group",
     description:
-      "Our expert architects create initial drafts and 3D models based on your inputs.",
-    icon: <PencilRuler size={32} className="text-primary" />,
+      "A dedicated WhatsApp group is created for seamless communication between you and our design team.",
   },
   {
-    step: "03",
-    title: "Review & Refine",
+    icon: MessageSquare,
+    title: "Discussion",
     description:
-      "We review the designs with you and make revisions until you are completely satisfied.",
-    icon: <MessageSquare size={32} className="text-primary" />,
+      "We collaborate and brainstorm ideas, refining the concept based on your valuable feedback.",
   },
   {
-    step: "04",
+    icon: FileEdit,
+    title: "Drafting",
+    description:
+      "Our expert architects create initial drafts, including 2D floor plans and 3D models for your review.",
+  },
+  {
+    icon: ClipboardCheck,
+    title: "Correction",
+    description:
+      "We incorporate all your suggestions and make necessary revisions to perfect every detail of the design.",
+  },
+  {
+    icon: Trophy,
     title: "Final Delivery",
     description:
-      "You receive the complete, ready-to-use architectural files for your project.",
-    icon: <FileCheck2 size={32} className="text-primary" />,
+      "Once you are completely satisfied, we deliver the final, ready-to-use architectural files for your dream home.",
   },
 ];
 
 const ProcessSection = () => (
-  <section className="py-20 bg-white">
+  <section className="py-20 bg-soft-teal">
     <div className="container mx-auto px-4">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="text-center mb-16"
+        transition={{ duration: 0.5 }}
+        className="text-center mb-20"
       >
-        <h2 className="text-4xl font-bold text-dark">Our Design Process</h2>
-        <p className="mt-2 text-lg text-dark-light">
-          A simple, transparent, and collaborative journey from idea to reality.
+        <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+          Our Design Process
+        </h2>
+        <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          A simple, transparent, and collaborative journey from idea to final
+          plan.
         </p>
       </motion.div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-        {processSteps.map((item, index) => (
+      <div className="relative max-w-2xl mx-auto">
+        <div className="absolute left-6 md:left-1/2 top-0 h-full w-0.5 bg-border -translate-x-1/2"></div>
+        {processSteps.map((step, index) => (
           <motion.div
-            key={item.step}
+            key={index}
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: index * 0.15 }}
-            className="text-center p-6"
+            transition={{ duration: 0.5, delay: index * 0.2 }}
+            className="relative mb-12"
           >
-            <div className="flex items-center justify-center gap-4 mb-4">
-              {item.icon}
-              <span className="text-5xl font-light text-gray-300">
-                {item.step}
-              </span>
+            <div className="flex items-center">
+              <div className="absolute left-6 md:left-1/2 top-1 z-10 -translate-x-1/2 w-12 h-12 bg-card border-2 border-primary rounded-full flex items-center justify-center">
+                <step.icon className="w-6 h-6 text-primary" />
+              </div>
+              <div className="w-full ml-20 md:ml-0 md:w-5/6 md:mx-auto">
+                <div className="bg-card p-6 rounded-xl shadow-soft border border-border">
+                  <h3 className="text-xl font-bold text-foreground mb-2">
+                    {index + 1}. {step.title}
+                  </h3>
+                  <p className="text-muted-foreground">{step.description}</p>
+                </div>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-dark mb-2">{item.title}</h3>
-            <p className="text-dark-light">{item.description}</p>
           </motion.div>
         ))}
       </div>
     </div>
   </section>
 );
+
+// Section 2: Standard Packages
 const standardPackages = [
   {
     title: "Floor Plan",
@@ -91,6 +116,7 @@ const standardPackages = [
     unit: "Per sq.ft.",
     areaType: "Built-up Area",
     isPopular: false,
+    linkTo: "/customize/floor-plans",
   },
   {
     title: "Floor Plan + 3D",
@@ -98,6 +124,7 @@ const standardPackages = [
     unit: "Per sq.ft.",
     areaType: "Built-up Area",
     isPopular: true,
+    linkTo: "/customize/3d-elevation",
   },
   {
     title: "Complete File",
@@ -105,6 +132,7 @@ const standardPackages = [
     unit: "Per sq.ft.",
     areaType: "Built-up Area",
     isPopular: false,
+    linkTo: "/products",
   },
   {
     title: "Interior Designing",
@@ -113,11 +141,12 @@ const standardPackages = [
     areaType: "Carpet Area",
     features: ["3D + 2D Drawings Included"],
     isPopular: false,
+    linkTo: "/customize/interior-designs",
   },
 ];
 
 const StandardPackagesSection = () => (
-  <section className="py-20 bg-cyan-50">
+  <section className="py-20 bg-background">
     <div className="container mx-auto px-4">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -126,8 +155,10 @@ const StandardPackagesSection = () => (
         transition={{ duration: 0.5 }}
         className="text-center mb-16"
       >
-        <h2 className="text-4xl font-bold text-dark">Standard Packages</h2>
-        <p className="mt-2 text-lg text-dark-light">
+        <h2 className="text-4xl font-bold text-foreground">
+          Standard Packages
+        </h2>
+        <p className="mt-2 text-lg text-muted-foreground">
           Choose the plan that's right for you.
         </p>
       </motion.div>
@@ -139,65 +170,67 @@ const StandardPackagesSection = () => (
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            className={`bg-white border-2 rounded-xl p-6 text-center transition-all duration-300 relative ${pkg.isPopular ? "border-primary shadow-2xl scale-105" : "border-gray-200 hover:border-primary hover:shadow-lg"}`}
+            className={`bg-card border-2 rounded-xl p-6 text-center transition-all duration-300 relative ${pkg.isPopular ? "border-primary shadow-orange -translate-y-2" : "border-border hover:border-primary hover:shadow-medium"}`}
           >
             {pkg.isPopular && (
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-4 py-1 rounded-full">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-4 py-1 rounded-full">
                 MOST POPULAR
               </div>
             )}
-            <h3 className="text-2xl font-bold text-dark mb-4">{pkg.title}</h3>
+            <h3 className="text-2xl font-bold text-foreground mb-4">
+              {pkg.title}
+            </h3>
             <div className="mb-4">
               <span className="text-5xl font-extrabold text-primary">{`₹${pkg.price}`}</span>
-              <p className="text-dark-light">{pkg.unit}</p>
+              <p className="text-muted-foreground">{pkg.unit}</p>
             </div>
-            <p className="text-sm text-gray-500 mb-6">{pkg.areaType}</p>
+            <p className="text-sm text-muted-foreground mb-6">{pkg.areaType}</p>
             {pkg.features && (
               <div className="text-left mt-4 text-sm space-y-2">
-                {pkg.features.map((feature) => (
-                  <div key={feature} className="flex items-center gap-2">
-                    <CheckCircle size={16} className="text-green-500" />
-                    <span>{feature}</span>
-                  </div>
-                ))}
+                <div className="flex items-center gap-2">
+                  <CheckCircle size={16} className="text-accent" />
+                  <span>{pkg.features[0]}</span>
+                </div>
               </div>
             )}
-            <button className="mt-6 w-full bg-primary text-white font-bold py-3 rounded-lg hover:bg-primary-dark transition-colors">
-              Choose Plan
-            </button>
+            <Link to={pkg.linkTo}>
+              <Button className="mt-6 w-full btn-primary">Choose Plan</Button>
+            </Link>
           </motion.div>
         ))}
       </div>
     </div>
   </section>
 );
+
+// Section 3: Premium Packages
 const premiumPackages = [
   {
     title: "Floor Plan",
     price: "5",
-    unit: "Per sq.ft.",
     features: ["3 Options", "Premium Quality"],
     isPopular: false,
+    linkTo: "/customize/floor-plans",
   },
   {
     title: "Floor Plan + 3D",
     price: "12",
-    unit: "Per sq.ft.",
     features: ["Premium Quality", "All Side Render", "Video Walkthrough"],
     isPopular: true,
+    linkTo: "/customize/3d-elevation",
   },
   {
     title: "Complete File + Interior",
     price: "30",
-    unit: "Per sq.ft.",
     features: ["Everything Included", "Full Support"],
     areaType: "Built-up Area",
     isPopular: false,
+    linkTo: "/customize/interior-designs",
   },
 ];
 
 const PremiumPackagesSection = () => (
-  <section className="py-20 bg-white">
+  <section className="py-20 bg-soft-teal">
     <div className="container mx-auto px-4">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -206,8 +239,8 @@ const PremiumPackagesSection = () => (
         transition={{ duration: 0.5 }}
         className="text-center mb-16"
       >
-        <h2 className="text-4xl font-bold text-dark">Premium Packages</h2>
-        <p className="mt-2 text-lg text-dark-light">
+        <h2 className="text-4xl font-bold text-foreground">Premium Packages</h2>
+        <p className="mt-2 text-lg text-muted-foreground">
           Upgrade to a premium experience with more features.
         </p>
       </motion.div>
@@ -219,67 +252,75 @@ const PremiumPackagesSection = () => (
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            className={`bg-white border-2 rounded-xl p-8 text-center transition-all duration-300 relative flex flex-col ${pkg.isPopular ? "border-primary shadow-2xl scale-105" : "border-gray-200 hover:border-primary hover:shadow-lg"}`}
+            className={`bg-card border-2 rounded-xl p-8 text-center transition-all duration-300 relative flex flex-col ${pkg.isPopular ? "border-primary shadow-orange -translate-y-2" : "border-border hover:border-primary hover:shadow-medium"}`}
           >
             {pkg.isPopular && (
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-4 py-1 rounded-full flex items-center gap-1">
-                <Star size={12} fill="white" />
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-4 py-1 rounded-full flex items-center gap-1">
+                <Star size={12} className="fill-current" />
                 <span>BEST VALUE</span>
               </div>
             )}
             <div className="flex-grow">
-              <h3 className="text-2xl font-bold text-dark mb-4">{pkg.title}</h3>
+              <h3 className="text-2xl font-bold text-foreground mb-4">
+                {pkg.title}
+              </h3>
               <div className="mb-6">
                 <span className="text-5xl font-extrabold text-primary">{`₹${pkg.price}`}</span>
-                <p className="text-dark-light">{pkg.unit}</p>
+                <p className="text-muted-foreground">Per sq.ft.</p>
               </div>
               <div className="text-left mt-6 mb-8 text-base space-y-3">
                 {pkg.features.map((feature) => (
                   <div key={feature} className="flex items-center gap-3">
-                    <CheckCircle size={18} className="text-green-500" />
+                    <CheckCircle size={18} className="text-accent" />
                     <span>{feature}</span>
                   </div>
                 ))}
               </div>
               {pkg.areaType && (
-                <p className="text-sm text-gray-500 mb-6">{pkg.areaType}</p>
+                <p className="text-sm text-muted-foreground mb-6">
+                  {pkg.areaType}
+                </p>
               )}
             </div>
-            <button className="w-full bg-primary text-white font-bold py-3 rounded-lg hover:bg-primary-dark transition-colors">
-              Select Premium Plan
-            </button>
+            <Link to={pkg.linkTo}>
+              <Button className="w-full btn-primary mt-auto">
+                Select Premium Plan
+              </Button>
+            </Link>
           </motion.div>
         ))}
       </div>
     </div>
   </section>
 );
+
+// Section 4: Corporate Packages
 const corporatePackages = [
   {
     title: "Builders & Colonizers",
     icon: <Building2 size={48} className="text-primary" />,
     description:
       "Comprehensive architectural solutions for large-scale housing and colony projects.",
-    href: "/corporate/builders",
+    slug: "builders-colonizers",
   },
   {
     title: "Offices & Shops",
     icon: <Store size={48} className="text-primary" />,
     description:
       "Modern and functional designs for commercial spaces, offices, and retail stores.",
-    href: "/corporate/offices",
+    slug: "offices-shops",
   },
   {
     title: "Factories & Educational",
     icon: <Factory size={48} className="text-primary" />,
     description:
       "Specialized plans for industrial buildings, schools, colleges, and other institutions.",
-    href: "/corporate/factories",
+    slug: "factories-educational",
   },
 ];
 
 const CorporatePackagesSection = () => (
-  <section className="py-20 bg-cyan-50">
+  <section className="py-20 bg-background">
     <div className="container mx-auto px-4">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -288,10 +329,10 @@ const CorporatePackagesSection = () => (
         transition={{ duration: 0.5 }}
         className="text-center mb-16"
       >
-        <h2 className="text-4xl font-bold text-dark">
+        <h2 className="text-4xl font-bold text-foreground">
           Corporate Packages (Projects)
         </h2>
-        <p className="mt-2 text-lg text-dark-light">
+        <p className="mt-2 text-lg text-muted-foreground">
           Tailored solutions for your business and large-scale needs.
         </p>
       </motion.div>
@@ -303,23 +344,26 @@ const CorporatePackagesSection = () => (
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            className="bg-white border-2 border-transparent rounded-xl p-8 text-center flex flex-col items-center transition-all duration-300 hover:border-primary hover:shadow-xl hover:-translate-y-2"
+            className="bg-card border-2 border-transparent rounded-xl p-8 text-center flex flex-col items-center transition-all duration-300 hover:border-primary hover:shadow-xl hover:-translate-y-2"
           >
             <div className="mb-6">{pkg.icon}</div>
-            <h3 className="text-2xl font-bold text-dark mb-4">{pkg.title}</h3>
-            <p className="text-dark-light flex-grow mb-6">{pkg.description}</p>
-            <a
-              href={pkg.href}
-              className="mt-auto bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-primary-dark transition-colors"
-            >
-              Learn More
-            </a>
+            <h3 className="text-2xl font-bold text-foreground mb-4">
+              {pkg.title}
+            </h3>
+            <p className="text-muted-foreground flex-grow mb-6">
+              {pkg.description}
+            </p>
+            <Link to={`/corporate-inquiry/${pkg.slug}`} className="mt-auto">
+              <Button className="btn-primary">Learn More</Button>
+            </Link>
           </motion.div>
         ))}
       </div>
     </div>
   </section>
 );
+
+// Section 5: FAQ
 const faqData = [
   {
     question: "How long does it take to get a house plan?",
@@ -344,11 +388,11 @@ const faqData = [
 ];
 
 const FaqSection = () => {
-  const [openIndex, setOpenIndex] = useState(null);
-  const handleToggle = (index) =>
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const handleToggle = (index: number) =>
     setOpenIndex(openIndex === index ? null : index);
   return (
-    <section className="py-20 bg-white">
+    <section className="py-20 bg-soft-teal">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -356,7 +400,7 @@ const FaqSection = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl font-bold text-dark">
+          <h2 className="text-4xl font-bold text-foreground">
             Frequently Asked Questions
           </h2>
         </motion.div>
@@ -366,11 +410,11 @@ const FaqSection = () => {
             return (
               <div
                 key={index}
-                className="bg-white rounded-lg shadow-sm overflow-hidden border"
+                className="bg-card rounded-lg shadow-sm overflow-hidden border border-border"
               >
                 <button
                   onClick={() => handleToggle(index)}
-                  className="w-full flex justify-between items-center p-5 text-left font-semibold text-dark"
+                  className="w-full flex justify-between items-center p-5 text-left font-semibold text-foreground"
                 >
                   <span>{item.question}</span>
                   <ChevronDown
@@ -384,7 +428,7 @@ const FaqSection = () => {
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3 }}
-                      className="px-5 pb-5 text-dark-light"
+                      className="px-5 pb-5 text-muted-foreground"
                     >
                       {item.answer}
                     </motion.div>
@@ -398,14 +442,16 @@ const FaqSection = () => {
     </section>
   );
 };
+
+// Section 6: Call to Action
 const CtaSection = () => (
-  <section className="bg-primary py-20">
+  <section className="gradient-orange py-20">
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="container mx-auto px-4 text-center text-white"
+      className="container mx-auto px-4 text-center text-primary-foreground"
     >
       <h2 className="text-4xl font-bold mb-4">
         Ready to Build Your Dream Home?
@@ -414,45 +460,48 @@ const CtaSection = () => (
         Let's discuss your project. Contact us today for a free consultation and
         let our experts guide you.
       </p>
-      <Link
-        to="/contact"
-        className="inline-block bg-white text-primary font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-colors text-lg"
-      >
-        Get a Free Quote
+      <Link to="/contact">
+        <Button
+          size="lg"
+          className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-bold px-8 py-3 text-lg"
+        >
+          Get a Free Quote
+        </Button>
       </Link>
     </motion.div>
   </section>
 );
+
+// Final Services Page Component
 const ServicesPage = () => {
   return (
     <>
-    <Header/>
-    <div className="bg-white">
-      {/* Page Hero Section */}
-      <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.7 }}
-        className="bg-primary/90 text-white py-20 text-center"
-      >
-        <div className="container mx-auto px-4">
-          <h1 className="text-5xl font-extrabold mb-3">
-            Our Services & Packages
-          </h1>
-          <p className="text-xl max-w-3xl mx-auto">
-            Find the perfect architectural package that fits your needs, from
-            standard plans to fully customized corporate solutions.
-          </p>
-        </div>
-      </motion.section>
-      <ProcessSection />
-      <StandardPackagesSection />
-      <PremiumPackagesSection />
-      <CorporatePackagesSection />
-      <FaqSection />
-      <CtaSection />
-    </div>
-    <Footer/>
+      <Navbar />
+      <main>
+        <motion.section
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.7 }}
+          className="gradient-hero text-primary-foreground py-20 text-center"
+        >
+          <div className="container mx-auto px-4">
+            <h1 className="text-5xl font-extrabold mb-3">
+              Our Services & Packages
+            </h1>
+            <p className="text-xl max-w-3xl mx-auto">
+              Find the perfect architectural package that fits your needs, from
+              standard plans to fully customized corporate solutions.
+            </p>
+          </div>
+        </motion.section>
+        <ProcessSection />
+        <StandardPackagesSection />
+        <PremiumPackagesSection />
+        <CorporatePackagesSection />
+        <FaqSection />
+        <CtaSection />
+      </main>
+      <Footer />
     </>
   );
 };

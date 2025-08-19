@@ -1,154 +1,317 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
-import Footer from "../components/Footer";
-import Header from "../components/Navbar";
+import { Eye, EyeOff, CheckCircle } from "lucide-react"; // CheckCircle icon ko import karein
+import { motion, AnimatePresence } from "framer-motion";
+import Footer from "@/components/Footer";
+import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
-// Define the roles for easier management
 const userRoles = [
-  { id: "seller", label: "Register as a Seller" },
-  { id: "partner", label: "Register as a Partner" },
-  { id: "construction", label: "Register as a Construction Partner" },
+  {
+    id: "professional",
+    label: "Register as a Professional (Architect, Engineer, etc.)",
+  },
+  { id: "material-seller", label: "Register as a Material Seller" },
+  { id: "city-partner", label: "Register as a City Construction Partner" },
 ];
+
+const professionalSubRoles = [
+  "Architect",
+  "Junior Architect",
+  "Civil Structural Engineer",
+  "Civil Design Engineer",
+  "Interior Designer",
+  "Contractor",
+  "Vastu Consultant",
+  "Site Engineer",
+];
+
+const materialTypes = [
+  "Cement & Concrete",
+  "Bricks & Blocks",
+  "Steel & Rebar",
+  "Sanitary Ware",
+  "Electricals & Wiring",
+  "Paints & Finishes",
+  "Flooring & Tiles",
+  "Wood & Plywood",
+];
+
+const formStyles = {
+  label: "block text-sm font-semibold text-foreground mb-2",
+  input:
+    "w-full px-4 py-3 bg-input border-0 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none transition",
+  textarea:
+    "w-full px-4 py-3 bg-input border-0 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none transition min-h-[100px]",
+};
 
 const MultiRoleRegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
-  // State to manage the selected role, default is 'seller'
-  const [selectedRole, setSelectedRole] = useState("seller");
+  const [selectedRole, setSelectedRole] = useState("city-partner");
 
-  // Dynamic titles based on the selected role
-  const pageTitles = {
-    seller: "Register as a Seller",
-    partner: "Register as a Partner",
-    construction: "Register as a Construction Partner",
+  const renderRoleSpecificFields = () => {
+    const motionProps = {
+      key: selectedRole,
+      initial: { opacity: 0, y: 10 },
+      animate: { opacity: 1, y: 0 },
+      exit: { opacity: 0, y: -10 },
+      transition: { duration: 0.3 },
+    };
+
+    switch (selectedRole) {
+      case "material-seller":
+        return (
+          <motion.div {...motionProps} className="space-y-5">
+            <div>
+              <label htmlFor="businessName" className={formStyles.label}>
+                Business Name <span className="text-destructive">*</span>
+              </label>
+              <Input id="businessName" required className={formStyles.input} />
+            </div>
+            <div>
+              <label htmlFor="phone" className={formStyles.label}>
+                Phone Number <span className="text-destructive">*</span>
+              </label>
+              <Input
+                id="phone"
+                type="tel"
+                required
+                className={formStyles.input}
+              />
+            </div>
+            <div>
+              <label htmlFor="address" className={formStyles.label}>
+                Address <span className="text-destructive">*</span>
+              </label>
+              <Textarea id="address" required className={formStyles.textarea} />
+            </div>
+            <div>
+              <label htmlFor="city" className={formStyles.label}>
+                City <span className="text-destructive">*</span>
+              </label>
+              <Input id="city" required className={formStyles.input} />
+            </div>
+            <div>
+              <label htmlFor="materialType" className={formStyles.label}>
+                Type of Material Selling{" "}
+                <span className="text-destructive">*</span>
+              </label>
+              <Select>
+                <SelectTrigger className={formStyles.input}>
+                  <SelectValue placeholder="Select material type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {materialTypes.map((m) => (
+                    <SelectItem
+                      key={m}
+                      value={m.toLowerCase().replace(/ /g, "-")}
+                    >
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label htmlFor="photo" className={formStyles.label}>
+                Your Photo / Shop Photo
+              </label>
+              <Input id="photo" type="file" className={formStyles.input} />
+            </div>
+          </motion.div>
+        );
+      case "city-partner":
+        return (
+          <motion.div {...motionProps} className="space-y-5">
+            <div>
+              <label htmlFor="companyName" className={formStyles.label}>
+                Company Name <span className="text-destructive">*</span>
+              </label>
+              <Input id="companyName" required className={formStyles.input} />
+            </div>
+            <div>
+              <label htmlFor="partnerPhone" className={formStyles.label}>
+                Phone Number <span className="text-destructive">*</span>
+              </label>
+              <Input
+                id="partnerPhone"
+                type="tel"
+                required
+                className={formStyles.input}
+              />
+            </div>
+            <div>
+              <label htmlFor="partnerAddress" className={formStyles.label}>
+                Address <span className="text-destructive">*</span>
+              </label>
+              <Textarea
+                id="partnerAddress"
+                required
+                className={formStyles.textarea}
+              />
+            </div>
+            <div>
+              <label htmlFor="partnerCity" className={formStyles.label}>
+                City of Operation <span className="text-destructive">*</span>
+              </label>
+              <Input id="partnerCity" required className={formStyles.input} />
+            </div>
+            <div>
+              <label htmlFor="partnerPhoto" className={formStyles.label}>
+                Your Photo / Company Logo
+              </label>
+              <Input
+                id="partnerPhoto"
+                type="file"
+                className={formStyles.input}
+              />
+            </div>
+          </motion.div>
+        );
+      case "professional":
+      default:
+        return (
+          <motion.div {...motionProps} className="space-y-5">
+            <div>
+              <label htmlFor="fullName" className={formStyles.label}>
+                Full Name <span className="text-destructive">*</span>
+              </label>
+              <Input id="fullName" required className={formStyles.input} />
+            </div>
+            <div>
+              <label htmlFor="profPhone" className={formStyles.label}>
+                Phone Number <span className="text-destructive">*</span>
+              </label>
+              <Input
+                id="profPhone"
+                type="tel"
+                required
+                className={formStyles.input}
+              />
+            </div>
+            <div>
+              <label htmlFor="sub-role" className={formStyles.label}>
+                Your Profession <span className="text-destructive">*</span>
+              </label>
+              <Select>
+                <SelectTrigger className={formStyles.input}>
+                  <SelectValue placeholder="Choose your profession" />
+                </SelectTrigger>
+                <SelectContent>
+                  {professionalSubRoles.map((subRole) => (
+                    <SelectItem
+                      key={subRole}
+                      value={subRole.toLowerCase().replace(/ /g, "-")}
+                    >
+                      {subRole}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </motion.div>
+        );
+    }
   };
 
   return (
     <>
-      <Header />
-      <div className="min-h-screen flex items-center justify-center bg-background p-4 font-poppins">
-        <div className="bg-card text-foreground p-8 sm:p-10 rounded-xl shadow-2xl max-w-md w-full">
-          <h1 className="text-3xl font-bold text-center mb-8">
-            {pageTitles[selectedRole]}
-          </h1>
-
-          <form>
-            <div className="space-y-6">
-              {/* Role Selection using Radio Buttons */}
-              <fieldset className="space-y-4 border border-border p-4 rounded-lg">
-                <legend className="text-sm font-semibold px-2">
-                  Choose your role
-                </legend>
-                {userRoles.map((role) => (
-                  <div key={role.id} className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      id={role.id}
-                      name="user-role"
-                      value={role.id}
-                      className="h-4 w-4 text-primary focus:ring-primary border-border"
-                      checked={selectedRole === role.id}
-                      onChange={(e) => setSelectedRole(e.target.value)}
-                    />
-                    <label htmlFor={role.id} className="text-sm font-medium">
-                      {role.label}
-                    </label>
-                  </div>
-                ))}
-              </fieldset>
-
-              {/* Standard input fields */}
-              <div>
-                <label
-                  htmlFor="username"
-                  className="block text-sm font-semibold mb-2"
-                >
-                  Username <span className="text-destructive">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="username"
-                  name="username"
-                  className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                  required
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-semibold mb-2"
-                >
-                  Email address <span className="text-destructive">*</span>
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                  required
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-semibold mb-2"
-                >
-                  Password <span className="text-destructive">*</span>
-                </label>
-                <div className="relative">
+      <Navbar />
+      <div className="min-h-screen flex items-center justify-center bg-soft-teal p-4 py-12">
+        <div className="bg-card text-foreground p-8 sm:p-10 rounded-2xl shadow-2xl max-w-lg w-full">
+          <form className="space-y-5">
+            {/* --- BADLAAV YAHAN KIYA GAYA HAI: Dropdown ko custom radio buttons se replace kiya gaya hai --- */}
+            <fieldset className="space-y-3">
+              <legend className="sr-only">Select your registration type</legend>
+              {userRoles.map((role) => (
+                <div key={role.id}>
                   <input
-                    type={showPassword ? "text" : "password"}
-                    id="password"
-                    name="password"
-                    className="w-full px-4 py-3 pr-12 bg-input border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                    required
+                    type="radio"
+                    id={role.id}
+                    name="user-role"
+                    value={role.id}
+                    className="sr-only" // Asli radio button ko hide karein
+                    checked={selectedRole === role.id}
+                    onChange={(e) => setSelectedRole(e.target.value)}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-muted-foreground cursor-pointer"
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
+                  <label
+                    htmlFor={role.id}
+                    className={`flex items-center justify-between w-full p-4 rounded-lg cursor-pointer border-2 transition-all duration-300 ${
+                      selectedRole === role.id
+                        ? "bg-accent text-accent-foreground border-transparent shadow-md"
+                        : "bg-input border-border hover:border-primary/50"
+                    }`}
                   >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
+                    <span className="font-semibold">{role.label}</span>
+                    {selectedRole === role.id && <CheckCircle size={20} />}
+                  </label>
                 </div>
-              </div>
+              ))}
+            </fieldset>
 
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="newsletter"
-                  name="newsletter"
-                  className="h-4 w-4 rounded text-primary focus:ring-primary border-border"
-                  defaultChecked
+            <AnimatePresence mode="wait">
+              {renderRoleSpecificFields()}
+            </AnimatePresence>
+
+            <div>
+              <label htmlFor="email" className={formStyles.label}>
+                Email address <span className="text-destructive">*</span>
+              </label>
+              <Input
+                type="email"
+                id="email"
+                required
+                className={formStyles.input}
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className={formStyles.label}>
+                Password <span className="text-destructive">*</span>
+              </label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  required
+                  className={`${formStyles.input} pr-12`}
                 />
-                <label htmlFor="newsletter" className="text-sm">
-                  Subscribe to our newsletter
-                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-4 text-muted-foreground cursor-pointer"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
 
-            <p className="text-xs text-muted-foreground text-center mt-8">
-              Your personal data will be used to support your experience
-              throughout this website, to manage access to your account, and for
-              other purposes described in our{" "}
+            <p className="text-xs text-muted-foreground text-center pt-4">
+              By registering, you agree to our{" "}
+              <Link to="/terms" className="text-primary hover:underline">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
               <Link
                 to="/privacy-policy"
                 className="text-primary hover:underline"
               >
-                privacy policy
+                Privacy Policy
               </Link>
               .
             </p>
-
             <Button
               type="submit"
-              className="w-full mt-6 text-base font-bold py-3"
+              className="w-full text-base font-bold py-3 h-12 btn-primary"
             >
               Register
             </Button>
