@@ -41,10 +41,13 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const { userInfo } = useSelector((state: RootState) => state.user);
+
+  const isUserAllowed =
+    userInfo && ["user", "admin", "professional"].includes(userInfo.role);
   const showCartAndWishlist = !userInfo || userInfo?.role === "user";
 
   const getDashboardPath = () => {
-    if (!userInfo) return "/login";
+    if (!isUserAllowed) return "/login";
     switch (userInfo.role) {
       case "professional":
         return "/professional";
@@ -86,9 +89,7 @@ const Navbar = () => {
   return (
     <>
       <header
-        className={`sticky top-0 z-50 transition-all duration-300 ${
-          isScrolled ? "bg-white/95 shadow-md backdrop-blur-lg" : "bg-white"
-        }`}
+        className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? "bg-white/95 shadow-md backdrop-blur-lg" : "bg-white"}`}
       >
         <div className="max-w-screen-xl mx-auto px-2 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
@@ -102,36 +103,22 @@ const Navbar = () => {
                 />
               </div>
             </Link>
-
-            {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-8">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`text-base font-medium relative transition-colors duration-300 ${
-                    isActive(link.path)
-                      ? "text-orange-600"
-                      : "text-gray-600 hover:text-orange-600"
-                  }`}
+                  className={`text-base font-medium relative transition-colors duration-300 ${isActive(link.path) ? "text-orange-600" : "text-gray-600 hover:text-orange-600"}`}
                   style={
-                    link.name === "About" && isActive(link.path)
+                    link.name === "About"
                       ? {
-                          backgroundColor: "#F97316", // Orange color
+                          backgroundColor: "#F97316",
                           color: "white",
-                          padding: "2rem 1rem", // Tall padding
+                          padding: "2rem 1rem",
                           clipPath:
-                            "polygon(0 0, 100% 0, 100% 75%, 50% 100%, 0 75%)", // Shape
+                            "polygon(0 0, 100% 0, 100% 75%, 50% 100%, 0 75%)",
                         }
-                      : link.name === "About"
-                        ? {
-                            backgroundColor: "#F97316",
-                            color: "white",
-                            padding: "2rem 1rem",
-                            clipPath:
-                              "polygon(0 0, 100% 0, 100% 75%, 50% 100%, 0 75%)",
-                          }
-                        : {}
+                      : {}
                   }
                 >
                   {link.name}
@@ -141,13 +128,10 @@ const Navbar = () => {
                 </Link>
               ))}
             </nav>
-
-            {/* Right Side Icons & User Info */}
             <div className="hidden lg:flex items-center space-x-5">
               <button className="text-gray-600 hover:text-orange-600 transition-colors">
                 <Search className="w-5 h-5" />
               </button>
-
               {showCartAndWishlist && (
                 <>
                   <button
@@ -172,8 +156,7 @@ const Navbar = () => {
                   </Link>
                 </>
               )}
-
-              {userInfo ? (
+              {isUserAllowed ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-2">
@@ -215,8 +198,6 @@ const Navbar = () => {
                 </Link>
               )}
             </div>
-
-            {/* Mobile Menu Button */}
             <div className="lg:hidden">
               <button
                 onClick={() => setIsMenuOpen(true)}
@@ -227,8 +208,6 @@ const Navbar = () => {
             </div>
           </div>
         </div>
-
-        {/* Mobile Menu Panel */}
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div

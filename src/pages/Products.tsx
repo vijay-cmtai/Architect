@@ -1,11 +1,11 @@
+// src/pages/Products.jsx
+
 import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import {
   Filter,
-  Grid,
-  List,
   Heart,
   Download,
   Loader2,
@@ -14,12 +14,19 @@ import {
   Youtube,
   ChevronLeft,
   ChevronRight,
+  Grid,
+  List,
+  Search,
+  Lock,
 } from "lucide-react";
 import { fetchProducts } from "@/lib/features/products/productSlice";
 import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice";
+import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -32,10 +39,427 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import house1 from "@/assets/house-1.jpg";
 import house2 from "@/assets/house-2.jpg";
 import house3 from "@/assets/house-3.jpg";
+import { toast } from "sonner";
+
+// --- Enhanced FilterSidebar Component ---
+const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
+  <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-white rounded-xl shadow-lg h-fit border border-gray-200">
+    <h3 className="text-xl font-bold mb-4 flex items-center text-gray-800">
+      <Filter className="w-5 h-5 mr-2 text-gray-500" />
+      Filters
+    </h3>
+    <div className="space-y-6">
+      <div>
+        <Label htmlFor="searchTerm" className="font-semibold text-gray-600">
+          Search
+        </Label>
+        <div className="relative mt-2">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            id="searchTerm"
+            placeholder="Search products..."
+            value={filters.searchTerm}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, searchTerm: e.target.value }))
+            }
+            className="pl-10 bg-gray-100 border-transparent h-12"
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="category" className="font-semibold text-gray-600">
+          Category
+        </Label>
+        <Select
+          value={filters.category}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, category: value }))
+          }
+        >
+          <SelectTrigger
+            id="category"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {uniqueCategories.map((cat) => (
+              <SelectItem key={cat} value={cat}>
+                {cat}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="plotSize" className="font-semibold text-gray-600">
+          Plot Size
+        </Label>
+        <Select
+          value={filters.plotSize}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, plotSize: value }))
+          }
+        >
+          <SelectTrigger
+            id="plotSize"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Size" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Sizes</SelectItem>
+            <SelectItem value="30x40">30x40</SelectItem>
+            <SelectItem value="40x60">40x60</SelectItem>
+            <SelectItem value="50x80">50x80</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="plotArea" className="font-semibold text-gray-600">
+          Plot Area (sqft)
+        </Label>
+        <Select
+          value={filters.plotArea}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, plotArea: value }))
+          }
+        >
+          <SelectTrigger
+            id="plotArea"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Area" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Areas</SelectItem>
+            <SelectItem value="500-1000">500-1000</SelectItem>
+            <SelectItem value="1000-2000">1000-2000</SelectItem>
+            <SelectItem value="2000+">2000+</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="direction" className="font-semibold text-gray-600">
+          Direction
+        </Label>
+        <Select
+          value={filters.direction}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, direction: value }))
+          }
+        >
+          <SelectTrigger
+            id="direction"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Direction" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Directions</SelectItem>
+            <SelectItem value="East">East</SelectItem>
+            <SelectItem value="West">West</SelectItem>
+            <SelectItem value="North">North</SelectItem>
+            <SelectItem value="South">South</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="floors" className="font-semibold text-gray-600">
+          Floors
+        </Label>
+        <Select
+          value={filters.floors}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, floors: value }))
+          }
+        >
+          <SelectTrigger
+            id="floors"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Floors" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Floors</SelectItem>
+            <SelectItem value="1">1</SelectItem>
+            <SelectItem value="2">2</SelectItem>
+            <SelectItem value="3">3+</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="propertyType" className="font-semibold text-gray-600">
+          Property Type
+        </Label>
+        <Select
+          value={filters.propertyType}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, propertyType: value }))
+          }
+        >
+          <SelectTrigger
+            id="propertyType"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="Residential">Residential</SelectItem>
+            <SelectItem value="Commercial">Commercial</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label className="font-semibold text-gray-600">
+          Budget: ₹{filters.budget[0].toLocaleString()} - ₹
+          {filters.budget[1].toLocaleString()}
+        </Label>
+        <Slider
+          value={filters.budget}
+          onValueChange={(value) =>
+            setFilters((prev) => ({
+              ...prev,
+              budget: value as [number, number],
+            }))
+          }
+          max={50000}
+          min={0}
+          step={500}
+          className="mt-3"
+        />
+      </div>
+
+      <Button
+        onClick={() =>
+          setFilters({
+            category: "all",
+            searchTerm: "",
+            plotSize: "all",
+            plotArea: "all",
+            direction: "all",
+            floors: "all",
+            propertyType: "all",
+            budget: [0, 50000],
+          })
+        }
+        variant="outline"
+        className="w-full"
+      >
+        Clear Filters
+      </Button>
+    </div>
+  </aside>
+);
+
+// --- Enhanced ProductCard Component ---
+const ProductCard = ({ product, userOrders }) => {
+  const navigate = useNavigate();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { userInfo } = useSelector((state: RootState) => state.user);
+
+  const isWishlisted = isInWishlist(product._id);
+  const linkTo =
+    product.source === "admin"
+      ? `/product/${product._id}`
+      : `/professional-plan/${product._id}`;
+
+  // Check if user has purchased this product
+  const hasPurchased = userOrders?.some(
+    (order) =>
+      order.isPaid &&
+      order.orderItems?.some(
+        (item) =>
+          item.productId === product._id || item.productId?._id === product._id
+      )
+  );
+
+  const handleWishlistClick = () => {
+    if (!userInfo) {
+      toast.error("Please log in to add items to your wishlist.");
+      navigate("/login");
+      return;
+    }
+    isWishlisted ? removeFromWishlist(product._id) : addToWishlist(product);
+  };
+
+  const handleDownload = async () => {
+    if (!userInfo) {
+      toast.error("Please log in to download.");
+      navigate("/login");
+      return;
+    }
+
+    if (!hasPurchased) {
+      toast.error("Please purchase this plan to download it.");
+      navigate(linkTo);
+      return;
+    }
+
+    if (!product.planFile) {
+      toast.error("Download file is not available for this plan.");
+      return;
+    }
+
+    try {
+      const response = await fetch(product.planFile);
+      if (!response.ok) throw new Error("Network response was not ok.");
+      const blob = await response.blob();
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+
+      const fileExtension =
+        product.planFile.split(".").pop()?.split("?")[0] || "pdf";
+      link.setAttribute(
+        "download",
+        `ArchHome-${product.name.replace(/\s+/g, "-")}.${fileExtension}`
+      );
+
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Your download has started!");
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast.error("Failed to download the file.");
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+      <div className="relative p-2">
+        <Link to={linkTo}>
+          <img
+            src={product.image || house3}
+            alt={product.name}
+            className="w-full h-48 object-cover rounded-md group-hover:scale-105 transition-transform duration-500"
+          />
+          <div className="absolute inset-2 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md"></div>
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-gray-900/80 text-white text-xs font-bold px-4 py-2 rounded-md shadow-lg text-center">
+            <p>{product.plotSize}</p>
+            <p className="text-xs font-normal">
+              {hasPurchased ? "Download pdf file" : "Purchase to download"}
+            </p>
+          </div>
+        </Link>
+        {product.isSale && (
+          <div className="absolute top-4 left-4 bg-white text-gray-800 text-xs font-bold px-3 py-1 rounded-md shadow">
+            Sale!
+          </div>
+        )}
+        {hasPurchased && (
+          <div className="absolute top-2 right-12 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md z-10">
+            Purchased
+          </div>
+        )}
+        <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={handleWishlistClick}
+            className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-gray-600 hover:text-red-500 hover:scale-110"}`}
+            aria-label="Toggle Wishlist"
+          >
+            <Heart
+              className="w-5 h-5"
+              fill={isWishlisted ? "currentColor" : "none"}
+            />
+          </button>
+        </div>
+      </div>
+      <div className="p-4 grid grid-cols-2 gap-4 border-t text-center text-sm">
+        <div>
+          <p className="text-xs text-gray-500">Plot Area</p>
+          <p className="font-bold">{product.plotArea || "N/A"} sqft</p>
+        </div>
+        <div className="bg-teal-50 p-2 rounded-md">
+          <p className="text-xs text-gray-500">Rooms</p>
+          <p className="font-bold">
+            {product.rooms || product.bhk || "N/A"} BHK
+          </p>
+        </div>
+        <div className="bg-teal-50 p-2 rounded-md">
+          <p className="text-xs text-gray-500">Bathrooms</p>
+          <p className="font-bold">{product.bathrooms || "N/A"}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500">Kitchen</p>
+          <p className="font-bold">{product.kitchen || "N/A"}</p>
+        </div>
+      </div>
+      <div className="p-4 border-t">
+        <p className="text-xs text-gray-500 uppercase">
+          {product.category || "House Plan"}
+        </p>
+        <h3 className="text-lg font-bold text-gray-900 mt-1 truncate">
+          {product.name}
+        </h3>
+        <div className="flex items-baseline gap-2 mt-1">
+          {product.isSale && (
+            <s className="text-md text-gray-400">
+              ₹{product.price.toLocaleString()}
+            </s>
+          )}
+          <span className="text-xl font-bold text-gray-800">
+            ₹
+            {(product.isSale
+              ? product.salePrice
+              : product.price
+            ).toLocaleString()}
+          </span>
+        </div>
+      </div>
+      <div className="p-4 pt-0 mt-auto grid grid-cols-1 gap-2">
+        <Link to={linkTo}>
+          <Button
+            variant="outline"
+            className="w-full bg-gray-800 text-white hover:bg-gray-700"
+          >
+            Read more
+          </Button>
+        </Link>
+        <Button
+          className={`w-full text-white rounded-md ${
+            hasPurchased
+              ? "bg-teal-500 hover:bg-teal-600"
+              : "bg-gray-400 hover:bg-gray-500"
+          }`}
+          onClick={handleDownload}
+          disabled={!hasPurchased}
+        >
+          {hasPurchased ? (
+            <>
+              <Download className="mr-2 h-4 w-4" />
+              Download PDF
+            </>
+          ) : (
+            <>
+              <Lock className="mr-2 h-4 w-4" />
+              Purchase to Download
+            </>
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 const Products = () => {
   const dispatch: AppDispatch = useDispatch();
   const [searchParams] = useSearchParams();
+  const { userInfo } = useSelector((state: RootState) => state.user);
 
   const categoryQuery = searchParams.get("category");
   const searchQuery = searchParams.get("search");
@@ -52,138 +476,73 @@ const Products = () => {
     error: profError,
   } = useSelector((state: RootState) => state.professionalPlans);
 
+  // Get user orders
+  const { orders: userOrders } = useSelector(
+    (state: RootState) => state.orders
+  );
+
   const [viewMode, setViewMode] = useState("grid");
-  const [budget, setBudget] = useState<[number, number]>([500, 50000]);
-  const [plotSize, setPlotSize] = useState("all");
-  const [plotArea, setPlotArea] = useState("all");
-  const [bhk, setBhk] = useState("all");
-  const [direction, setDirection] = useState("all");
-  const [floors, setFloors] = useState("all");
-  const [propertyType, setPropertyType] = useState("all");
+  const [filters, setFilters] = useState({
+    category: categoryQuery || "all",
+    searchTerm: searchQuery || "",
+    plotSize: "all",
+    plotArea: "all",
+    direction: "all",
+    floors: "all",
+    propertyType: "all",
+    budget: [0, 50000],
+  });
   const [sortBy, setSortBy] = useState("newest");
-  const [category, setCategory] = useState(categoryQuery || "all");
   const [currentPage, setCurrentPage] = useState(1);
   const CARDS_PER_PAGE = 6;
 
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-
   useEffect(() => {
-    const apiParams: { country?: string } = {};
-    if (countryQuery) apiParams.country = countryQuery;
+    // Only send filters that are not "all" or default
+    const apiParams: Record<string, any> = {};
+    Object.entries(filters).forEach(([key, value]) => {
+      if (key === "budget") {
+        apiParams.budget = value.join("-");
+      } else if (key === "searchTerm") {
+        if (value.trim()) apiParams.search = value;
+      } else if (value !== "all") {
+        apiParams[key] = value;
+      }
+    });
+
     dispatch(fetchProducts(apiParams));
-    dispatch(fetchAllApprovedPlans());
-  }, [dispatch, countryQuery]);
+    dispatch(fetchAllApprovedPlans(apiParams));
+
+    // Fetch user orders if logged in
+    if (userInfo) {
+      dispatch(fetchMyOrders());
+    }
+  }, [dispatch, filters, userInfo]);
 
   useEffect(() => {
-    setCategory(categoryQuery || "all");
-  }, [categoryQuery]);
+    setFilters((prev) => ({
+      ...prev,
+      category: categoryQuery || "all",
+      searchTerm: searchQuery || "",
+    }));
+  }, [categoryQuery, searchQuery]);
 
-  // Combine and format products
   const combinedProducts = useMemo(() => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
     const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
-    const formattedAdminProducts = adminArray.map((p) => ({
+    const normalizedAdmin = adminArray.map((p) => ({
       ...p,
-      image: p.image || house1,
+      name: p.name || "Unnamed",
+      image: p.image || p.mainImage || "",
       source: "admin",
     }));
-    const formattedProfPlans = profArray.map((p) => ({
+    const normalizedProf = profArray.map((p) => ({
       ...p,
-      name: p.planName,
-      image: p.mainImage || house2,
+      name: p.planName || "Unnamed",
+      image: p.mainImage || "",
       source: "professional",
     }));
-    return [...formattedAdminProducts, ...formattedProfPlans];
+    return [...normalizedAdmin, ...normalizedProf];
   }, [adminProducts, professionalPlans]);
-
-  // Filtering and sorting logic
-  const filteredAndSortedProducts = useMemo(() => {
-    const filtered = combinedProducts.filter((product) => {
-      if (!product || typeof product.price === "undefined") return false;
-
-      const productPrice =
-        product.isSale && product.salePrice ? product.salePrice : product.price;
-
-      const matchesBhk =
-        bhk === "all" ||
-        Number(product.rooms ?? product.bhk ?? "") === Number(bhk);
-      const matchesFloors =
-        floors === "all" || Number(product.floors ?? "") === Number(floors);
-
-      const plotSizeStr = (product.plotSize ?? "").toLowerCase();
-      const nameStr = (product.name ?? "").toLowerCase();
-      const searchStr = (searchQuery ?? "").toLowerCase();
-      const plotAreaNum = Number(product.plotArea ?? 0);
-
-      return (
-        (!searchQuery ||
-          plotSizeStr.includes(searchStr) ||
-          nameStr.includes(searchStr)) &&
-        productPrice >= budget[0] &&
-        productPrice <= budget[1] &&
-        (plotSize === "all" || product.plotSize === plotSize) &&
-        (plotArea === "all" ||
-          (plotArea === "500-1000"
-            ? plotAreaNum >= 500 && plotAreaNum <= 1000
-            : plotArea === "1000-2000"
-              ? plotAreaNum > 1000 && plotAreaNum <= 2000
-              : plotArea === "2000+"
-                ? plotAreaNum > 2000
-                : true)) &&
-        matchesBhk &&
-        (direction === "all" || product.direction === direction) &&
-        matchesFloors &&
-        (propertyType === "all" || product.propertyType === propertyType) &&
-        (category === "all" || product.category === category) &&
-        (!countryQuery || product.country === countryQuery)
-      );
-    });
-
-    const sorted = [...filtered];
-    switch (sortBy) {
-      case "price-low":
-        return sorted.sort(
-          (a, b) =>
-            (a.isSale && a.salePrice ? a.salePrice : a.price) -
-            (b.isSale && b.salePrice ? b.salePrice : b.price)
-        );
-      case "price-high":
-        return sorted.sort(
-          (a, b) =>
-            (b.isSale && b.salePrice ? b.salePrice : b.price) -
-            (a.isSale && a.salePrice ? a.salePrice : a.price)
-        );
-      default:
-        return sorted;
-    }
-  }, [
-    combinedProducts,
-    budget,
-    plotSize,
-    plotArea,
-    bhk,
-    direction,
-    floors,
-    propertyType,
-    searchQuery,
-    category,
-    countryQuery,
-    sortBy,
-  ]);
-
-  // Pagination logic
-  const totalPages = Math.ceil(
-    filteredAndSortedProducts.length / CARDS_PER_PAGE
-  );
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
-    const endIndex = startIndex + CARDS_PER_PAGE;
-    return filteredAndSortedProducts.slice(startIndex, endIndex);
-  }, [currentPage, filteredAndSortedProducts]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filteredAndSortedProducts]);
 
   const uniqueCategories = useMemo(() => {
     if (!combinedProducts) return [];
@@ -193,17 +552,99 @@ const Products = () => {
     return Array.from(categoriesSet).sort();
   }, [combinedProducts]);
 
-  const handleDownload = (imageUrl: string, productName: string) => {
-    const link = document.createElement("a");
-    link.href = imageUrl;
-    link.setAttribute(
-      "download",
-      `ArchHome-${productName.replace(/\s+/g, "-")}.pdf`
+  // Enhanced filtering logic matching ConstructionProductsPage
+  const filteredAndSortedProducts = useMemo(() => {
+    let products = combinedProducts.filter((product) => {
+      if (!product || typeof product.price === "undefined") return false;
+
+      const productPrice = product.isSale ? product.salePrice : product.price;
+      const productName = product.name || "";
+      const productCategory = product.category || "";
+
+      const matchesSearch =
+        productName.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        productCategory
+          .toLowerCase()
+          .includes(filters.searchTerm.toLowerCase());
+
+      const matchesBudget =
+        productPrice >= filters.budget[0] && productPrice <= filters.budget[1];
+      const matchesCategory =
+        filters.category === "all" || productCategory === filters.category;
+      const matchesPlotSize =
+        filters.plotSize === "all" || product.plotSize === filters.plotSize;
+      const matchesPlotArea =
+        filters.plotArea === "all" ||
+        (filters.plotArea === "500-1000"
+          ? product.plotArea >= 500 && product.plotArea <= 1000
+          : filters.plotArea === "1000-2000"
+            ? product.plotArea > 1000 && product.plotArea <= 2000
+            : filters.plotArea === "2000+"
+              ? product.plotArea > 2000
+              : true);
+      const matchesDirection =
+        filters.direction === "all" || product.direction === filters.direction;
+      const matchesFloors =
+        filters.floors === "all" ||
+        product.floors === parseInt(filters.floors, 10);
+      const matchesPropertyType =
+        filters.propertyType === "all" ||
+        product.propertyType === filters.propertyType;
+
+      // Also check against URL parameters
+      const matchesCountryQuery =
+        !countryQuery || product.country === countryQuery;
+
+      return (
+        matchesSearch &&
+        matchesBudget &&
+        matchesCategory &&
+        matchesPlotSize &&
+        matchesPlotArea &&
+        matchesDirection &&
+        matchesFloors &&
+        matchesPropertyType &&
+        matchesCountryQuery
+      );
+    });
+
+    if (sortBy === "price-low") {
+      products.sort(
+        (a, b) =>
+          (a.isSale ? a.salePrice : a.price) -
+          (b.isSale ? b.salePrice : b.price)
+      );
+    } else if (sortBy === "price-high") {
+      products.sort(
+        (a, b) =>
+          (b.isSale ? b.salePrice : b.price) -
+          (a.isSale ? a.salePrice : a.price)
+      );
+    } else {
+      products.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+    }
+
+    return products;
+  }, [combinedProducts, filters, countryQuery, sortBy]);
+
+  const totalPages = Math.ceil(
+    filteredAndSortedProducts.length / CARDS_PER_PAGE
+  );
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
+    return filteredAndSortedProducts.slice(
+      startIndex,
+      startIndex + CARDS_PER_PAGE
     );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  }, [currentPage, filteredAndSortedProducts]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredAndSortedProducts]);
 
   const pageTitle = countryQuery
     ? `${countryQuery} House Plans`
@@ -212,324 +653,51 @@ const Products = () => {
     ? `Browse plans available in ${countryQuery}`
     : "Discover our complete collection of architectural masterpieces";
 
-  const renderProductGrid = () => {
-    const isLoading =
-      adminListStatus === "loading" || profListStatus === "loading";
-    const hasError =
-      adminListStatus === "failed" || profListStatus === "failed";
-
-    if (isLoading) {
-      return (
-        <div className="col-span-full flex flex-col items-center justify-center py-20">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-      );
-    }
-    if (hasError) {
-      return (
-        <div className="col-span-full text-center py-20">
-          <ServerCrash className="mx-auto h-12 w-12 text-destructive" />
-          <h3 className="mt-4 text-xl font-semibold text-destructive">
-            Failed to Load Products
-          </h3>
-          <p className="mt-2 text-muted-foreground">
-            {String(adminError || profError) || "An error occurred."}
-          </p>
-        </div>
-      );
-    }
-    if (paginatedProducts.length === 0) {
-      return (
-        <div className="col-span-full text-center py-20">
-          <h3 className="text-xl font-semibold">No Plans Found</h3>
-          <p className="mt-2 text-muted-foreground">
-            Try adjusting your filters or clear the search.
-          </p>
-        </div>
-      );
-    }
-
-    return paginatedProducts.map((product: any) => {
-      const isWishlisted = isInWishlist(product._id);
-      return (
-        <div
-          key={`${product.source}-${product._id}`}
-          className="bg-card rounded-lg shadow-soft border border-gray-200 overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-        >
-          <div className="relative border-b p-4">
-            <Link to={`/product/${product._id}`}>
-              <img
-                src={product.mainImage || product.image || house3}
-                alt={product.name}
-                className="w-full h-56 object-contain group-hover:scale-105 transition-transform duration-500"
-              />
-            </Link>
-            {product.isSale && (
-              <div className="absolute top-2 left-2 bg-white text-gray-800 text-sm font-semibold px-4 py-1.5 rounded-md shadow-md z-10">
-                Sale!
-              </div>
-            )}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm font-bold px-4 py-2 rounded-md shadow-lg z-10 text-center">
-              <p>{product.plotSize} House plan</p>
-              <p className="text-xs font-normal">Download pdf file</p>
-            </div>
-            <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                onClick={() =>
-                  isWishlisted
-                    ? removeFromWishlist(product._id)
-                    : addToWishlist(product)
-                }
-                className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-foreground hover:text-primary hover:scale-110"}`}
-                aria-label="Toggle Wishlist"
-              >
-                <Heart
-                  className="w-5 h-5"
-                  fill={isWishlisted ? "currentColor" : "none"}
-                />
-              </button>
-              {product.youtubeLink && (
-                <a
-                  href={product.youtubeLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-9 h-9 bg-red-500/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm text-white hover:bg-red-600 hover:scale-110"
-                  aria-label="Watch on YouTube"
-                >
-                  <Youtube className="w-5 h-5" />
-                </a>
-              )}
-            </div>
-          </div>
-          <div className="p-4 border-b">
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div>
-                <p className="text-sm text-gray-500">Plot Area</p>
-                <p className="font-semibold text-gray-800">
-                  {product.plotArea} sqft
-                </p>
-              </div>
-              <div className="bg-teal-50 p-2 rounded-md">
-                <p className="text-sm text-gray-500">Rooms</p>
-                <p className="font-semibold text-gray-800">
-                  {product.rooms || product.bhk} BHK
-                </p>
-              </div>
-              <div className="bg-teal-50 p-2 rounded-md">
-                <p className="text-sm text-gray-500">Bathrooms</p>
-                <p className="font-semibold text-gray-800">
-                  {product.bathrooms}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Kitchen</p>
-                <p className="font-semibold text-gray-800">{product.kitchen}</p>
-              </div>
-            </div>
-          </div>
-          <div className="p-4">
-            <p className="text-sm text-gray-500 uppercase">
-              {product.category || "House Plan"}
-            </p>
-            <h3 className="text-lg font-bold text-gray-800 mt-1">
-              {product.name}
-            </h3>
-            <div className="flex items-baseline gap-2 mt-2">
-              {product.isSale && (
-                <s className="text-md text-gray-500">
-                  ₹{product.price.toLocaleString()}
-                </s>
-              )}
-              <span className="text-xl font-bold text-gray-900">
-                ₹
-                {(product.isSale && product.salePrice
-                  ? product.salePrice
-                  : product.price
-                ).toLocaleString()}
-              </span>
-            </div>
-            <div className="mt-4 grid grid-cols-1 gap-2">
-              <Link to={`/product/${product._id}`}>
-                <Button
-                  variant="outline"
-                  className="w-full bg-slate-800 text-white hover:bg-slate-700 rounded-md"
-                >
-                  Read more
-                </Button>
-              </Link>
-              <Button
-                className="w-full bg-teal-500 text-white hover:bg-teal-600 rounded-md"
-                onClick={() => handleDownload(product.image, product.name)}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Download PDF
-              </Button>
-            </div>
-          </div>
-        </div>
-      );
-    });
-  };
+  const isLoading =
+    adminListStatus === "loading" || profListStatus === "loading";
+  const isError = adminListStatus === "failed" || profListStatus === "failed";
+  const errorMessage = String(adminError || profError);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            {pageTitle}
-          </h1>
+          <h1 className="text-3xl font-bold">{pageTitle}</h1>
           <p className="text-xl text-muted-foreground">{pageDescription}</p>
           {(countryQuery || categoryQuery || searchQuery) && (
             <div className="mt-4">
               <Link to="/products">
                 <Button variant="destructive" size="sm">
                   <X className="w-4 h-4 mr-2" />
-                  Clear All Filters
+                  Clear Filters
                 </Button>
               </Link>
             </div>
           )}
         </div>
-        <div className="flex flex-col lg:flex-row gap-8">
-          <div className="lg:w-80 space-y-6">
-            <div className="bg-card p-6 rounded-2xl shadow-soft">
-              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
-                <Filter className="w-5 h-5 mr-2" />
-                Filters
-              </h3>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-foreground mb-3">
-                  Category
-                </label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {uniqueCategories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        <div className="flex flex-col lg:flex-row gap-12">
+          <FilterSidebar
+            filters={filters}
+            setFilters={setFilters}
+            uniqueCategories={uniqueCategories}
+          />
+          <div className="w-full lg:w-3/4 xl:w-4/5">
+            <div className="flex flex-wrap gap-4 justify-between items-center mb-6 border-b pb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">All Plans</h2>
+                <p className="text-gray-500 text-sm">
+                  Showing {paginatedProducts.length} of{" "}
+                  {filteredAndSortedProducts.length} results
+                </p>
               </div>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-foreground mb-3">
-                  Plot Size
-                </label>
-                <Select value={plotSize} onValueChange={setPlotSize}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Plot Size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Sizes</SelectItem>
-                    <SelectItem value="21x56">21x56</SelectItem>
-                    <SelectItem value="40x65">40x65</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-foreground mb-3">
-                  Plot Area (sqft)
-                </label>
-                <Select value={plotArea} onValueChange={setPlotArea}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Plot Area" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Areas</SelectItem>
-                    <SelectItem value="500-1000">500-1000</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-foreground mb-3">
-                  Budget: ₹{budget[0].toLocaleString()} - ₹
-                  {budget[1].toLocaleString()}
-                </label>
-                <Slider
-                  value={budget}
-                  onValueChange={setBudget as (value: number[]) => void}
-                  max={50000}
-                  min={500}
-                  step={100}
-                />
-              </div>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-foreground mb-3">
-                  BHK
-                </label>
-                <Select value={bhk} onValueChange={setBhk}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select BHK" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All BHK</SelectItem>
-                    <SelectItem value="1">1 BHK</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-foreground mb-3">
-                  Direction
-                </label>
-                <Select value={direction} onValueChange={setDirection}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Direction" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Directions</SelectItem>
-                    <SelectItem value="East">East</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-foreground mb-3">
-                  Floors
-                </label>
-                <Select value={floors} onValueChange={setFloors}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Floors" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Floors</SelectItem>
-                    <SelectItem value="1">1</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-foreground mb-3">
-                  Property Type
-                </label>
-                <Select value={propertyType} onValueChange={setPropertyType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="Residential">Residential</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          <div className="flex-1">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-              <p className="text-muted-foreground">
-                Showing {paginatedProducts.length} of{" "}
-                {filteredAndSortedProducts.length} results
-              </p>
               <div className="flex items-center gap-4">
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-48 bg-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="newest">Newest First</SelectItem>
+                    <SelectItem value="newest">Sort by latest</SelectItem>
                     <SelectItem value="price-low">
                       Price: Low to High
                     </SelectItem>
@@ -543,7 +711,6 @@ const Products = () => {
                     variant={viewMode === "grid" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setViewMode("grid")}
-                    className="rounded-r-none"
                   >
                     <Grid className="w-4 h-4" />
                   </Button>
@@ -551,22 +718,60 @@ const Products = () => {
                     variant={viewMode === "list" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setViewMode("list")}
-                    className="rounded-l-none"
                   >
                     <List className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
             </div>
-            <div
-              className={`grid gap-8 ${
-                viewMode === "grid"
-                  ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
-                  : "grid-cols-1"
-              }`}
-            >
-              {renderProductGrid()}
-            </div>
+
+            {isLoading && (
+              <div className="flex justify-center items-center h-96">
+                <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
+              </div>
+            )}
+
+            {isError && (
+              <div className="text-center py-20">
+                <ServerCrash className="mx-auto h-12 w-12 text-red-500" />
+                <h3 className="mt-4 text-xl font-semibold text-red-500">
+                  Failed to Load Products
+                </h3>
+                <p className="mt-2 text-gray-500">{errorMessage}</p>
+              </div>
+            )}
+
+            {!isLoading &&
+              !isError &&
+              filteredAndSortedProducts.length === 0 && (
+                <div className="text-center py-20">
+                  <h3 className="text-xl font-semibold">No Plans Found</h3>
+                  <p className="mt-2 text-gray-500">
+                    Try adjusting your filters to see more results.
+                  </p>
+                </div>
+              )}
+
+            {!isLoading && !isError && (
+              <div
+                className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3" : "grid-cols-1"}`}
+              >
+                {paginatedProducts.length > 0 ? (
+                  paginatedProducts.map((product) => (
+                    <ProductCard
+                      key={`${product.source}-${product._id}`}
+                      product={product}
+                      userOrders={userOrders}
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-20">
+                    <h3 className="text-xl font-semibold">No Products Found</h3>
+                  </div>
+                )}
+              </div>
+            )}
+
             {totalPages > 1 && (
               <div className="mt-12 flex justify-center items-center gap-4">
                 <Button

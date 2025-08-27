@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState, store } from "@/lib/store";
 type AppDispatch = typeof store.dispatch;
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2 } from "lucide-react"; // Loader2 ko import karein
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +27,6 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // ✨ FIX 1: actionStatus ko 'loading' se badal dein. Yeh zyada descriptive hai.
   const { userInfo, actionStatus, error } = useSelector(
     (state: RootState) => state.user
   );
@@ -39,9 +38,9 @@ const LoginPage = () => {
   const isLoading = actionStatus === "loading";
 
   useEffect(() => {
-    // Agar user pehle se logged in hai, toh use redirect kar dein
+    // Check if user is already logged in and redirect accordingly
     if (userInfo) {
-      // ✨ FIX 2: Redirection logic ko aasan banaya gaya hai
+      // Only allow specific roles to login and access dashboards
       switch (userInfo.role) {
         case "admin":
           navigate("/admin");
@@ -49,19 +48,54 @@ const LoginPage = () => {
         case "professional":
           navigate("/professional");
           break;
-        default:
+        case "user":
           navigate("/");
+          break;
+        default:
+          // For seller and Contractor roles, show error and logout
+          toast.error(
+            "Your account type is not authorized to login to this platform."
+          );
+          // You might want to add a logout action here if needed
+          // dispatch(logoutUser());
+          break;
       }
     }
   }, [userInfo, navigate]);
 
   useEffect(() => {
-    // Component load hone par ya error aane par state reset karein
-    if (error) {
+    // Handle login response
+    if (actionStatus === "succeeded" && userInfo) {
+      // Check if the logged-in user has an allowed role
+      if (["user", "admin", "professional"].includes(userInfo.role)) {
+        switch (userInfo.role) {
+          case "admin":
+            toast.success("Admin login successful! Redirecting...");
+            setTimeout(() => navigate("/admin"), 1000);
+            break;
+          case "professional":
+            toast.success("Professional login successful! Redirecting...");
+            setTimeout(() => navigate("/professional"), 1000);
+            break;
+          case "user":
+          default:
+            toast.success("Login successful! Redirecting...");
+            setTimeout(() => navigate("/"), 1000);
+        }
+      } else {
+        // Unauthorized role attempting to login
+        toast.error(
+          "Your account type is not authorized to access this platform."
+        );
+        dispatch(resetActionStatus());
+      }
+    }
+
+    if (actionStatus === "failed" && error) {
       toast.error(error);
       dispatch(resetActionStatus());
     }
-  }, [error, dispatch]);
+  }, [actionStatus, userInfo, error, navigate, dispatch]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -120,7 +154,6 @@ const LoginPage = () => {
                   </button>
                 </div>
               </div>
-              {/* ✨ FIX 3: disabled={isLoading} aur loading spinner add kiya gaya ✨ */}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isLoading ? "Logging in..." : "Sign In"}

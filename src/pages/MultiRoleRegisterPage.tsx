@@ -79,9 +79,7 @@ const MultiRoleRegisterPage = () => {
 
   const isLoading = actionStatus === "loading";
 
-  // ==========================================================
-  // ✨ BADLAV YAHAN HAI: useEffect me redirection logic update kiya gaya hai ✨
-  // ==========================================================
+  // Updated redirection logic - sellers and contractors don't go to dashboard
   useEffect(() => {
     if (actionStatus === "failed" && error) {
       toast.error(error);
@@ -97,17 +95,27 @@ const MultiRoleRegisterPage = () => {
           setTimeout(() => navigate("/admin"), 1000);
           break;
         case "professional":
+          toast.success(
+            "Professional registration successful! Your account is under review."
+          );
+          setTimeout(() => navigate("/login"), 2000);
+          break;
         case "seller":
+          toast.success(
+            "Material Seller registration successful! Your account is registered and under review."
+          );
+          setTimeout(() => navigate("/login"), 2000);
+          break;
         case "Contractor":
           toast.success(
-            "Registration successful! Your account is under review."
+            "Contractor registration successful! Your account is registered and under review."
           );
-          setTimeout(() => navigate("/login"), 2000); // Thoda zyada delay
+          setTimeout(() => navigate("/login"), 2000);
           break;
         case "user":
         default:
           toast.success("Registration successful! Redirecting...");
-          setTimeout(() => navigate("/login"), 1000); // Regular user ko bhi login par bhejein
+          setTimeout(() => navigate("/login"), 1000);
       }
     }
   }, [actionStatus, userInfo, error, navigate, dispatch]);

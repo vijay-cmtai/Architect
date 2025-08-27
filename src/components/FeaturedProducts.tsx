@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Youtube,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWishlist } from "@/contexts/WishlistContext";
@@ -58,10 +59,12 @@ const FeaturedProducts = () => {
       .flatMap((order) => order.orderItems);
 
     // Return a Set of just the product IDs
-    return new Set(paidItems.map((item) => item.productId));
+    return new Set(
+      paidItems.map((item) => item.productId?._id || item.productId)
+    );
   }, [orders, userInfo]);
 
-  const handleDownload = (product: any) => {
+  const handleDownload = async (product: any) => {
     if (!userInfo) {
       toast({
         title: "Login Required",
@@ -71,24 +74,7 @@ const FeaturedProducts = () => {
       return;
     }
 
-    if (purchasedProductIds.has(product._id)) {
-      // User has purchased this product, proceed with download
-      const downloadUrl =
-        product.planFile || product.image || product.mainImage;
-      if (!downloadUrl) {
-        toast({ title: "Error", description: "Download file not found." });
-        return;
-      }
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.setAttribute(
-        "download",
-        `ArchHome-${product.name.replace(/\s+/g, "-")}.pdf`
-      );
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
+    if (!purchasedProductIds.has(product._id)) {
       // User is logged in but has not purchased this product
       toast({
         title: "Product Not Purchased",
@@ -98,6 +84,49 @@ const FeaturedProducts = () => {
             View Product
           </Button>
         ),
+      });
+      return;
+    }
+
+    if (!product.planFile) {
+      toast({
+        title: "Error",
+        description: "Download file is not available for this plan.",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(product.planFile);
+      if (!response.ok) throw new Error("Network response was not ok.");
+      const blob = await response.blob();
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+
+      const fileExtension =
+        product.planFile.split(".").pop()?.split("?")[0] || "pdf";
+      link.setAttribute(
+        "download",
+        `ArchHome-${product.name.replace(/\s+/g, "-")}.${fileExtension}`
+      );
+
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "Your download has started!",
+      });
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast({
+        title: "Error",
+        description: "Failed to download the file.",
       });
     }
   };
@@ -186,6 +215,8 @@ const FeaturedProducts = () => {
               <div className="flex gap-8">
                 {featuredProducts.map((product: any, index: number) => {
                   const isWishlisted = isInWishlist(product._id);
+                  const hasPurchased = purchasedProductIds.has(product._id);
+
                   return (
                     <motion.div
                       key={product._id}
@@ -210,6 +241,11 @@ const FeaturedProducts = () => {
                         {product.isSale && (
                           <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md z-10">
                             Sale!
+                          </div>
+                        )}
+                        {hasPurchased && (
+                          <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md z-10">
+                            Purchased
                           </div>
                         )}
                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-lg z-10 text-center">
@@ -282,7 +318,11 @@ const FeaturedProducts = () => {
                               </span>
                             )}
                             <span className="text-xl font-bold text-gray-900">
-                              ₹{product.salePrice.toLocaleString()}
+                              ₹
+                              {(product.isSale
+                                ? product.salePrice
+                                : product.price
+                              ).toLocaleString()}
                             </span>
                           </div>
                         </div>
@@ -297,10 +337,24 @@ const FeaturedProducts = () => {
                           </Link>
                           <Button
                             size="sm"
-                            className="w-full bg-teal-500 text-white hover:bg-teal-600 text-sm h-10"
+                            className={`w-full text-white text-sm h-10 ${
+                              hasPurchased
+                                ? "bg-teal-500 hover:bg-teal-600"
+                                : "bg-gray-400 hover:bg-gray-500"
+                            }`}
                             onClick={() => handleDownload(product)}
+                            disabled={!hasPurchased}
                           >
-                            <Download className="mr-2 h-4 w-4" /> PDF
+                            {hasPurchased ? (
+                              <>
+                                <Download className="mr-2 h-4 w-4" /> PDF
+                              </>
+                            ) : (
+                              <>
+                                <Lock className="mr-2 h-4 w-4" /> Buy to
+                                Download
+                              </>
+                            )}
                           </Button>
                         </div>
                       </div>

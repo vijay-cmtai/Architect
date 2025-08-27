@@ -1,3 +1,5 @@
+// lib/features/users/userSlice.js
+
 import axios from "axios";
 import {
   createSlice,
@@ -101,7 +103,7 @@ export const registerUser = createAsyncThunk<UserInfo, FormData>(
         userData,
         config
       );
-      localStorage.setItem("userInfo", JSON.stringify(data));
+      // Let the reducer handle localStorage
       return data;
     } catch (error: any) {
       return rejectWithValue(
@@ -118,7 +120,7 @@ export const loginUser = createAsyncThunk<
   try {
     const config = { headers: { "Content-Type": "application/json" } };
     const { data } = await axios.post(`${API_URL}/login`, userData, config);
-    localStorage.setItem("userInfo", JSON.stringify(data));
+    // Let the reducer handle localStorage
     return data;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "Login failed");
@@ -145,7 +147,7 @@ export const updateProfile = createAsyncThunk<
     };
     const { data } = await axios.put(`${API_URL}/${userId}`, formData, config);
     const updatedUserInfo = { ...state.user.userInfo, ...data };
-    localStorage.setItem("userInfo", JSON.stringify(updatedUserInfo));
+    // Let the reducer handle localStorage
     return updatedUserInfo;
   } catch (error: any) {
     return rejectWithValue(
@@ -200,7 +202,6 @@ export const updateUserByAdmin = createAsyncThunk<
   }
 });
 
-// ✨ YAHAN SE ADMIN THUNKS EXPORT HONGE ✨
 export const createUserByAdmin = createAsyncThunk<
   UserInfo,
   any,
@@ -300,18 +301,33 @@ const userSlice = createSlice({
       .addCase(registerUser.fulfilled, (state, action) => {
         state.actionStatus = "succeeded";
         state.userInfo = action.payload;
+        localStorage.setItem("userInfo", JSON.stringify(action.payload));
       })
       .addCase(registerUser.rejected, actionRejected)
       .addCase(loginUser.pending, actionPending)
-      .addCase(loginUser.fulfilled, (state, action) => {
-        state.actionStatus = "succeeded";
-        state.userInfo = action.payload;
-      })
+      .addCase(
+        loginUser.fulfilled,
+        (state, action: PayloadAction<UserInfo>) => {
+          const user = action.payload;
+          if (user.role === "seller" || user.role === "Contractor") {
+            state.actionStatus = "failed";
+            state.error =
+              "Access denied. This account type cannot log in here.";
+            state.userInfo = null;
+            localStorage.removeItem("userInfo");
+          } else {
+            state.actionStatus = "succeeded";
+            state.userInfo = user;
+            localStorage.setItem("userInfo", JSON.stringify(user));
+          }
+        }
+      )
       .addCase(loginUser.rejected, actionRejected)
       .addCase(updateProfile.pending, actionPending)
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.actionStatus = "succeeded";
         state.userInfo = action.payload;
+        localStorage.setItem("userInfo", JSON.stringify(action.payload));
       })
       .addCase(updateProfile.rejected, actionRejected);
 
@@ -330,7 +346,7 @@ const userSlice = createSlice({
         state.error = action.payload;
       });
 
-    // ✨ Admin Actions ke liye Reducers ✨
+    // Admin Actions
     builder
       .addCase(createUserByAdmin.pending, actionPending)
       .addCase(createUserByAdmin.fulfilled, (state, action) => {

@@ -1,9 +1,16 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Loader2, ServerCrash, Filter, Heart, Download } from "lucide-react";
+import {
+  Loader2,
+  ServerCrash,
+  Filter,
+  Heart,
+  Download,
+  Lock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -16,10 +23,12 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { fetchProducts } from "@/lib/features/products/productSlice";
 import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice";
+import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
 import { useWishlist } from "@/contexts/WishlistContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import house3 from "@/assets/house-3.jpg";
+import { useToast } from "@/components/ui/use-toast";
 
 // --- FilterSidebar ---
 const FilterSidebar = ({ filters, setFilters }) => (
@@ -180,20 +189,88 @@ const FilterSidebar = ({ filters, setFilters }) => (
 );
 
 // --- ProductCard ---
-const ProductCard = ({ plan }) => {
+const ProductCard = ({ plan, userOrders }) => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { userInfo } = useSelector((state: RootState) => state.user);
+
   const isWishlisted = isInWishlist(plan._id);
 
-  const handleDownload = (imageUrl: string, productName: string) => {
-    const link = document.createElement("a");
-    link.href = imageUrl;
-    link.setAttribute(
-      "download",
-      `ArchHome-${productName.replace(/\s+/g, "-")}.pdf`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // Check if user has purchased this product
+  const hasPurchased = userOrders?.some(
+    (order) =>
+      order.isPaid &&
+      order.orderItems?.some(
+        (item) =>
+          item.productId === plan._id || item.productId?._id === plan._id
+      )
+  );
+
+  const handleDownload = async () => {
+    if (!userInfo) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to download purchased products.",
+        action: <Button onClick={() => navigate("/login")}>Login</Button>,
+      });
+      return;
+    }
+
+    if (!hasPurchased) {
+      toast({
+        title: "Product Not Purchased",
+        description: "You must purchase this plan to download the file.",
+        action: (
+          <Button onClick={() => navigate(`/product/${plan._id}`)}>
+            View Product
+          </Button>
+        ),
+      });
+      return;
+    }
+
+    if (!plan.planFile) {
+      toast({
+        title: "Error",
+        description: "Download file is not available for this plan.",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(plan.planFile);
+      if (!response.ok) throw new Error("Network response was not ok.");
+      const blob = await response.blob();
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+
+      const fileExtension =
+        plan.planFile.split(".").pop()?.split("?")[0] || "pdf";
+      link.setAttribute(
+        "download",
+        `ArchHome-${plan.name.replace(/\s+/g, "-")}.${fileExtension}`
+      );
+
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "Your download has started!",
+      });
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast({
+        title: "Error",
+        description: "Failed to download the file.",
+      });
+    }
   };
 
   return (
@@ -217,9 +294,16 @@ const ProductCard = ({ plan }) => {
             Sale!
           </div>
         )}
+        {hasPurchased && (
+          <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md z-10">
+            Purchased
+          </div>
+        )}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm font-bold px-4 py-2 rounded-md shadow-lg z-10 text-center">
           <p>{plan.plotSize} House plan</p>
-          <p className="text-xs font-normal">Download pdf file</p>
+          <p className="text-xs font-normal">
+            {hasPurchased ? "Download pdf file" : "Purchase to download"}
+          </p>
         </div>
         <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
@@ -280,11 +364,25 @@ const ProductCard = ({ plan }) => {
             </Button>
           </Link>
           <Button
-            className="w-full bg-teal-500 text-white hover:bg-teal-600 rounded-md"
-            onClick={() => handleDownload(plan.image, plan.name)}
+            className={`w-full text-white rounded-md ${
+              hasPurchased
+                ? "bg-teal-500 hover:bg-teal-600"
+                : "bg-gray-400 hover:bg-gray-500"
+            }`}
+            onClick={handleDownload}
+            disabled={!hasPurchased}
           >
-            <Download className="mr-2 h-4 w-4" />
-            Download PDF
+            {hasPurchased ? (
+              <>
+                <Download className="mr-2 h-4 w-4" />
+                Download PDF
+              </>
+            ) : (
+              <>
+                <Lock className="mr-2 h-4 w-4" />
+                Purchase to Download
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -306,6 +404,8 @@ const BrowsePlansPage = () => {
     listStatus: profListStatus,
     error: profError,
   } = useSelector((state: RootState) => state.professionalPlans);
+  const { userInfo } = useSelector((state: RootState) => state.user);
+  const { orders } = useSelector((state: RootState) => state.orders);
 
   const [filters, setFilters] = useState({
     plotArea: "all",
@@ -333,7 +433,12 @@ const BrowsePlansPage = () => {
 
     dispatch(fetchProducts(apiParams));
     dispatch(fetchAllApprovedPlans(apiParams));
-  }, [dispatch, filters]);
+
+    // Fetch user orders if logged in
+    if (userInfo) {
+      dispatch(fetchMyOrders());
+    }
+  }, [dispatch, filters, userInfo]);
 
   const combinedProducts = useMemo(() => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
@@ -485,7 +590,11 @@ const BrowsePlansPage = () => {
                 className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"
               >
                 {filteredAndSortedProducts.map((plan) => (
-                  <ProductCard key={`${plan.source}-${plan._id}`} plan={plan} />
+                  <ProductCard
+                    key={`${plan.source}-${plan._id}`}
+                    plan={plan}
+                    userOrders={orders}
+                  />
                 ))}
               </motion.div>
             )}

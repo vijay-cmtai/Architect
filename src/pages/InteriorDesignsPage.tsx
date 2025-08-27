@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
 import {
@@ -13,6 +13,7 @@ import {
   Heart,
   ChevronLeft,
   ChevronRight,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -27,86 +28,299 @@ import { Slider } from "@/components/ui/slider";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useWishlist } from "@/contexts/WishlistContext";
+import { useToast } from "@/components/ui/use-toast";
 import { fetchProducts } from "@/lib/features/products/productSlice";
 import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice";
+import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
 import house3 from "@/assets/house-3.jpg";
 
-// --- FilterSidebar Component (Updated) ---
+// --- Enhanced FilterSidebar Component ---
 const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
-  <aside className="w-full lg:w-80 shrink-0">
-    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 sticky top-24">
-      <h3 className="text-xl font-bold mb-6 flex items-center text-gray-800">
-        <Filter className="w-5 h-5 mr-3 text-gray-500" />
-        Filters
-      </h3>
-      <div className="space-y-6">
-        <div>
-          <Label className="font-semibold text-gray-600">
-            Category (Style)
-          </Label>
-          <Select
-            value={filters.category}
-            onValueChange={(v) => setFilters((p) => ({ ...p, category: v }))}
+  <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-white rounded-xl shadow-lg h-fit border border-gray-200">
+    <h3 className="text-xl font-bold mb-4 flex items-center text-gray-800">
+      <Filter className="w-5 h-5 mr-2 text-gray-500" />
+      Filters
+    </h3>
+    <div className="space-y-6">
+      <div>
+        <Label htmlFor="category" className="font-semibold text-gray-600">
+          Category (Style)
+        </Label>
+        <Select
+          value={filters.category}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, category: value }))
+          }
+        >
+          <SelectTrigger
+            id="category"
+            className="mt-2 bg-gray-100 border-transparent h-12"
           >
-            <SelectTrigger className="mt-2 bg-gray-100 border-transparent h-12">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Styles</SelectItem>
-              {uniqueCategories.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="font-semibold text-gray-600">Room Type</Label>
-          <Select
-            value={filters.roomType}
-            onValueChange={(v) => setFilters((p) => ({ ...p, roomType: v }))}
-          >
-            <SelectTrigger className="mt-2 bg-gray-100 border-transparent h-12">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Rooms</SelectItem>
-              <SelectItem value="Kitchen">Kitchen</SelectItem>
-              <SelectItem value="Bedroom">Bedroom</SelectItem>
-              <SelectItem value="Living Room">Living Room</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="font-semibold text-gray-600">
-            Budget: ₹{filters.budget[0].toLocaleString()} - ₹
-            {filters.budget[1].toLocaleString()}
-          </Label>
-          <Slider
-            value={filters.budget}
-            onValueChange={(value) =>
-              setFilters((p) => ({ ...p, budget: value as [number, number] }))
-            }
-            max={50000}
-            min={500}
-            step={100}
-            className="mt-3"
-          />
-        </div>
+            <SelectValue placeholder="Select Style" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Styles</SelectItem>
+            {uniqueCategories.map((cat) => (
+              <SelectItem key={cat} value={cat}>
+                {cat}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
+
+      <div>
+        <Label htmlFor="roomType" className="font-semibold text-gray-600">
+          Room Type
+        </Label>
+        <Select
+          value={filters.roomType}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, roomType: value }))
+          }
+        >
+          <SelectTrigger
+            id="roomType"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Room" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Rooms</SelectItem>
+            <SelectItem value="Kitchen">Kitchen</SelectItem>
+            <SelectItem value="Bedroom">Bedroom</SelectItem>
+            <SelectItem value="Living Room">Living Room</SelectItem>
+            <SelectItem value="Bathroom">Bathroom</SelectItem>
+            <SelectItem value="Dining Room">Dining Room</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="plotArea" className="font-semibold text-gray-600">
+          Plot Area (sqft)
+        </Label>
+        <Select
+          value={filters.plotArea}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, plotArea: value }))
+          }
+        >
+          <SelectTrigger
+            id="plotArea"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Area" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Areas</SelectItem>
+            <SelectItem value="500-1000">500-1000</SelectItem>
+            <SelectItem value="1000-2000">1000-2000</SelectItem>
+            <SelectItem value="2000+">2000+</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="direction" className="font-semibold text-gray-600">
+          Direction
+        </Label>
+        <Select
+          value={filters.direction}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, direction: value }))
+          }
+        >
+          <SelectTrigger
+            id="direction"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Direction" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Directions</SelectItem>
+            <SelectItem value="East">East</SelectItem>
+            <SelectItem value="West">West</SelectItem>
+            <SelectItem value="North">North</SelectItem>
+            <SelectItem value="South">South</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="floors" className="font-semibold text-gray-600">
+          Floors
+        </Label>
+        <Select
+          value={filters.floors}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, floors: value }))
+          }
+        >
+          <SelectTrigger
+            id="floors"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Floors" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Floors</SelectItem>
+            <SelectItem value="1">1</SelectItem>
+            <SelectItem value="2">2</SelectItem>
+            <SelectItem value="3">3+</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="propertyType" className="font-semibold text-gray-600">
+          Property Type
+        </Label>
+        <Select
+          value={filters.propertyType}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, propertyType: value }))
+          }
+        >
+          <SelectTrigger
+            id="propertyType"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="Residential">Residential</SelectItem>
+            <SelectItem value="Commercial">Commercial</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label className="font-semibold text-gray-600">
+          Budget: ₹{filters.budget[0].toLocaleString()} - ₹
+          {filters.budget[1].toLocaleString()}
+        </Label>
+        <Slider
+          value={filters.budget}
+          onValueChange={(value) =>
+            setFilters((prev) => ({
+              ...prev,
+              budget: value as [number, number],
+            }))
+          }
+          max={50000}
+          min={500}
+          step={100}
+          className="mt-3"
+        />
+      </div>
+
+      <Button
+        onClick={() =>
+          setFilters({
+            category: "all",
+            roomType: "all",
+            plotArea: "all",
+            direction: "all",
+            floors: "all",
+            propertyType: "all",
+            budget: [500, 50000],
+          })
+        }
+        variant="outline"
+        className="w-full"
+      >
+        Clear Filters
+      </Button>
     </div>
   </aside>
 );
 
-// --- ProductCard Component (Updated) ---
-const ProductCard = ({ product }) => {
+// --- Enhanced ProductCard Component with Authentication ---
+const ProductCard = ({ product, userOrders }) => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { userInfo } = useSelector((state: RootState) => state.user);
+
   const isWishlisted = isInWishlist(product._id);
   const linkTo =
     product.source === "admin"
       ? `/product/${product._id}`
       : `/professional-plan/${product._id}`;
+
+  // Check if user has purchased this product
+  const hasPurchased = userOrders?.some(
+    (order) =>
+      order.isPaid &&
+      order.orderItems?.some(
+        (item) =>
+          item.productId === product._id || item.productId?._id === product._id
+      )
+  );
+
+  const handleDownload = async () => {
+    if (!userInfo) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to download purchased products.",
+        action: <Button onClick={() => navigate("/login")}>Login</Button>,
+      });
+      return;
+    }
+
+    if (!hasPurchased) {
+      toast({
+        title: "Product Not Purchased",
+        description: "You must purchase this design to download the file.",
+        action: <Button onClick={() => navigate(linkTo)}>View Product</Button>,
+      });
+      return;
+    }
+
+    if (!product.planFile) {
+      toast({
+        title: "Error",
+        description: "Download file is not available for this design.",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(product.planFile);
+      if (!response.ok) throw new Error("Network response was not ok.");
+      const blob = await response.blob();
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+
+      const fileExtension =
+        product.planFile.split(".").pop()?.split("?")[0] || "pdf";
+      link.setAttribute(
+        "download",
+        `ArchHome-Interior-${product.name.replace(/\s+/g, "-")}.${fileExtension}`
+      );
+
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "Your interior design download has started!",
+      });
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast({
+        title: "Error",
+        description: "Failed to download the file.",
+      });
+    }
+  };
 
   return (
     <motion.div
@@ -114,14 +328,14 @@ const ProductCard = ({ product }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 flex flex-col group transition-shadow duration-300 hover:shadow-xl"
+      className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
     >
       <div className="relative p-2">
         <Link to={linkTo}>
           <img
-            src={product.image || house3}
+            src={product.mainImage || product.image || house3}
             alt={product.name}
-            className="w-full h-48 object-cover rounded-md"
+            className="w-full h-48 object-cover rounded-md group-hover:scale-105 transition-transform duration-500"
           />
         </Link>
         {product.isSale && (
@@ -129,16 +343,39 @@ const ProductCard = ({ product }) => {
             Sale!
           </div>
         )}
+        {hasPurchased && (
+          <div className="absolute top-2 right-12 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md z-10">
+            Purchased
+          </div>
+        )}
+        <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={() => {
+              isWishlisted
+                ? removeFromWishlist(product._id)
+                : addToWishlist(product);
+            }}
+            className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-gray-600 hover:text-red-500 hover:scale-110"}`}
+            aria-label="Toggle Wishlist"
+          >
+            <Heart
+              className="w-5 h-5"
+              fill={isWishlisted ? "currentColor" : "none"}
+            />
+          </button>
+        </div>
       </div>
       <div className="p-4 border-t border-gray-200">
         <div className="grid grid-cols-2 gap-2 text-center">
           <div className="py-2">
             <p className="text-xs text-gray-500">Style</p>
-            <p className="font-bold text-gray-800">{product.style || "N/A"}</p>
+            <p className="font-bold text-gray-800">
+              {product.style || product.category || "N/A"}
+            </p>
           </div>
-          <div className="bg-teal-500/10 text-teal-800 p-2 rounded-md">
-            <p className="text-xs">Room Type</p>
-            <p className="font-bold">
+          <div className="bg-teal-50 p-2 rounded-md">
+            <p className="text-xs text-gray-500">Room Type</p>
+            <p className="font-bold text-gray-800">
               {product.roomType || product.size || "N/A"}
             </p>
           </div>
@@ -166,7 +403,7 @@ const ProductCard = ({ product }) => {
           </span>
         </div>
       </div>
-      <div className="p-4 pt-2 mt-auto space-y-2">
+      <div className="p-4 pt-2 mt-auto grid grid-cols-1 gap-2">
         <Link to={linkTo}>
           <Button
             variant="outline"
@@ -175,9 +412,26 @@ const ProductCard = ({ product }) => {
             Read more
           </Button>
         </Link>
-        <Button className="w-full bg-teal-500 hover:bg-teal-600 text-white">
-          <Download className="mr-2 h-4 w-4" />
-          Download PDF
+        <Button
+          className={`w-full text-white rounded-md ${
+            hasPurchased
+              ? "bg-teal-500 hover:bg-teal-600"
+              : "bg-gray-400 hover:bg-gray-500"
+          }`}
+          onClick={handleDownload}
+          disabled={!hasPurchased}
+        >
+          {hasPurchased ? (
+            <>
+              <Download className="mr-2 h-4 w-4" />
+              Download PDF
+            </>
+          ) : (
+            <>
+              <Lock className="mr-2 h-4 w-4" />
+              Purchase to Download
+            </>
+          )}
         </Button>
       </div>
     </motion.div>
@@ -186,7 +440,9 @@ const ProductCard = ({ product }) => {
 
 // --- Main Page ---
 const InteriorDesignsPage = () => {
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
+  const navigate = useNavigate();
+
   const {
     products: adminProducts,
     listStatus: adminListStatus,
@@ -197,32 +453,59 @@ const InteriorDesignsPage = () => {
     listStatus: profListStatus,
     error: profError,
   } = useSelector((state: RootState) => state.professionalPlans);
+  const { userInfo } = useSelector((state: RootState) => state.user);
+  const { orders } = useSelector((state: RootState) => state.orders);
 
   const [sortBy, setSortBy] = useState("newest");
   const [filters, setFilters] = useState({
     category: "all",
     roomType: "all",
+    plotArea: "all",
+    direction: "all",
+    floors: "all",
+    propertyType: "all",
     budget: [500, 50000],
   });
   const [currentPage, setCurrentPage] = useState(1);
   const CARDS_PER_PAGE = 6;
 
   useEffect(() => {
-    dispatch(fetchProducts({}));
-    dispatch(fetchAllApprovedPlans());
-  }, [dispatch]);
+    // Only send filters that are not "all" or default
+    const apiParams: Record<string, any> = {};
+    Object.entries(filters).forEach(([key, value]) => {
+      if (key === "budget") {
+        apiParams.budget = value.join("-");
+      } else if (value !== "all") {
+        apiParams[key] = value;
+      }
+    });
+    apiParams.planType = "Interior Designs";
+
+    dispatch(fetchProducts(apiParams));
+    dispatch(fetchAllApprovedPlans(apiParams));
+
+    // Fetch user orders if logged in
+    if (userInfo) {
+      dispatch(fetchMyOrders());
+    }
+  }, [dispatch, filters, userInfo]);
 
   const combinedProducts = useMemo(() => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
     const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
-    const formattedAdmin = adminArray.map((p) => ({ ...p, source: "admin" }));
-    const formattedProf = profArray.map((p) => ({
+    const normalizedAdmin = adminArray.map((p) => ({
       ...p,
-      name: p.planName,
-      image: p.mainImage,
+      name: p.name || "Unnamed",
+      image: p.image || "",
+      source: "admin",
+    }));
+    const normalizedProf = profArray.map((p) => ({
+      ...p,
+      name: p.planName || "Unnamed",
+      image: p.mainImage || "",
       source: "professional",
     }));
-    return [...formattedAdmin, ...formattedProf];
+    return [...normalizedAdmin, ...normalizedProf];
   }, [adminProducts, professionalPlans]);
 
   const interiorDesigns = useMemo(
@@ -238,40 +521,71 @@ const InteriorDesignsPage = () => {
   }, [interiorDesigns]);
 
   const filteredAndSortedProducts = useMemo(() => {
-    let filtered = [...interiorDesigns];
+    let products = interiorDesigns.filter((product) => {
+      if (!product || typeof product.price === "undefined") return false;
 
-    if (filters.category !== "all") {
-      filtered = filtered.filter((p) => p.category === filters.category);
-    }
-    if (filters.roomType !== "all") {
-      filtered = filtered.filter(
-        (p) => p.roomType === filters.roomType || p.size === filters.roomType
+      // Only show "Interior Designs"
+      if (product.planType !== "Interior Designs") return false;
+
+      const productPrice = product.isSale ? product.salePrice : product.price;
+      const matchesBudget =
+        productPrice >= filters.budget[0] && productPrice <= filters.budget[1];
+      const matchesCategory =
+        filters.category === "all" || product.category === filters.category;
+      const matchesRoomType =
+        filters.roomType === "all" ||
+        product.roomType === filters.roomType ||
+        product.size === filters.roomType;
+      const matchesPlotArea =
+        filters.plotArea === "all" ||
+        (filters.plotArea === "500-1000"
+          ? product.plotArea >= 500 && product.plotArea <= 1000
+          : filters.plotArea === "1000-2000"
+            ? product.plotArea > 1000 && product.plotArea <= 2000
+            : filters.plotArea === "2000+"
+              ? product.plotArea > 2000
+              : true);
+      const matchesDirection =
+        filters.direction === "all" || product.direction === filters.direction;
+      const matchesFloors =
+        filters.floors === "all" ||
+        product.floors === parseInt(filters.floors, 10);
+      const matchesPropertyType =
+        filters.propertyType === "all" ||
+        product.propertyType === filters.propertyType;
+
+      return (
+        matchesBudget &&
+        matchesCategory &&
+        matchesRoomType &&
+        matchesPlotArea &&
+        matchesDirection &&
+        matchesFloors &&
+        matchesPropertyType
       );
-    }
-    filtered = filtered.filter((p) => {
-      const price = p.isSale ? p.salePrice : p.price;
-      return price >= filters.budget[0] && price <= filters.budget[1];
     });
 
-    switch (sortBy) {
-      case "price-low":
-        return filtered.sort(
-          (a, b) =>
-            (a.isSale ? a.salePrice : a.price) -
-            (b.isSale ? b.salePrice : b.price)
-        );
-      case "price-high":
-        return filtered.sort(
-          (a, b) =>
-            (b.isSale ? b.salePrice : b.price) -
-            (a.isSale ? a.salePrice : a.price)
-        );
-      default:
-        return filtered.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+    if (sortBy === "price-low") {
+      products.sort(
+        (a, b) =>
+          (a.isSale ? a.salePrice : a.price) -
+          (b.isSale ? b.salePrice : b.price)
+      );
+    } else if (sortBy === "price-high") {
+      products.sort(
+        (a, b) =>
+          (b.isSale ? b.salePrice : b.price) -
+          (a.isSale ? a.salePrice : a.price)
+      );
+    } else {
+      products.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
     }
+
+    return products;
   }, [interiorDesigns, filters, sortBy]);
 
   const totalPages = Math.ceil(
@@ -298,25 +612,30 @@ const InteriorDesignsPage = () => {
     <div className="bg-gray-50">
       <Navbar />
       <main className="container mx-auto px-4 py-12">
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-12">
           <FilterSidebar
             filters={filters}
             setFilters={setFilters}
             uniqueCategories={uniqueCategories}
           />
-          <div className="flex-1">
-            <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
-              <p className="text-gray-500">
-                Showing {paginatedProducts.length} of{" "}
-                {filteredAndSortedProducts.length} results
-              </p>
+          <div className="w-full lg:w-3/4 xl:w-4/5">
+            <div className="flex flex-wrap gap-4 justify-between items-center mb-6 border-b pb-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800">
+                  Interior Design Plans
+                </h1>
+                <p className="text-gray-500 text-sm">
+                  Showing {paginatedProducts.length} of{" "}
+                  {filteredAndSortedProducts.length} results
+                </p>
+              </div>
               <div className="w-full sm:w-48">
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="bg-white">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="newest">Newest First</SelectItem>
+                    <SelectItem value="newest">Sort by latest</SelectItem>
                     <SelectItem value="price-low">
                       Price: Low to High
                     </SelectItem>
@@ -333,12 +652,29 @@ const InteriorDesignsPage = () => {
                 <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
               </div>
             )}
+
             {isError && (
               <div className="text-center py-20">
                 <ServerCrash className="mx-auto h-12 w-12 text-red-500" />
-                <h3>Error: {errorMessage}</h3>
+                <h3 className="mt-4 text-xl font-semibold text-red-500">
+                  Failed to Load Interior Designs
+                </h3>
+                <p className="mt-2 text-gray-500">{errorMessage}</p>
               </div>
             )}
+
+            {!isLoading &&
+              !isError &&
+              filteredAndSortedProducts.length === 0 && (
+                <div className="text-center py-20">
+                  <h3 className="text-xl font-semibold">
+                    No Interior Designs Found
+                  </h3>
+                  <p className="mt-2 text-gray-500">
+                    Try adjusting your filters to see more results.
+                  </p>
+                </div>
+              )}
 
             {!isLoading && !isError && (
               <>
@@ -351,6 +687,7 @@ const InteriorDesignsPage = () => {
                       <ProductCard
                         key={`${product.source}-${product._id}`}
                         product={product}
+                        userOrders={orders}
                       />
                     ))
                   ) : (
