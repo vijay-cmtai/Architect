@@ -1,158 +1,266 @@
+// src/components/Navbar.jsx
+
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Search, Heart, ShoppingCart, Menu, X } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Search,
+  Heart,
+  ShoppingCart,
+  Menu,
+  X,
+  User,
+  LogOut,
+} from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { Button } from "@/components/ui/button";
 import WishlistPanel from "@/components/WishlistPanel";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/lib/store";
+import { logout } from "@/lib/features/users/userSlice";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
 
-  const { state } = useCart();
+  const { state: cartState } = useCart();
   const { wishlistItems } = useWishlist();
   const location = useLocation();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const { userInfo } = useSelector((state: RootState) => state.user);
+  const showCartAndWishlist = !userInfo || userInfo?.role === "user";
+
+  const getDashboardPath = () => {
+    if (!userInfo) return "/login";
+    switch (userInfo.role) {
+      case "professional":
+        return "/professional";
+      case "admin":
+        return "/admin";
+      default:
+        return "/dashboard";
+    }
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    setIsMenuOpen(false);
+    navigate("/login");
+  };
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
 
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Ready Made House Plan", path: "/products" },
     { name: "Services", path: "/services" },
     { name: "Career", path: "/careers" },
+    { name: "Download", path: "/download" },
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
   ];
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <>
-      <nav
+      <header
         className={`sticky top-0 z-50 transition-all duration-300 ${
-          isScrolled
-            ? "shadow-medium backdrop-blur-md bg-background/95"
-            : "shadow-soft bg-background"
+          isScrolled ? "bg-white/95 shadow-md backdrop-blur-lg" : "bg-white"
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-screen-xl mx-auto px-2 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
-            {/* Logo */}
-            <Link to="/" className="flex items-center space-x-2 group">
-              <div className="w-10 h-10 gradient-orange rounded-lg flex items-center justify-center transform group-hover:scale-110 transition-all duration-300 group-hover:shadow-orange">
-                <span className="text-white font-bold text-lg">AH</span>
+            <Link to="/" className="flex items-center gap-2">
+              <div className="relative">
+                <div className="absolute -inset-1 bg-orange-200 rounded-full blur opacity-20"></div>
+                <img
+                  src="/logo.png"
+                  alt="ArchHome Logo"
+                  className="h-14 w-auto relative"
+                />
               </div>
-              <span className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
-                ArchHome
-              </span>
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
+            <nav className="hidden lg:flex items-center space-x-8">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`font-medium transition-colors duration-200 relative group ${
+                  className={`text-base font-medium relative transition-colors duration-300 ${
                     isActive(link.path)
-                      ? "text-primary"
-                      : "text-foreground hover:text-primary"
+                      ? "text-orange-600"
+                      : "text-gray-600 hover:text-orange-600"
                   }`}
+                  style={
+                    link.name === "About" && isActive(link.path)
+                      ? {
+                          backgroundColor: "#F97316", // Orange color
+                          color: "white",
+                          padding: "2rem 1rem", // Tall padding
+                          clipPath:
+                            "polygon(0 0, 100% 0, 100% 75%, 50% 100%, 0 75%)", // Shape
+                        }
+                      : link.name === "About"
+                        ? {
+                            backgroundColor: "#F97316",
+                            color: "white",
+                            padding: "2rem 1rem",
+                            clipPath:
+                              "polygon(0 0, 100% 0, 100% 75%, 50% 100%, 0 75%)",
+                          }
+                        : {}
+                  }
                 >
                   {link.name}
-                  <span
-                    className={`absolute -bottom-1 left-0 w-full h-0.5 bg-primary transform origin-left transition-transform duration-200 ${
-                      isActive(link.path)
-                        ? "scale-x-100"
-                        : "scale-x-0 group-hover:scale-x-100"
-                    }`}
-                  ></span>
+                  {!isActive(link.path) && link.name !== "About" && (
+                    <span className="absolute bottom-[-4px] left-0 w-full h-0.5 bg-orange-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center"></span>
+                  )}
                 </Link>
               ))}
-            </div>
+            </nav>
 
-            {/* Desktop Icons & Auth Buttons */}
-            <div className="hidden md:flex items-center space-x-2">
-              <button className="p-3 text-foreground hover:text-primary transition-all duration-300 rounded-full hover:bg-primary/5 transform hover:scale-110">
+            {/* Right Side Icons & User Info */}
+            <div className="hidden lg:flex items-center space-x-5">
+              <button className="text-gray-600 hover:text-orange-600 transition-colors">
                 <Search className="w-5 h-5" />
               </button>
 
-              <button
-                onClick={() => setIsWishlistOpen(true)}
-                className="p-3 text-foreground hover:text-primary transition-all duration-300 rounded-full hover:bg-primary/5 transform hover:scale-110 relative"
-                aria-label="Open Wishlist"
-              >
-                <Heart className="w-5 h-5" />
-                {wishlistItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-primary to-primary-dark text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-semibold animate-pulse">
-                    {wishlistItems.length}
-                  </span>
-                )}
-              </button>
+              {showCartAndWishlist && (
+                <>
+                  <button
+                    onClick={() => setIsWishlistOpen(true)}
+                    className="text-gray-600 hover:text-orange-600 transition-colors"
+                  >
+                    <Heart className="w-5 h-5" />
+                  </button>
+                  <Link
+                    to="/cart"
+                    className="relative text-gray-600 hover:text-orange-600 transition-colors"
+                  >
+                    <ShoppingCart className="w-5 h-5" />
+                    {cartState.items.length > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                        {cartState.items.reduce(
+                          (sum, item) => sum + item.quantity,
+                          0
+                        )}
+                      </span>
+                    )}
+                  </Link>
+                </>
+              )}
 
-              <Link
-                to="/cart"
-                className="p-3 text-foreground hover:text-primary transition-all duration-300 rounded-full hover:bg-primary/5 transform hover:scale-110 relative"
-              >
-                <ShoppingCart className="w-5 h-5" />
-                {state.items.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-primary to-primary-dark text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-semibold animate-pulse">
-                    {state.items.reduce((sum, item) => sum + item.quantity, 0)}
-                  </span>
-                )}
-              </Link>
-              <div className="flex items-center space-x-2 ml-4">
+              {userInfo ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2">
+                      <Avatar className="w-9 h-9 border-2 border-orange-500">
+                        <AvatarFallback className="bg-orange-500 text-white font-bold">
+                          {userInfo.name
+                            ? userInfo.name.charAt(0).toUpperCase()
+                            : "V"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium text-gray-700">
+                        {userInfo.name}
+                      </span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <Link to={getDashboardPath()}>
+                      <DropdownMenuItem className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Dashboard</span>
+                      </DropdownMenuItem>
+                    </Link>
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="cursor-pointer text-red-600"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sign Out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
                 <Link to="/login">
-                  <Button variant="ghost">Login</Button>
+                  <Button className="bg-orange-500 hover:bg-orange-600 rounded-full">
+                    Login
+                  </Button>
                 </Link>
-                <Link to="/register">
-                  <Button>Register</Button>
-                </Link>
-              </div>
+              )}
             </div>
 
-            {/* Mobile menu button */}
-            <div className="md:hidden flex items-center">
+            {/* Mobile Menu Button */}
+            <div className="lg:hidden">
               <button
-                onClick={() => setIsWishlistOpen(true)}
-                className="p-2 text-foreground hover:text-primary relative"
+                onClick={() => setIsMenuOpen(true)}
+                className="text-gray-600"
               >
-                <Heart className="w-5 h-5" />
-                {wishlistItems.length > 0 && (
-                  <span className="absolute top-0 right-0 bg-primary text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-semibold">
-                    {wishlistItems.length}
-                  </span>
-                )}
-              </button>
-              <Link
-                to="/cart"
-                className="p-2 text-foreground hover:text-primary"
-              >
-                <ShoppingCart className="w-5 h-5" />
-              </Link>
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2 text-foreground hover:text-primary"
-              >
-                {isMenuOpen ? (
-                  <X className="w-6 h-6" />
-                ) : (
-                  <Menu className="w-6 h-6" />
-                )}
+                <Menu className="w-6 h-6" />
               </button>
             </div>
           </div>
         </div>
-      </nav>
-      {/* Render the Wishlist Panel and pass state management props */}
+
+        {/* Mobile Menu Panel */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="fixed inset-0 z-50 bg-white p-6 lg:hidden"
+            >
+              <div className="flex justify-between items-center mb-8">
+                <Link to="/" className="text-2xl font-bold text-gray-800">
+                  ArchHome
+                </Link>
+                <button onClick={() => setIsMenuOpen(false)}>
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <nav className="flex flex-col space-y-4">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.name}
+                    to={link.path}
+                    className={`text-lg font-medium p-3 rounded-lg ${isActive(link.path) ? "bg-orange-500 text-white" : "text-gray-700 hover:bg-gray-100"}`}
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </header>
       <WishlistPanel
         isOpen={isWishlistOpen}
         onClose={() => setIsWishlistOpen(false)}

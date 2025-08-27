@@ -1,24 +1,24 @@
 import React from "react";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface RequestPageLayoutProps {
   title: string;
   imageUrl: string;
   imageAlt: string;
   children: React.ReactNode;
+  isLoading: boolean;
+  onSubmit: (e: React.FormEvent) => void;
 }
 
 export const formStyles = {
-  label: "block text-sm font-medium text-text-secondary mb-2",
+  label: "block text-sm font-medium text-gray-700 mb-2",
   input:
-    "w-full px-5 py-3 bg-[hsl(var(--background-muted))] border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-ring transition-all",
-  select:
-    "w-full px-5 py-3 bg-[hsl(var(--background-muted))] border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-ring transition-all appearance-none",
+    "w-full px-4 py-3 bg-gray-100 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition",
   textarea:
-    "w-full px-5 py-3 bg-[hsl(var(--background-muted))] border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-ring min-h-[120px] resize-y transition-all",
+    "w-full px-4 py-3 bg-gray-100 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary min-h-[120px] resize-y transition",
   fileInput:
-    "w-full text-sm text-text-secondary file:mr-4 file:py-2 file:px-5 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/20 file:text-primary hover:file:bg-primary/30 cursor-pointer",
-  radioLabel: "flex items-center gap-2 cursor-pointer text-text-secondary",
-  radioInput: "h-4 w-4 border-border text-primary focus:ring-primary",
+    "w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer",
 };
 
 const RequestPageLayout: React.FC<RequestPageLayoutProps> = ({
@@ -26,22 +26,26 @@ const RequestPageLayout: React.FC<RequestPageLayoutProps> = ({
   imageUrl,
   imageAlt,
   children,
+  isLoading,
+  onSubmit,
 }) => {
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-8 py-12 md:py-16 animate-fade-in">
+    <div className="max-w-6xl mx-auto p-4 md:p-8 py-12 md:py-16">
       <div className="flex flex-col-reverse lg:flex-row items-center gap-12 lg:gap-20">
         <div className="w-full lg:w-1/2">
-          <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-8">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-8">
             {title}
           </h2>
-          <form action="#" className="space-y-5">
+          <form onSubmit={onSubmit} className="space-y-5">
             {children}
-            <button
+            <Button
               type="submit"
-              className="btn-primary w-full mt-6 text-lg py-3.5"
+              className="btn-primary w-full mt-6 text-lg py-3.5 h-14"
+              disabled={isLoading}
             >
+              {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
               Send Request
-            </button>
+            </Button>
           </form>
         </div>
 
@@ -49,7 +53,7 @@ const RequestPageLayout: React.FC<RequestPageLayoutProps> = ({
           <img
             src={imageUrl}
             alt={imageAlt}
-            className="w-full h-[600px] object-cover rounded-2xl shadow-large"
+            className="w-full h-[600px] object-cover rounded-2xl shadow-lg"
           />
         </div>
       </div>

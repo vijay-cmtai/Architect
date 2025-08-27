@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Wrench } from "lucide-react"; // A nice icon to represent customization
+import { Wrench } from "lucide-react"; 
 
 const customServices = [
   {

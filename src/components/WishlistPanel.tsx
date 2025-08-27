@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // ✨ useNavigate imported
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
@@ -8,15 +8,52 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { X, HeartCrack, ShoppingCart } from "lucide-react"; // ShoppingCart icon add kiya
+import { X, HeartCrack, ShoppingCart, Loader2 } from "lucide-react";
 
-const WishlistPanel = ({ isOpen, onClose }) => {
+// Add types for props and wishlist/cart items
+type WishlistPanelProps = {
+  isOpen: boolean;
+  onClose: () => void;
+};
+
+type WishlistItem = {
+  id: string;
+  _id?: string;
+  name: string;
+  price: number;
+  salePrice?: number;
+  image: string;
+  size?: string;
+};
+
+const WishlistPanel: React.FC<WishlistPanelProps> = ({ isOpen, onClose }) => {
   const { wishlistItems, removeFromWishlist } = useWishlist();
-  const { addItem } = useCart();
+  const { addItem, state: cartState } = useCart();
+  const navigate = useNavigate(); // ✨ useNavigate hook initialized
 
-  const handleAddToCart = (item) => {
-    addItem(item);
+  // ==========================================================
+  // ✨ FIX IS HERE: The function is now async and uses await ✨
+  // ==========================================================
+  const handleAddToCart = async (item: WishlistItem) => {
+    // 1. Wait for the item to be successfully added to the cart
+    await addItem({
+      id: item.id,
+      _id: item._id,
+      name: item.name,
+      price: item.price,
+      salePrice: item.salePrice,
+      image: item.image,
+      size: item.size,
+    });
+
+    // 2. Remove the item from the wishlist
     removeFromWishlist(item.id);
+
+    // 3. Close the wishlist panel
+    onClose();
+
+    // 4. Navigate to the cart page
+    navigate("/cart");
   };
 
   return (
@@ -27,9 +64,8 @@ const WishlistPanel = ({ isOpen, onClose }) => {
             Your Wishlist ({wishlistItems.length})
           </SheetTitle>
         </SheetHeader>
-
         {wishlistItems.length === 0 ? (
-          <div className="flex-grow flex flex-col items-center justify-center text-center text-muted-foreground p-6">
+          <div className="flex-grow flex flex-col items-center justify-center text-center p-6 text-muted-foreground">
             <HeartCrack className="w-16 h-16 mb-4 text-primary/30" />
             <h3 className="text-xl font-semibold">Your Wishlist is Empty</h3>
             <p className="mt-2 max-w-xs">
@@ -45,7 +81,7 @@ const WishlistPanel = ({ isOpen, onClose }) => {
             {wishlistItems.map((item) => (
               <div
                 key={item.id}
-                className="flex items-start gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                className="flex items-start gap-4 p-2 rounded-lg hover:bg-muted/50"
               >
                 <Link to={`/product/${item.id}`} onClick={onClose}>
                   <img
@@ -71,14 +107,17 @@ const WishlistPanel = ({ isOpen, onClose }) => {
                       ? item.salePrice.toLocaleString()
                       : item.price.toLocaleString()}
                   </p>
-
-                  {/* --- BADLAAV 4: Add to Cart button yahan add karein --- */}
                   <Button
                     size="sm"
                     className="mt-2 w-full sm:w-auto"
                     onClick={() => handleAddToCart(item)}
+                    disabled={cartState.loading}
                   >
-                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    {cartState.loading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                    )}
                     Add to Cart
                   </Button>
                 </div>
@@ -87,7 +126,6 @@ const WishlistPanel = ({ isOpen, onClose }) => {
                   size="icon"
                   className="text-muted-foreground hover:text-destructive h-8 w-8 flex-shrink-0"
                   onClick={() => removeFromWishlist(item.id)}
-                  aria-label="Remove from wishlist"
                 >
                   <X className="w-4 h-4" />
                 </Button>

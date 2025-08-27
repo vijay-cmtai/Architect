@@ -1,132 +1,150 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, store } from "@/lib/store";
+type AppDispatch = typeof store.dispatch;
+import { toast } from "sonner";
+import { Eye, EyeOff, Loader2 } from "lucide-react"; // Loader2 ko import karein
+
 import { Button } from "@/components/ui/button";
-import Footer from "@/components/Footer";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+
+import { loginUser, resetActionStatus } from "@/lib/features/users/userSlice";
 
 const LoginPage = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // ✨ FIX 1: actionStatus ko 'loading' se badal dein. Yeh zyada descriptive hai.
+  const { userInfo, actionStatus, error } = useSelector(
+    (state: RootState) => state.user
+  );
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  const isLoading = actionStatus === "loading";
+
+  useEffect(() => {
+    // Agar user pehle se logged in hai, toh use redirect kar dein
+    if (userInfo) {
+      // ✨ FIX 2: Redirection logic ko aasan banaya gaya hai
+      switch (userInfo.role) {
+        case "admin":
+          navigate("/admin");
+          break;
+        case "professional":
+          navigate("/professional");
+          break;
+        default:
+          navigate("/");
+      }
+    }
+  }, [userInfo, navigate]);
+
+  useEffect(() => {
+    // Component load hone par ya error aane par state reset karein
+    if (error) {
+      toast.error(error);
+      dispatch(resetActionStatus());
+    }
+  }, [error, dispatch]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!email || !password) {
+      toast.error("Please fill in both email and password.");
+      return;
+    }
+    (dispatch as AppDispatch)(loginUser({ email, password }));
+  };
 
   return (
     <>
       <Navbar />
-      <div className="min-h-screen flex items-center justify-center bg-background p-4 font-poppins">
-        <div className="bg-card text-foreground p-8 sm:p-10 rounded-xl shadow-2xl max-w-md w-full">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold">Welcome Back!</h1>
-            <p className="text-muted-foreground mt-2">
-              Login to access your account
-            </p>
-          </div>
-
-          <form>
-            <div className="space-y-6">
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-semibold mb-2"
-                >
-                  Email address
-                </label>
-                <input
-                  type="email"
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
+        <Card className="w-full max-w-md shadow-lg">
+          <CardHeader className="text-center">
+            <CardTitle className="text-3xl font-bold">Sign In</CardTitle>
+            <CardDescription>
+              Enter your credentials to access your account
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
                   id="email"
                   name="email"
-                  placeholder="you@example.com"
-                  className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
-
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-semibold mb-2"
-                >
-                  Password
-                </label>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
                 <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
+                  <Input
                     id="password"
                     name="password"
-                    placeholder="••••••••"
-                    className="w-full px-4 py-3 pr-12 bg-input border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-muted-foreground cursor-pointer"
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
               </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="remember-me"
-                    name="remember-me"
-                    className="h-4 w-4 rounded text-primary focus:ring-primary border-border"
-                  />
-                  <label htmlFor="remember-me" className="text-sm">
-                    Remember me
-                  </label>
-                </div>
-                <Link
-                  to="/forgot-password"
-                  className="text-sm font-medium text-primary hover:underline"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full mt-8 text-base font-bold py-3"
+              {/* ✨ FIX 3: disabled={isLoading} aur loading spinner add kiya gaya ✨ */}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isLoading ? "Logging in..." : "Sign In"}
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="flex flex-col items-center space-y-2">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-primary hover:underline"
             >
-              Login
-            </Button>
-
-            <div className="relative my-8 flex items-center">
-              <div className="flex-grow border-t border-border"></div>
-              <span className="flex-shrink mx-4 text-xs uppercase text-muted-foreground">
-                Or continue with
-              </span>
-              <div className="flex-grow border-t border-border"></div>
-            </div>
-
-            {/* Optional: Social Login Buttons */}
-            <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="w-full">
-                {/* <GoogleIcon className="mr-2 h-5 w-5" /> You can add an icon here */}
-                Google
-              </Button>
-              <Button variant="outline" className="w-full">
-                {/* <FacebookIcon className="mr-2 h-5 w-5" /> You can add an icon here */}
-                Facebook
-              </Button>
-            </div>
-
-            <p className="text-sm text-center text-muted-foreground mt-8">
+              Forgot your password?
+            </Link>
+            <p className="text-sm text-muted-foreground">
               Don't have an account?{" "}
               <Link
                 to="/register"
-                className="font-semibold text-primary hover:underline"
+                className="text-primary hover:underline font-semibold"
               >
-                Register now
+                Register here
               </Link>
             </p>
-          </form>
-        </div>
+          </CardFooter>
+        </Card>
       </div>
       <Footer />
     </>

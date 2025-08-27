@@ -1,17 +1,54 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, store } from "@/lib/store";
+import { toast } from "sonner";
+import {
+  submitCustomizationRequest,
+  resetStatus,
+} from "@/lib/features/customization/customizationSlice";
 import RequestPageLayout, { formStyles } from "../components/RequestPageLayout";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 
-const ElevationRequestPage: React.FC = () => {
+const ThreeDElevationPage: React.FC = () => {
+  const dispatch = useDispatch();
+  const { actionStatus, error } = useSelector(
+    (state: RootState) => state.customization
+  );
+
+  const [formKey, setFormKey] = useState<number>(Date.now());
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    formData.append("requestType", "3D Elevation");
+
+    (dispatch as typeof store.dispatch)(submitCustomizationRequest(formData));
+  };
+
+  useEffect(() => {
+    if (actionStatus === "succeeded") {
+      toast.success(
+        "Request submitted successfully! Our team will contact you shortly."
+      );
+      dispatch(resetStatus());
+      setFormKey(Date.now());
+    }
+    if (actionStatus === "failed") {
+      toast.error(String(error) || "Submission failed. Please try again.");
+      dispatch(resetStatus());
+    }
+  }, [actionStatus, error, dispatch]);
+
   return (
     <>
       <Navbar />
-      <div className="bg-soft-teal">
+      <form key={formKey} onSubmit={handleSubmit}>
         <RequestPageLayout
           title="Get Your 3D Elevation"
-          imageUrl="https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+          imageUrl="https://images.pexels.com/photos/1105754/pexels-photo-1105754.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
           imageAlt="Example of a 3D house elevation"
+          isLoading={actionStatus === "loading"}
         >
           <div>
             <label htmlFor="name" className={formStyles.label}>
@@ -22,6 +59,7 @@ const ElevationRequestPage: React.FC = () => {
               id="name"
               name="name"
               className={formStyles.input}
+              required
             />
           </div>
           <div>
@@ -33,62 +71,55 @@ const ElevationRequestPage: React.FC = () => {
               id="email"
               name="email"
               className={formStyles.input}
+              required
             />
           </div>
           <div>
-            <label htmlFor="whatsapp" className={formStyles.label}>
+            <label htmlFor="whatsappNumber" className={formStyles.label}>
               WhatsApp Number
             </label>
             <input
               type="tel"
-              id="whatsapp"
-              name="whatsapp"
+              id="whatsappNumber"
+              name="whatsappNumber"
               className={formStyles.input}
+              required
             />
           </div>
-          <div className="relative">
-            <label htmlFor="plan-floor" className={formStyles.label}>
+          <div>
+            <label htmlFor="planForFloor" className={formStyles.label}>
               Plan for Floor
             </label>
             <select
-              id="plan-floor"
-              name="plan-floor"
+              id="planForFloor"
+              name="planForFloor"
               className={formStyles.select}
             >
               <option>G</option>
               <option>G+1</option>
               <option>G+2</option>
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 pt-6 text-text-muted">
-              <svg
-                className="fill-current h-5 w-5"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-              >
-                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-              </svg>
-            </div>
           </div>
           <div>
             <label className={formStyles.label}>3D Elevation Type</label>
-            <div className="flex items-center gap-6 pt-2">
+            <div className="flex gap-6 pt-2">
               <label className={formStyles.radioLabel}>
                 <input
                   type="radio"
-                  name="elevation-type"
-                  value="front"
+                  name="elevationType"
+                  value="Front"
                   defaultChecked
                   className={formStyles.radioInput}
-                />
+                />{" "}
                 Front
               </label>
               <label className={formStyles.radioLabel}>
                 <input
                   type="radio"
-                  name="elevation-type"
-                  value="corner"
+                  name="elevationType"
+                  value="Corner"
                   className={formStyles.radioInput}
-                />
+                />{" "}
                 Corner
               </label>
             </div>
@@ -100,26 +131,25 @@ const ElevationRequestPage: React.FC = () => {
             <textarea
               id="description"
               name="description"
-              placeholder="Message"
+              placeholder="Your message..."
               className={formStyles.textarea}
             ></textarea>
           </div>
           <div>
-            <label htmlFor="file-upload" className={formStyles.label}>
+            <label className={formStyles.label}>
               Upload Reference (Image or PDF)
             </label>
             <input
               type="file"
-              id="file-upload"
-              name="file-upload"
+              name="referenceFile"
               className={formStyles.fileInput}
             />
           </div>
         </RequestPageLayout>
-      </div>
+      </form>
       <Footer />
     </>
   );
 };
 
-export default ElevationRequestPage;
+export default ThreeDElevationPage;

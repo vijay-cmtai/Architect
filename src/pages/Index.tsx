@@ -13,6 +13,8 @@ import StandardPackagesSection from "../components/StandardPackagesSection";
 import PremiumPackagesSection from "../components/PremiumPackagesSection";
 import CorporatePackagesSection from "../components/CorporatePackagesSection";
 import BrandPartnersSection from "@/components/BrandPartnersSection";
+import SellersSection from "@/components/SellersSection";
+import ContractorsSection from "@/components/ContractorsSection";
 
 const Index = () => {
   return (
@@ -25,7 +27,8 @@ const Index = () => {
       <PremiumPackagesSection />
       <CorporatePackagesSection />
       <FeaturedProducts />
-      <CategoriesSection />
+      <SellersSection />
+      <ContractorsSection />
       <RegionalPlansSection />
       <BrandPartnersSection />
       <Testimonials />

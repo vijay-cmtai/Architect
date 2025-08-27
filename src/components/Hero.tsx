@@ -1,6 +1,9 @@
-import { useState, useEffect } from "react"; // useState aur useEffect ko import karein
-import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion"; // AnimatePresence ko import karein
+import { useState, useEffect, useMemo } from "react"; // useMemo ko import karein
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux"; // Redux hooks import karein
+import { RootState, AppDispatch } from "@/lib/store"; // Types import karein
+import { fetchProducts } from "@/lib/features/products/productSlice"; // fetchProducts action import karein
+import { motion, AnimatePresence } from "framer-motion";
 import AnimatedStat from "./AnimatedStat";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,8 +16,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// --- NAYI SLIDES KA DATA ---
-// Aap yahan apni pasand ki images daal sakte hain
 const slides = [
   {
     image:
@@ -34,26 +35,61 @@ const slides = [
 ];
 
 const Hero = () => {
-  // --- SLIDER KE LIYE LOGIC ---
   const [currentSlide, setCurrentSlide] = useState(0);
+  const navigate = useNavigate();
+  const dispatch: AppDispatch = useDispatch();
+
+  // ✨ Redux store se products aur unka status get karein ✨
+  const { products, listStatus } = useSelector(
+    (state: RootState) => state.products
+  );
+
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    // Har 5 second mein slide badalne ke liye timer
+    // Agar products load nahi hain, to unhe fetch karein
+    if (listStatus === "idle") {
+      dispatch(fetchProducts({}));
+    }
+  }, [dispatch, listStatus]);
+
+  useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
-
-    // Component unmount hone par timer ko clear karein
     return () => clearInterval(timer);
   }, []);
 
+  // ✨ Product list se unique categories nikalne ka logic ✨
+  const uniqueCategories = useMemo(() => {
+    if (!products || products.length === 0) {
+      return [];
+    }
+    // Set ka istemal karke sirf unique values nikalein
+    const categories = new Set(
+      products.map((product) => product.category).filter(Boolean)
+    );
+    return Array.from(categories).sort(); // Alphabetically sort karein
+  }, [products]);
+
+  const handleSearch = () => {
+    const queryParams = new URLSearchParams();
+    if (selectedCategory) {
+      queryParams.append("category", selectedCategory);
+    }
+    if (searchTerm) {
+      queryParams.append("search", searchTerm);
+    }
+    navigate(`/products?${queryParams.toString()}`);
+  };
+
   return (
     <section className="relative h-[700px] md:h-[650px] flex items-center justify-center text-white overflow-hidden">
-      {/* --- BACKGROUND SLIDER --- */}
       <div className="absolute inset-0">
         <AnimatePresence>
           <motion.img
-            key={currentSlide} // Key badalne par hi AnimatePresence kaam karta hai
+            key={currentSlide}
             src={slides[currentSlide].image}
             alt={slides[currentSlide].alt}
             initial={{ opacity: 0, scale: 1.05 }}
@@ -66,7 +102,6 @@ const Hero = () => {
         <div className="absolute inset-0 bg-black/60"></div>
       </div>
 
-      {/* Aapka purana content bilkul waisa hi hai */}
       <div className="relative z-10 text-center max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-4xl md:text-6xl font-bold mb-6 animate-slide-up">
           Find Your Perfect
@@ -103,25 +138,41 @@ const Hero = () => {
         >
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <Select>
+              {/* ✨ Category dropdown ab dynamic hai ✨ */}
+              <Select
+                onValueChange={setSelectedCategory}
+                disabled={listStatus === "loading"}
+              >
                 <SelectTrigger className="w-full text-primary-gray border-0 focus:ring-2 focus:ring-primary transition-all duration-300 hover:bg-primary/5">
-                  <SelectValue placeholder="Select Category" />
+                  <SelectValue
+                    placeholder={
+                      listStatus === "loading"
+                        ? "Loading..."
+                        : "Select Category"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="modern">Modern Homes</SelectItem>
-                  <SelectItem value="villa">Luxury Villas</SelectItem>
-                  <SelectItem value="apartment">Apartments</SelectItem>
-                  <SelectItem value="farmhouse">Farmhouses</SelectItem>
+                  {uniqueCategories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="flex-1">
               <Input
-                placeholder="Search house plans..."
+                placeholder="Search by plot size e.g., 21x30"
                 className="border-0 focus:ring-2 focus:ring-primary text-primary-gray transition-all duration-300 hover:bg-primary/5"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button className="btn-primary md:px-8 group">
+            <Button
+              className="btn-primary md:px-8 group"
+              onClick={handleSearch}
+            >
               <Search className="w-5 h-5 md:mr-2 group-hover:rotate-12 transition-transform duration-300" />
               <span className="hidden md:inline">Search</span>
             </Button>

@@ -1,12 +1,11 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { useCart } from "@/contexts/CartContext";
-import { Search } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/lib/store";
+import { Link, useParams } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Loader2, ServerCrash, Filter, Heart, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import Footer from "@/components/Footer";
-import Navbar from "@/components/Navbar";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -14,199 +13,277 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { fetchProducts } from "@/lib/features/products/productSlice";
+import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice";
+import { useWishlist } from "@/contexts/WishlistContext";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import house3 from "@/assets/house-3.jpg";
 
-// 1. ADDED A 'region' PROPERTY TO EACH PLAN
-const samplePlans = [
-  {
-    id: "p1",
-    title: "Indian Bungalow Design",
-    image:
-      "https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg?auto=compress&cs=tinysrgb&w=600",
-    price: 2999,
-    salePrice: 999,
-    category: "ASIAN HOUSE PLAN",
-    size: "35*45 sqft",
-    specs: { "Plot Area": "1575", Rooms: "3 BHK", Bathrooms: 2, Kitchen: 1 },
-    planType: "bungalows",
-    region: "india", // Matches the href from RegionalPlansSection
-  },
-  {
-    id: "p2",
-    title: "American Duplex Home",
-    image:
-      "https://images.pexels.com/photos/2724749/pexels-photo-2724749.jpeg?auto=compress&cs=tinysrgb&w=600",
-    price: 2999,
-    salePrice: 999,
-    category: "ASIAN HOUSE PLAN",
-    size: "21*45 sqft",
-    specs: { "Plot Area": "945", Rooms: "5 BHK", Bathrooms: 3, Kitchen: 1 },
-    planType: "duplex",
-    region: "america",
-  },
-  {
-    id: "p3",
-    title: "Arabian Classic House",
-    image:
-      "https://images.pexels.com/photos/314937/pexels-photo-314937.jpeg?auto=compress&cs=tinysrgb&w=600",
-    price: 2999,
-    salePrice: 999,
-    category: "ASIAN HOUSE PLAN",
-    size: "55*50 sqft",
-    specs: { "Plot Area": "2750", Rooms: "5 BHK", Bathrooms: 4, Kitchen: 2 },
-    planType: "classic-house",
-    region: "arabian",
-  },
-  {
-    id: "p4",
-    title: "Asian Corner House",
-    image:
-      "https://images.pexels.com/photos/276724/pexels-photo-276724.jpeg?auto=compress&cs=tinysrgb&w=600",
-    price: 2999,
-    salePrice: 999,
-    category: "ASIAN HOUSE PLAN",
-    size: "33*39 sqft",
-    specs: { "Plot Area": "1287", Rooms: "5 BHK", Bathrooms: 3, Kitchen: 1 },
-    planType: "corner-house",
-    region: "asia",
-  },
-  {
-    id: "p5",
-    title: "North American Apartment",
-    image:
-      "https://images.pexels.com/photos/276724/pexels-photo-276724.jpeg?auto=compress&cs=tinysrgb&w=600",
-    price: 2999,
-    salePrice: 999,
-    category: "ASIAN HOUSE PLAN",
-    size: "32*64 sqft",
-    specs: { "Plot Area": "2048", Rooms: "5 BHK", Bathrooms: 4, Kitchen: 1 },
-    planType: "apartments",
-    region: "north-america",
-  },
-  {
-    id: "p6",
-    title: "Indian Modern Villa",
-    image:
-      "https://images.pexels.com/photos/209296/pexels-photo-209296.jpeg?auto=compress&cs=tinysrgb&w=600",
-    price: 2999,
-    salePrice: 999,
-    category: "ASIAN HOUSE PLAN",
-    size: "29*31 sqft",
-    specs: { "Plot Area": "899", Rooms: "3 BHK", Bathrooms: 2, Kitchen: 1 },
-    planType: "modern-villa",
-    region: "india",
-  },
-];
-
-const FilterSidebar = ({ filterCount }) => (
+// --- FilterSidebar ---
+const FilterSidebar = ({ filters, setFilters }) => (
   <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-card rounded-xl shadow-lg h-fit border border-border">
-    <div className="relative mb-6">
-      <Input
-        placeholder="Search..."
-        className="pl-10 h-12 bg-input focus:bg-card"
-      />
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-    </div>
+    <h3 className="text-xl font-bold mb-4 flex items-center">
+      <Filter className="w-5 h-5 mr-2" />
+      Filters
+    </h3>
     <div className="space-y-6">
-      {[
-        "Plot Area",
-        "Plot Size",
-        "Style",
-        "Direction",
-        "No. of Rooms",
-        "No. of Kitchen",
-        "No. of Floors",
-        "No. of Bathrooms",
-      ]
-        .slice(0, filterCount)
-        .map((filter) => (
-          <div key={filter}>
-            <label className="text-sm font-semibold text-foreground mb-2 block">
-              {filter}
-            </label>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder={`Select ${filter}`} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="option1">Option 1</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        ))}
-      <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-        Filter
+      <div>
+        <Label htmlFor="plotSize">Plot Size</Label>
+        <Select
+          value={filters.plotSize}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, plotSize: value }))
+          }
+        >
+          <SelectTrigger id="plotSize">
+            <SelectValue placeholder="Select Size" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Sizes</SelectItem>
+            <SelectItem value="30x40">30x40</SelectItem>
+            <SelectItem value="40x60">40x60</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label htmlFor="plotArea">Plot Area (sqft)</Label>
+        <Select
+          value={filters.plotArea}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, plotArea: value }))
+          }
+        >
+          <SelectTrigger id="plotArea">
+            <SelectValue placeholder="Select Area" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Areas</SelectItem>
+            <SelectItem value="500-1000">500-1000</SelectItem>
+            <SelectItem value="1000-2000">1000-2000</SelectItem>
+            <SelectItem value="2000+">2000+</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label>
+          Budget: ₹{filters.budget[0].toLocaleString()} - ₹
+          {filters.budget[1].toLocaleString()}
+        </Label>
+        <Slider
+          value={filters.budget}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, budget: value }))
+          }
+          max={100000}
+          min={500}
+          step={500}
+        />
+      </div>
+      <div>
+        <Label htmlFor="bhk">Rooms (BHK)</Label>
+        <Select
+          value={filters.bhk}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, bhk: value }))
+          }
+        >
+          <SelectTrigger id="bhk">
+            <SelectValue placeholder="Select Rooms" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All BHKs</SelectItem>
+            <SelectItem value="1">1 BHK</SelectItem>
+            <SelectItem value="2">2 BHK</SelectItem>
+            <SelectItem value="3">3 BHK</SelectItem>
+            <SelectItem value="4">4+ BHK</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label htmlFor="direction">Direction</Label>
+        <Select
+          value={filters.direction}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, direction: value }))
+          }
+        >
+          <SelectTrigger id="direction">
+            <SelectValue placeholder="Select Direction" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Directions</SelectItem>
+            <SelectItem value="East">East</SelectItem>
+            <SelectItem value="West">West</SelectItem>
+            <SelectItem value="North">North</SelectItem>
+            <SelectItem value="South">South</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label htmlFor="floors">Floors</Label>
+        <Select
+          value={filters.floors}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, floors: value }))
+          }
+        >
+          <SelectTrigger id="floors">
+            <SelectValue placeholder="Select Floors" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Floors</SelectItem>
+            <SelectItem value="1">1</SelectItem>
+            <SelectItem value="2">2</SelectItem>
+            <SelectItem value="3">3+</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label htmlFor="propertyType">Property Type</Label>
+        <Select
+          value={filters.propertyType}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, propertyType: value }))
+          }
+        >
+          <SelectTrigger id="propertyType">
+            <SelectValue placeholder="Select Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="Residential">Residential</SelectItem>
+            <SelectItem value="Commercial">Commercial</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <Button
+        onClick={() =>
+          setFilters({
+            plotArea: "all",
+            plotSize: "all",
+            bhk: "all",
+            direction: "all",
+            floors: "all",
+            propertyType: "all",
+            budget: [500, 100000],
+          })
+        }
+        variant="outline"
+        className="w-full"
+      >
+        Clear Filters
       </Button>
     </div>
   </aside>
 );
 
+// --- ProductCard ---
 const ProductCard = ({ plan }) => {
-  const { addItem } = useCart();
-  const navigate = useNavigate();
-  const handleAddToCart = () => {
-    addItem(plan);
-    navigate("/cart");
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const isWishlisted = isInWishlist(plan._id);
+
+  const handleDownload = (imageUrl: string, productName: string) => {
+    const link = document.createElement("a");
+    link.href = imageUrl;
+    link.setAttribute(
+      "download",
+      `ArchHome-${productName.replace(/\s+/g, "-")}.pdf`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
-      className="bg-card rounded-xl shadow-soft overflow-hidden border border-border flex flex-col group"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="bg-card rounded-lg shadow-soft border border-gray-200 overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
     >
-      <div className="relative border-b border-border p-2 bg-gray-50">
-        <img
-          src={plan.image}
-          alt={plan.title}
-          className="w-full h-auto object-contain"
-        />
-        <div className="absolute top-3 left-3 bg-destructive text-destructive-foreground text-xs font-bold px-3 py-1 rounded-full">
-          Sale!
+      <div className="relative border-b p-4">
+        <Link to={`/product/${plan._id}`}>
+          <img
+            src={plan.mainImage || plan.image || house3}
+            alt={plan.name}
+            className="w-full h-56 object-contain group-hover:scale-105 transition-transform duration-500"
+          />
+        </Link>
+        {plan.isSale && (
+          <div className="absolute top-2 left-2 bg-white text-gray-800 text-sm font-semibold px-4 py-1.5 rounded-md shadow-md z-10">
+            Sale!
+          </div>
+        )}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm font-bold px-4 py-2 rounded-md shadow-lg z-10 text-center">
+          <p>{plan.plotSize} House plan</p>
+          <p className="text-xs font-normal">Download pdf file</p>
         </div>
-      </div>
-      <div className="p-4 text-center">
-        <h3 className="font-bold text-sm text-foreground">
-          {plan.title.toUpperCase()}
-        </h3>
-        <p className="text-xs text-muted-foreground">Download pdf file</p>
-      </div>
-      <div className="px-4 pb-4">
-        <div className="my-2 grid grid-cols-2 gap-px bg-border overflow-hidden rounded-md">
-          {Object.entries(plan.specs).map(([key, value]) => (
-            <div key={key} className="bg-background p-2 text-center">
-              <span className="font-semibold block capitalize text-xs text-muted-foreground">
-                {key}
-              </span>
-              <span className="font-bold text-sm text-foreground">
-                {String(value)}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="p-4 border-t border-border flex flex-col gap-2 mt-auto">
-        <p className="text-xs text-muted-foreground text-center">
-          {plan.category} • {plan.size}
-        </p>
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <span className="text-muted-foreground line-through">
-            ₹{plan.price.toLocaleString()}
-          </span>
-          <span className="text-primary font-bold text-lg">
-            ₹{plan.salePrice.toLocaleString()}
-          </span>
-        </div>
-        <div className="space-y-2">
-          <Button
-            onClick={handleAddToCart}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+        <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={() => {
+              isWishlisted ? removeFromWishlist(plan._id) : addToWishlist(plan);
+            }}
+            className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-foreground hover:text-primary hover:scale-110"}`}
+            aria-label="Toggle Wishlist"
           >
-            Add to cart
-          </Button>
-          <Button variant="outline" className="w-full">
+            <Heart
+              className="w-5 h-5"
+              fill={isWishlisted ? "currentColor" : "none"}
+            />
+          </button>
+        </div>
+      </div>
+      <div className="p-4 border-b">
+        <div className="grid grid-cols-2 gap-4 text-center">
+          <div>
+            <p className="text-sm text-gray-500">Plot Area</p>
+            <p className="font-semibold text-gray-800">{plan.plotArea} sqft</p>
+          </div>
+          <div className="bg-teal-50 p-2 rounded-md">
+            <p className="text-sm text-gray-500">Rooms</p>
+            <p className="font-semibold text-gray-800">
+              {plan.rooms || plan.bhk} BHK
+            </p>
+          </div>
+          <div className="bg-teal-50 p-2 rounded-md">
+            <p className="text-sm text-gray-500">Bathrooms</p>
+            <p className="font-semibold text-gray-800">{plan.bathrooms}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Kitchen</p>
+            <p className="font-semibold text-gray-800">{plan.kitchen}</p>
+          </div>
+        </div>
+      </div>
+      <div className="p-4">
+        <p className="text-sm text-gray-500 uppercase">
+          {plan.category || "House Plan"}
+        </p>
+        <h3 className="text-lg font-bold text-gray-800 mt-1">{plan.name}</h3>
+        <div className="flex items-baseline gap-2 mt-2">
+          {plan.isSale && (
+            <s className="text-md text-gray-500">
+              ₹{plan.price.toLocaleString()}
+            </s>
+          )}
+          <span className="text-xl font-bold text-gray-900">
+            ₹{(plan.isSale ? plan.salePrice : plan.price).toLocaleString()}
+          </span>
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-2">
+          <Link to={`/product/${plan._id}`}>
+            <Button className="w-full bg-slate-800 text-white hover:bg-slate-700 hover:text-white rounded-md">
+              Read more
+            </Button>
+          </Link>
+          <Button
+            className="w-full bg-teal-500 text-white hover:bg-teal-600 rounded-md"
+            onClick={() => handleDownload(plan.image, plan.name)}
+          >
+            <Download className="mr-2 h-4 w-4" />
             Download PDF
           </Button>
         </div>
@@ -216,48 +293,147 @@ const ProductCard = ({ plan }) => {
 };
 
 const BrowsePlansPage = () => {
-  const [sortBy, setSortBy] = useState("latest");
-  // 2. GET BOTH categoryName AND regionName from the URL
-  const { categoryName, regionName } = useParams<{
-    categoryName?: string;
-    regionName?: string;
-  }>();
+  const dispatch: AppDispatch = useDispatch();
+  const { categoryName, regionName } = useParams();
 
-  // 3. APPLY FILTERS SEQUENTIALLY
-  let filteredPlans = samplePlans;
+  const {
+    products: adminProducts,
+    listStatus: adminListStatus,
+    error: adminError,
+  } = useSelector((state: RootState) => state.products);
+  const {
+    plans: professionalPlans,
+    listStatus: profListStatus,
+    error: profError,
+  } = useSelector((state: RootState) => state.professionalPlans);
 
-  if (categoryName) {
-    filteredPlans = filteredPlans.filter(
-      (plan) => plan.planType === categoryName
-    );
-  }
+  const [filters, setFilters] = useState({
+    plotArea: "all",
+    plotSize: "all",
+    bhk: "all",
+    direction: "all",
+    floors: "all",
+    propertyType: "all",
+    budget: [500, 100000],
+  });
 
-  if (regionName) {
-    filteredPlans = filteredPlans.filter((plan) => plan.region === regionName);
-  }
+  const [sortBy, setSortBy] = useState("newest");
 
-  // 4. CREATE A DYNAMIC PAGE TITLE
-  const formatTitle = (slug) =>
-    slug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  useEffect(() => {
+    // Only send filters that are not "all" or default
+    const apiParams: Record<string, any> = {};
+    Object.entries(filters).forEach(([key, value]) => {
+      if (key === "budget") {
+        apiParams.budget = value.join("-");
+      } else if (value !== "all") {
+        apiParams[key] = value;
+      }
+    });
+    apiParams.planType = "Floor Plans";
 
-  let pageTitle = "All Plans";
-  if (categoryName) pageTitle = `${formatTitle(categoryName)} Plans`;
-  if (regionName) pageTitle = `Plans for ${formatTitle(regionName)}`;
+    dispatch(fetchProducts(apiParams));
+    dispatch(fetchAllApprovedPlans(apiParams));
+  }, [dispatch, filters]);
+
+  const combinedProducts = useMemo(() => {
+    const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
+    const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
+    const normalizedAdmin = adminArray.map((p) => ({
+      ...p,
+      name: p.name || "Unnamed",
+      image: p.image || "",
+      source: "admin",
+    }));
+    const normalizedProf = profArray.map((p) => ({
+      ...p,
+      name: p.planName || "Unnamed",
+      image: p.mainImage || "",
+      source: "professional",
+    }));
+    return [...normalizedAdmin, ...normalizedProf];
+  }, [adminProducts, professionalPlans]);
+
+  const filteredAndSortedProducts = useMemo(() => {
+    let products = combinedProducts.filter((product) => {
+      if (!product || typeof product.price === "undefined") return false;
+
+      // Only show "Floor Plans"
+      if (product.planType !== "Floor Plans") return false;
+
+      const productPrice = product.isSale ? product.salePrice : product.price;
+      const matchesBudget =
+        productPrice >= filters.budget[0] && productPrice <= filters.budget[1];
+      const matchesPlotSize =
+        filters.plotSize === "all" || product.plotSize === filters.plotSize;
+      const matchesPlotArea =
+        filters.plotArea === "all" ||
+        (filters.plotArea === "500-1000"
+          ? product.plotArea >= 500 && product.plotArea <= 1000
+          : filters.plotArea === "1000-2000"
+            ? product.plotArea > 1000 && product.plotArea <= 2000
+            : filters.plotArea === "2000+"
+              ? product.plotArea > 2000
+              : true);
+      const matchesBhk =
+        filters.bhk === "all" ||
+        (product.rooms || product.bhk) === parseInt(filters.bhk, 10);
+      const matchesDirection =
+        filters.direction === "all" || product.direction === filters.direction;
+      const matchesFloors =
+        filters.floors === "all" ||
+        product.floors === parseInt(filters.floors, 10);
+      const matchesPropertyType =
+        filters.propertyType === "all" ||
+        product.propertyType === filters.propertyType;
+
+      return (
+        matchesBudget &&
+        matchesPlotSize &&
+        matchesPlotArea &&
+        matchesBhk &&
+        matchesDirection &&
+        matchesFloors &&
+        matchesPropertyType
+      );
+    });
+
+    if (sortBy === "price-low") {
+      products.sort(
+        (a, b) =>
+          (a.isSale ? a.salePrice : a.price) -
+          (b.isSale ? b.salePrice : b.price)
+      );
+    } else if (sortBy === "price-high") {
+      products.sort(
+        (a, b) =>
+          (b.isSale ? b.salePrice : b.price) -
+          (a.isSale ? a.salePrice : a.price)
+      );
+    }
+
+    return products;
+  }, [combinedProducts, filters, sortBy]);
+
+  const isLoading =
+    adminListStatus === "loading" || profListStatus === "loading";
+  const isError = adminListStatus === "failed" || profListStatus === "failed";
+  const errorMessage = adminError || profError;
+  const pageTitle = "Floor Plans";
 
   return (
     <div className="bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-12">
         <div className="flex flex-col lg:flex-row gap-12">
-          <FilterSidebar filterCount={8} />
+          <FilterSidebar filters={filters} setFilters={setFilters} />
           <div className="w-full lg:w-3/4 xl:w-4/5">
-            <div className="flex flex-wrap gap-4 justify-between items-center mb-6 border-b border-border pb-4">
+            <div className="flex flex-wrap gap-4 justify-between items-center mb-6 border-b pb-4">
               <div>
                 <h1 className="text-3xl font-bold text-foreground">
                   {pageTitle}
                 </h1>
                 <p className="text-muted-foreground text-sm">
-                  Showing {filteredPlans.length} results
+                  Showing {filteredAndSortedProducts.length} results
                 </p>
               </div>
               <div className="w-full sm:w-48">
@@ -266,22 +442,53 @@ const BrowsePlansPage = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="latest">Sort by latest</SelectItem>
-                    <SelectItem value="popular">Sort by popularity</SelectItem>
+                    <SelectItem value="newest">Sort by latest</SelectItem>
+                    <SelectItem value="price-low">
+                      Price: Low to High
+                    </SelectItem>
+                    <SelectItem value="price-high">
+                      Price: High to Low
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <AnimatePresence>
+            {isLoading && (
+              <div className="flex justify-center items-center h-96">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              </div>
+            )}
+            {isError && (
+              <div className="text-center py-20">
+                <ServerCrash className="mx-auto h-12 w-12 text-destructive" />
+                <h3 className="mt-4 text-xl font-semibold text-destructive">
+                  Failed to Load Plans
+                </h3>
+                <p className="mt-2 text-muted-foreground">
+                  {String(errorMessage)}
+                </p>
+              </div>
+            )}
+            {!isLoading &&
+              !isError &&
+              filteredAndSortedProducts.length === 0 && (
+                <div className="text-center py-20">
+                  <h3 className="text-xl font-semibold">No Plans Found</h3>
+                  <p className="mt-2 text-muted-foreground">
+                    Try adjusting your filters.
+                  </p>
+                </div>
+              )}
+            {!isLoading && !isError && (
               <motion.div
                 layout
                 className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"
               >
-                {filteredPlans.map((plan) => (
-                  <ProductCard key={plan.id} plan={plan} />
+                {filteredAndSortedProducts.map((plan) => (
+                  <ProductCard key={`${plan.source}-${plan._id}`} plan={plan} />
                 ))}
               </motion.div>
-            </AnimatePresence>
+            )}
           </div>
         </div>
       </main>

@@ -16,10 +16,16 @@ import {
   PhoneCall,
   ClipboardCheck,
   Trophy,
+  CreditCard,
+  Lightbulb,
+  Handshake,
+  Youtube,
+  Briefcase,
+  Users2,
+  BrainCircuit,
+  Building,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-// Section 1: Naya Process Section (Aapke handwritten note ke anusaar)
 const processSteps = [
   {
     icon: PhoneCall,
@@ -28,16 +34,22 @@ const processSteps = [
       "We start with a detailed call to understand your vision, requirements, and budget perfectly.",
   },
   {
+    icon: CreditCard,
+    title: "Secure Payment",
+    description:
+      "Once you're ready, make a secure online payment to book your slot and kickstart the design phase.",
+  },
+  {
+    icon: MessageSquare,
+    title: "Discussion & Brainstorming",
+    description:
+      "We collaborate and brainstorm ideas, refining the concept based on your valuable feedback.",
+  },
+  {
     icon: Users,
     title: "WhatsApp Group",
     description:
       "A dedicated WhatsApp group is created for seamless communication between you and our design team.",
-  },
-  {
-    icon: MessageSquare,
-    title: "Discussion",
-    description:
-      "We collaborate and brainstorm ideas, refining the concept based on your valuable feedback.",
   },
   {
     icon: FileEdit,
@@ -55,60 +67,10 @@ const processSteps = [
     icon: Trophy,
     title: "Final Delivery",
     description:
-      "Once you are completely satisfied, we deliver the final, ready-to-use architectural files for your dream home.",
+      "Once you are completely satisfied, we deliver the final, ready-to-use architectural files.",
   },
 ];
 
-const ProcessSection = () => (
-  <section className="py-20 bg-soft-teal">
-    <div className="container mx-auto px-4">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-        className="text-center mb-20"
-      >
-        <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-          Our Design Process
-        </h2>
-        <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          A simple, transparent, and collaborative journey from idea to final
-          plan.
-        </p>
-      </motion.div>
-      <div className="relative max-w-2xl mx-auto">
-        <div className="absolute left-6 md:left-1/2 top-0 h-full w-0.5 bg-border -translate-x-1/2"></div>
-        {processSteps.map((step, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: index * 0.2 }}
-            className="relative mb-12"
-          >
-            <div className="flex items-center">
-              <div className="absolute left-6 md:left-1/2 top-1 z-10 -translate-x-1/2 w-12 h-12 bg-card border-2 border-primary rounded-full flex items-center justify-center">
-                <step.icon className="w-6 h-6 text-primary" />
-              </div>
-              <div className="w-full ml-20 md:ml-0 md:w-5/6 md:mx-auto">
-                <div className="bg-card p-6 rounded-xl shadow-soft border border-border">
-                  <h3 className="text-xl font-bold text-foreground mb-2">
-                    {index + 1}. {step.title}
-                  </h3>
-                  <p className="text-muted-foreground">{step.description}</p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  </section>
-);
-
-// Section 2: Standard Packages
 const standardPackages = [
   {
     title: "Floor Plan",
@@ -144,7 +106,6 @@ const standardPackages = [
     linkTo: "/customize/interior-designs",
   },
 ];
-
 const StandardPackagesSection = () => (
   <section className="py-20 bg-background">
     <div className="container mx-auto px-4">
@@ -202,8 +163,6 @@ const StandardPackagesSection = () => (
     </div>
   </section>
 );
-
-// Section 3: Premium Packages
 const premiumPackages = [
   {
     title: "Floor Plan",
@@ -228,7 +187,6 @@ const premiumPackages = [
     linkTo: "/customize/interior-designs",
   },
 ];
-
 const PremiumPackagesSection = () => (
   <section className="py-20 bg-soft-teal">
     <div className="container mx-auto px-4">
@@ -294,28 +252,75 @@ const PremiumPackagesSection = () => (
   </section>
 );
 
-// Section 4: Corporate Packages
+// ==========================================================
+// ✨ UPDATED: Corporate Packages Section Data ✨
+// ==========================================================
 const corporatePackages = [
   {
     title: "Builders & Colonizers",
     icon: <Building2 size={48} className="text-primary" />,
-    description:
-      "Comprehensive architectural solutions for large-scale housing and colony projects.",
+    description: "Architectural solutions for large-scale housing projects.",
     slug: "builders-colonizers",
   },
   {
     title: "Offices & Shops",
     icon: <Store size={48} className="text-primary" />,
     description:
-      "Modern and functional designs for commercial spaces, offices, and retail stores.",
+      "Modern designs for commercial spaces, offices, and retail stores.",
     slug: "offices-shops",
   },
   {
     title: "Factories & Educational",
     icon: <Factory size={48} className="text-primary" />,
     description:
-      "Specialized plans for industrial buildings, schools, colleges, and other institutions.",
+      "Specialized plans for industrial buildings, schools, and colleges.",
     slug: "factories-educational",
+  },
+  {
+    title: "Franchisee",
+    icon: <Handshake size={48} className="text-primary" />,
+    description:
+      "Partner with us and grow your business with our established brand.",
+    slug: "franchisee",
+    highlight: true,
+  },
+  {
+    title: "MEP Consultant",
+    icon: <Briefcase size={48} className="text-primary" />,
+    description:
+      "Expert consultancy for Mechanical, Electrical, and Plumbing systems.",
+    slug: "mep-consultant",
+  },
+  {
+    title: "Social Media / Content Creator",
+    icon: <Users2 size={48} className="text-primary" />,
+    description:
+      "Collaborate with experts for digital marketing and content creation.",
+    slug: "social-media",
+  },
+  {
+    title: "Technology Expert (AI)",
+    icon: <BrainCircuit size={48} className="text-primary" />,
+    description: "Integrate cutting-edge AI and technology into your projects.",
+    slug: "technology-expert",
+  },
+  {
+    title: "Innovator (New Ideas)",
+    icon: <Lightbulb size={48} className="text-primary" />,
+    description: "Partner on new ideas and innovative product development.",
+    slug: "innovator",
+  },
+  {
+    title: "Industry Expert (Collaboration)",
+    icon: <Building size={48} className="text-primary" />,
+    description: "For Hotels, Hospitals, and other large-scale projects.",
+    slug: "industry-expert",
+  },
+  {
+    title: "3D Visualizer",
+    icon: <Youtube size={48} className="text-primary" />,
+    description: "High-quality 3D walkthroughs and visualization services.",
+    slug: "3d-visualizer",
   },
 ];
 
@@ -330,13 +335,13 @@ const CorporatePackagesSection = () => (
         className="text-center mb-16"
       >
         <h2 className="text-4xl font-bold text-foreground">
-          Corporate Packages (Projects)
+          Corporate Packages & Collaborations
         </h2>
         <p className="mt-2 text-lg text-muted-foreground">
           Tailored solutions for your business and large-scale needs.
         </p>
       </motion.div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
         {corporatePackages.map((pkg, index) => (
           <motion.div
             key={index}
@@ -344,7 +349,8 @@ const CorporatePackagesSection = () => (
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            className="bg-card border-2 border-transparent rounded-xl p-8 text-center flex flex-col items-center transition-all duration-300 hover:border-primary hover:shadow-xl hover:-translate-y-2"
+            // ✨ Conditional styling for highlighted card ✨
+            className={`bg-card rounded-xl p-8 text-center flex flex-col items-center transition-all duration-300 border-2 ${pkg.highlight ? "border-primary shadow-lg" : "border-transparent"} hover:border-primary hover:shadow-xl hover:-translate-y-2`}
           >
             <div className="mb-6">{pkg.icon}</div>
             <h3 className="text-2xl font-bold text-foreground mb-4">
@@ -354,7 +360,7 @@ const CorporatePackagesSection = () => (
               {pkg.description}
             </p>
             <Link to={`/corporate-inquiry/${pkg.slug}`} className="mt-auto">
-              <Button className="btn-primary">Learn More</Button>
+              <Button className="btn-primary">Inquire Now</Button>
             </Link>
           </motion.div>
         ))}
@@ -388,8 +394,8 @@ const faqData = [
 ];
 
 const FaqSection = () => {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const handleToggle = (index: number) =>
+  const [openIndex, setOpenIndex] = useState(null);
+  const handleToggle = (index) =>
     setOpenIndex(openIndex === index ? null : index);
   return (
     <section className="py-20 bg-soft-teal">
@@ -494,7 +500,6 @@ const ServicesPage = () => {
             </p>
           </div>
         </motion.section>
-        <ProcessSection />
         <StandardPackagesSection />
         <PremiumPackagesSection />
         <CorporatePackagesSection />

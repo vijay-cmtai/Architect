@@ -1,10 +1,21 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { useCart } from "@/contexts/CartContext";
-import { Search } from "lucide-react";
+// src/pages/InteriorDesignsPage.jsx
+
+import React, { useState, useEffect, useMemo } from "react";
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "@/lib/store";
+import {
+  Loader2,
+  ServerCrash,
+  Download,
+  Filter,
+  Heart,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -12,207 +23,368 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useWishlist } from "@/contexts/WishlistContext";
+import { fetchProducts } from "@/lib/features/products/productSlice";
+import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice";
+import house3 from "@/assets/house-3.jpg";
 
-const interiorDesignsData = [
-  {
-    id: "id1",
-    title: "Modern Minimalist Kitchen",
-    image:
-      "https://images.pexels.com/photos/276724/pexels-photo-276724.jpeg?auto=compress&cs=tinysrgb&w=600",
-    price: 2999,
-    salePrice: 499,
-    category: "INTERIOR DESIGNS",
-    size: "Kitchen",
-    specs: {
-      Style: "Modern",
-      Theme: "Minimalist",
-      Area: "120 sqft",
-      Type: "Modular",
-    },
-  },
-  {
-    id: "id2",
-    title: "Cozy Bohemian Bedroom Decor",
-    image:
-      "https://images.pexels.com/photos/209296/pexels-photo-209296.jpeg?auto=compress&cs=tinysrgb&w=600",
-    price: 2999,
-    salePrice: 499,
-    category: "INTERIOR DESIGNS",
-    size: "Bedroom",
-    specs: {
-      Style: "Cozy",
-      Theme: "Bohemian",
-      Area: "150 sqft",
-      Type: "Decor",
-    },
-  },
-  {
-    id: "id3",
-    title: "Luxury Classic Living Room",
-    image:
-      "https://images.pexels.com/photos/314937/pexels-photo-314937.jpeg?auto=compress&cs=tinysrgb&w=600",
-    price: 4999,
-    salePrice: 999,
-    category: "INTERIOR DESIGNS",
-    size: "Living Room",
-    specs: {
-      Style: "Luxury",
-      Theme: "Classic",
-      Area: "250 sqft",
-      Type: "Full-room",
-    },
-  },
-];
-
-const FilterSidebar = () => (
-  <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-card rounded-xl shadow-lg h-fit border border-border">
-    <div className="relative mb-6">
-      <Input
-        placeholder="Search by Style, Area, etc..."
-        className="pl-10 h-12 bg-input focus:bg-card"
-      />
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-    </div>
-    <div className="space-y-6">
-      {["Room Type", "Style", "Color Palette", "Budget"].map((filter) => (
-        <div key={filter}>
-          <label className="text-sm font-semibold text-foreground mb-2 block">
-            {filter}
-          </label>
-          <Select>
-            <SelectTrigger>
-              <SelectValue placeholder={`Select ${filter}`} />
+// --- FilterSidebar Component (Updated) ---
+const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
+  <aside className="w-full lg:w-80 shrink-0">
+    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 sticky top-24">
+      <h3 className="text-xl font-bold mb-6 flex items-center text-gray-800">
+        <Filter className="w-5 h-5 mr-3 text-gray-500" />
+        Filters
+      </h3>
+      <div className="space-y-6">
+        <div>
+          <Label className="font-semibold text-gray-600">
+            Category (Style)
+          </Label>
+          <Select
+            value={filters.category}
+            onValueChange={(v) => setFilters((p) => ({ ...p, category: v }))}
+          >
+            <SelectTrigger className="mt-2 bg-gray-100 border-transparent h-12">
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="option1">Option 1</SelectItem>
+              <SelectItem value="all">All Styles</SelectItem>
+              {uniqueCategories.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
-      ))}
-      <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mt-8">
-        Filter
-      </Button>
+        <div>
+          <Label className="font-semibold text-gray-600">Room Type</Label>
+          <Select
+            value={filters.roomType}
+            onValueChange={(v) => setFilters((p) => ({ ...p, roomType: v }))}
+          >
+            <SelectTrigger className="mt-2 bg-gray-100 border-transparent h-12">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Rooms</SelectItem>
+              <SelectItem value="Kitchen">Kitchen</SelectItem>
+              <SelectItem value="Bedroom">Bedroom</SelectItem>
+              <SelectItem value="Living Room">Living Room</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="font-semibold text-gray-600">
+            Budget: ₹{filters.budget[0].toLocaleString()} - ₹
+            {filters.budget[1].toLocaleString()}
+          </Label>
+          <Slider
+            value={filters.budget}
+            onValueChange={(value) =>
+              setFilters((p) => ({ ...p, budget: value as [number, number] }))
+            }
+            max={50000}
+            min={500}
+            step={100}
+            className="mt-3"
+          />
+        </div>
+      </div>
     </div>
   </aside>
 );
 
-const ProductCard = ({ plan }) => {
-  const { addItem } = useCart();
-  const navigate = useNavigate();
-
-  const handleAddToCart = () => {
-    addItem(plan);
-    navigate("/cart");
-  };
+// --- ProductCard Component (Updated) ---
+const ProductCard = ({ product }) => {
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const isWishlisted = isInWishlist(product._id);
+  const linkTo =
+    product.source === "admin"
+      ? `/product/${product._id}`
+      : `/professional-plan/${product._id}`;
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
-      className="bg-card rounded-xl shadow-soft overflow-hidden border border-border flex flex-col group"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 flex flex-col group transition-shadow duration-300 hover:shadow-xl"
     >
-      <div className="relative border-b border-border p-2 bg-gray-50">
-        <img
-          src={plan.image}
-          alt={plan.title}
-          className="w-full h-auto object-contain"
-        />
-        <div className="absolute top-3 left-3 bg-destructive text-destructive-foreground text-xs font-bold px-3 py-1 rounded-full">
-          Sale!
+      <div className="relative p-2">
+        <Link to={linkTo}>
+          <img
+            src={product.image || house3}
+            alt={product.name}
+            className="w-full h-48 object-cover rounded-md"
+          />
+        </Link>
+        {product.isSale && (
+          <div className="absolute top-4 left-4 bg-white text-gray-800 text-xs font-bold px-3 py-1 rounded-md shadow">
+            Sale!
+          </div>
+        )}
+      </div>
+      <div className="p-4 border-t border-gray-200">
+        <div className="grid grid-cols-2 gap-2 text-center">
+          <div className="py-2">
+            <p className="text-xs text-gray-500">Style</p>
+            <p className="font-bold text-gray-800">{product.style || "N/A"}</p>
+          </div>
+          <div className="bg-teal-500/10 text-teal-800 p-2 rounded-md">
+            <p className="text-xs">Room Type</p>
+            <p className="font-bold">
+              {product.roomType || product.size || "N/A"}
+            </p>
+          </div>
         </div>
       </div>
-      <div className="p-4 text-center">
-        <h3 className="font-bold text-sm text-foreground">
-          {plan.title.toUpperCase()}
-        </h3>
-        <p className="text-xs text-muted-foreground">Download pdf file</p>
-      </div>
-      <div className="px-4 pb-4">
-        <div className="my-2 grid grid-cols-2 gap-px bg-border overflow-hidden rounded-md">
-          {Object.entries(plan.specs).map(([key, value]) => (
-            <div key={key} className="bg-background p-2 text-center">
-              <span className="font-semibold block capitalize text-xs text-muted-foreground">
-                {key}
-              </span>
-              <span className="font-bold text-sm text-foreground">
-                {String(value)}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="p-4 border-t border-border flex flex-col gap-2 mt-auto">
-        <p className="text-xs text-muted-foreground text-center">
-          {plan.category} • {plan.size}
+      <div className="p-4 pt-2">
+        <p className="text-xs text-gray-500 uppercase">
+          {product.category || "Interior Design"}
         </p>
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <span className="text-muted-foreground line-through">
-            ₹{plan.price.toLocaleString()}
-          </span>
-          <span className="text-primary font-bold text-lg">
-            ₹{plan.salePrice.toLocaleString()}
+        <h3 className="text-lg font-bold text-gray-900 mt-1 truncate">
+          {product.name || "Design Plan"}
+        </h3>
+        <div className="flex items-baseline gap-2 mt-1">
+          {product.isSale && (
+            <s className="text-md text-gray-400">
+              ₹{product.price.toLocaleString()}
+            </s>
+          )}
+          <span className="text-xl font-bold text-gray-800">
+            ₹
+            {(product.isSale
+              ? product.salePrice
+              : product.price
+            ).toLocaleString()}
           </span>
         </div>
-        <div className="space-y-2">
+      </div>
+      <div className="p-4 pt-2 mt-auto space-y-2">
+        <Link to={linkTo}>
           <Button
-            onClick={handleAddToCart}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+            variant="outline"
+            className="w-full bg-gray-800 text-white hover:bg-gray-700"
           >
-            Add to cart
+            Read more
           </Button>
-          <Button variant="outline" className="w-full">
-            Download PDF
-          </Button>
-        </div>
+        </Link>
+        <Button className="w-full bg-teal-500 hover:bg-teal-600 text-white">
+          <Download className="mr-2 h-4 w-4" />
+          Download PDF
+        </Button>
       </div>
     </motion.div>
   );
 };
 
+// --- Main Page ---
 const InteriorDesignsPage = () => {
-  const [sortBy, setSortBy] = useState("latest");
+  const dispatch = useDispatch();
+  const {
+    products: adminProducts,
+    listStatus: adminListStatus,
+    error: adminError,
+  } = useSelector((state: RootState) => state.products);
+  const {
+    plans: professionalPlans,
+    listStatus: profListStatus,
+    error: profError,
+  } = useSelector((state: RootState) => state.professionalPlans);
+
+  const [sortBy, setSortBy] = useState("newest");
+  const [filters, setFilters] = useState({
+    category: "all",
+    roomType: "all",
+    budget: [500, 50000],
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const CARDS_PER_PAGE = 6;
+
+  useEffect(() => {
+    dispatch(fetchProducts({}));
+    dispatch(fetchAllApprovedPlans());
+  }, [dispatch]);
+
+  const combinedProducts = useMemo(() => {
+    const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
+    const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
+    const formattedAdmin = adminArray.map((p) => ({ ...p, source: "admin" }));
+    const formattedProf = profArray.map((p) => ({
+      ...p,
+      name: p.planName,
+      image: p.mainImage,
+      source: "professional",
+    }));
+    return [...formattedAdmin, ...formattedProf];
+  }, [adminProducts, professionalPlans]);
+
+  const interiorDesigns = useMemo(
+    () => combinedProducts.filter((p) => p.planType === "Interior Designs"),
+    [combinedProducts]
+  );
+
+  const uniqueCategories = useMemo(() => {
+    const categoriesSet = new Set(
+      interiorDesigns.map((p) => p.category).filter(Boolean)
+    );
+    return Array.from(categoriesSet).sort();
+  }, [interiorDesigns]);
+
+  const filteredAndSortedProducts = useMemo(() => {
+    let filtered = [...interiorDesigns];
+
+    if (filters.category !== "all") {
+      filtered = filtered.filter((p) => p.category === filters.category);
+    }
+    if (filters.roomType !== "all") {
+      filtered = filtered.filter(
+        (p) => p.roomType === filters.roomType || p.size === filters.roomType
+      );
+    }
+    filtered = filtered.filter((p) => {
+      const price = p.isSale ? p.salePrice : p.price;
+      return price >= filters.budget[0] && price <= filters.budget[1];
+    });
+
+    switch (sortBy) {
+      case "price-low":
+        return filtered.sort(
+          (a, b) =>
+            (a.isSale ? a.salePrice : a.price) -
+            (b.isSale ? b.salePrice : b.price)
+        );
+      case "price-high":
+        return filtered.sort(
+          (a, b) =>
+            (b.isSale ? b.salePrice : b.price) -
+            (a.isSale ? a.salePrice : a.price)
+        );
+      default:
+        return filtered.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+    }
+  }, [interiorDesigns, filters, sortBy]);
+
+  const totalPages = Math.ceil(
+    filteredAndSortedProducts.length / CARDS_PER_PAGE
+  );
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
+    return filteredAndSortedProducts.slice(
+      startIndex,
+      startIndex + CARDS_PER_PAGE
+    );
+  }, [currentPage, filteredAndSortedProducts]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredAndSortedProducts]);
+
+  const isLoading =
+    adminListStatus === "loading" || profListStatus === "loading";
+  const isError = adminListStatus === "failed" || profListStatus === "failed";
+  const errorMessage = String(adminError || profError || "An error occurred.");
+
   return (
-    <div className="bg-background">
+    <div className="bg-gray-50">
       <Navbar />
       <main className="container mx-auto px-4 py-12">
-        <div className="flex flex-col lg:flex-row gap-12">
-          <FilterSidebar />
-          <div className="w-full lg:w-3/4 xl:w-4/5">
-            <div className="flex flex-wrap gap-4 justify-between items-center mb-6 border-b border-border pb-4">
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">
-                  Interior Designs
-                </h1>
-                <p className="text-muted-foreground text-sm">
-                  Showing {interiorDesignsData.length} results
-                </p>
-              </div>
+        <div className="flex flex-col lg:flex-row gap-8">
+          <FilterSidebar
+            filters={filters}
+            setFilters={setFilters}
+            uniqueCategories={uniqueCategories}
+          />
+          <div className="flex-1">
+            <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
+              <p className="text-gray-500">
+                Showing {paginatedProducts.length} of{" "}
+                {filteredAndSortedProducts.length} results
+              </p>
               <div className="w-full sm:w-48">
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger>
-                    <SelectValue />
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="latest">Sort by latest</SelectItem>
+                    <SelectItem value="newest">Newest First</SelectItem>
+                    <SelectItem value="price-low">
+                      Price: Low to High
+                    </SelectItem>
+                    <SelectItem value="price-high">
+                      Price: High to Low
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <AnimatePresence>
-              <motion.div
-                layout
-                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"
-              >
-                {interiorDesignsData.map((plan) => (
-                  <ProductCard key={plan.id} plan={plan} />
-                ))}
-              </motion.div>
-            </AnimatePresence>
+
+            {isLoading && (
+              <div className="flex justify-center items-center h-96">
+                <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
+              </div>
+            )}
+            {isError && (
+              <div className="text-center py-20">
+                <ServerCrash className="mx-auto h-12 w-12 text-red-500" />
+                <h3>Error: {errorMessage}</h3>
+              </div>
+            )}
+
+            {!isLoading && !isError && (
+              <>
+                <motion.div
+                  layout
+                  className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                >
+                  {paginatedProducts.length > 0 ? (
+                    paginatedProducts.map((product) => (
+                      <ProductCard
+                        key={`${product.source}-${product._id}`}
+                        product={product}
+                      />
+                    ))
+                  ) : (
+                    <div className="col-span-full text-center py-20">
+                      <p className="text-gray-500 text-lg">No designs found.</p>
+                    </div>
+                  )}
+                </motion.div>
+
+                {totalPages > 1 && (
+                  <div className="mt-12 flex justify-center items-center gap-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="w-4 h-4 mr-2" /> Previous
+                    </Button>
+                    <span className="font-medium">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(p + 1, totalPages))
+                      }
+                      disabled={currentPage === totalPages}
+                    >
+                      Next <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </main>
@@ -220,4 +392,5 @@ const InteriorDesignsPage = () => {
     </div>
   );
 };
+
 export default InteriorDesignsPage;

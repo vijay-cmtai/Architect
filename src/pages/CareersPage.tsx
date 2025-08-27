@@ -1,3 +1,4 @@
+import React from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -5,7 +6,6 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { MapPin, Briefcase } from "lucide-react";
 
-// Aapke handwritten note se job openings ka data
 const jobOpenings = [
   {
     title: "Architect / Junior Architect",
@@ -112,13 +112,16 @@ const CareersPage = () => {
                       </div>
                     </div>
                   </div>
-                  <a
-                    href={`mailto:careers@yourcompany.com?subject=Application for ${job.title}`}
+
+                  {/* ✨ THE CHANGE IS HERE: Button is now a Link that passes state ✨ */}
+                  <Link
+                    to="/apply"
+                    state={{ jobTitle: job.title }} // This sends the job title to the Application Page
                   >
                     <Button className="btn-primary w-full md:w-auto">
                       Apply Now
                     </Button>
-                  </a>
+                  </Link>
                 </motion.div>
               ))}
             </div>
