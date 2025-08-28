@@ -1,116 +1,103 @@
+// src/pages/ProductDetail.jsx
+
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
 import { fetchProducts } from "@/lib/features/products/productSlice";
+import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice"; 
 import { Heart, Plus, Minus, Loader2, ServerCrash } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner"; // sonner का उपयोग करें
 import house1 from "@/assets/house-1.jpg";
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
-  const { toast } = useToast();
 
-  const { products, listStatus } = useSelector(
+  // ✨ दोनों स्लाइस से डेटा get करें ✨
+  const { products: adminProducts, listStatus: adminListStatus } = useSelector(
     (state: RootState) => state.products
   );
+  const { plans: professionalPlans, listStatus: profListStatus } = useSelector(
+    (state: RootState) => state.professionalPlans
+  );
 
-  const { state: cartState, addItem } = useCart(); // Get cart state and addItem function
-
+  const { state: cartState, addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
 
   useEffect(() => {
-    if (
-      listStatus === "idle" ||
-      !Array.isArray(products) ||
-      products.length === 0
-    ) {
-      dispatch(fetchProducts({}) as any);
+    // अगर डेटा पहले से लोड नहीं है, तो दोनों को fetch करें
+    if (adminListStatus === "idle") {
+      dispatch(fetchProducts({}));
     }
-  }, [dispatch, listStatus, products]);
+    if (profListStatus === "idle") {
+      dispatch(fetchAllApprovedPlans());
+    }
+  }, [dispatch, adminListStatus, profListStatus]);
 
+  // ✨ FIX: दोनों लिस्ट में प्रोडक्ट/प्लान को ढूंढें ✨
   const product = useMemo(() => {
-    return Array.isArray(products)
-      ? products.find((p: any) => p._id === id)
-      : null;
-  }, [products, id]);
+    const allProducts = [
+      ...(Array.isArray(adminProducts)
+        ? adminProducts.map((p) => ({ ...p, name: p.name, image: p.mainImage }))
+        : []),
+      ...(Array.isArray(professionalPlans)
+        ? professionalPlans.map((p) => ({
+            ...p,
+            name: p.planName,
+            image: p.mainImage,
+          }))
+        : []),
+    ];
+    return allProducts.find((p) => p._id === id) || null;
+  }, [adminProducts, professionalPlans, id]);
 
   const productImages = useMemo(() => {
     if (!product) return [house1];
-    const images = [
-      product.mainImage || product.image,
-      ...(product.images || []),
-    ].filter(Boolean);
+    const images = [product.mainImage, ...(product.galleryImages || [])].filter(
+      Boolean
+    );
     return images.length > 0 ? images : [house1];
   }, [product]);
 
-  // ==========================================================
-  // ✨ FIX IS HERE: Made the function async and added await ✨
-  // ==========================================================
   const handleAddToCart = async () => {
     if (!product) return;
-
-    // The addItem function is now async. We wait for it to complete.
     await addItem({
-      id: product._id,
+      productId: product._id, 
       name: product.name,
       price: product.isSale ? product.salePrice : product.price,
       image: productImages[0],
       size: product.plotSize,
       quantity: quantity,
     });
-
-    toast({
-      title: "Added to Cart!",
-      description: `${quantity} x ${product.name} has been added to your cart.`,
-    });
-
-    // Optional: Ask user if they want to navigate to the cart page
-    setTimeout(() => {
-      const shouldGoToCart = window.confirm(
-        "Item added to cart. Would you like to view your cart?"
-      );
-      if (shouldGoToCart) {
-        navigate("/cart");
-      }
-    }, 500); // Shorter delay for better user experience
+    toast.success(`${quantity} x ${product.name} added to cart!`);
   };
 
   const handleBuyNow = async () => {
     if (!product) return;
-
-    // Also await here to ensure the item is in the cart before navigating
     await addItem({
-      id: product._id,
+      productId: product._id,
       name: product.name,
       price: product.isSale ? product.salePrice : product.price,
       image: productImages[0],
       size: product.plotSize,
       quantity: quantity,
     });
-
-    // Navigate immediately after the item is added
     navigate("/checkout");
   };
 
-  const relatedProducts = useMemo(() => {
-    if (!product || !Array.isArray(products)) return [];
-    return products
-      .filter((p: any) => p.category === product.category && p._id !== id)
-      .slice(0, 2);
-  }, [products, product, id]);
+  const isLoading =
+    adminListStatus === "loading" || profListStatus === "loading";
 
-  if (listStatus === "loading" || (listStatus === "succeeded" && !product)) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-12 h-12 animate-spin text-primary" />
       </div>
     );
@@ -118,7 +105,7 @@ const ProductDetail = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <Navbar />
         <div className="text-center py-20">
           <ServerCrash className="mx-auto h-16 w-16 text-destructive" />
@@ -212,8 +199,8 @@ const ProductDetail = () => {
                   {product.plotArea} sqft
                 </div>
                 <div>
-                  <span className="font-medium text-gray-600">Bedrooms:</span>{" "}
-                  {product.bedrooms || product.rooms}
+                  <span className="font-medium text-gray-600">Rooms:</span>{" "}
+                  {product.rooms || product.bhk} BHK
                 </div>
                 <div>
                   <span className="font-medium text-gray-600">Bathrooms:</span>{" "}
@@ -255,7 +242,6 @@ const ProductDetail = () => {
               </div>
               <div className="space-y-3">
                 <div className="flex space-x-4">
-                  {/* ✨ Using cartState.loading for disabled state ✨ */}
                   <Button
                     onClick={handleAddToCart}
                     disabled={cartState.loading}
@@ -270,16 +256,6 @@ const ProductDetail = () => {
                     ) : (
                       "Add to Cart"
                     )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="w-14 h-14"
-                    onClick={() => setIsLiked(!isLiked)}
-                  >
-                    <Heart
-                      className={`w-6 h-6 ${isLiked ? "fill-current text-red-500" : ""}`}
-                    />
                   </Button>
                 </div>
                 <Button
@@ -300,41 +276,7 @@ const ProductDetail = () => {
             </div>
           </div>
         </div>
-        {relatedProducts.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-8">
-              Related Products
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {relatedProducts.map((relatedProd: any) => (
-                <Link
-                  key={relatedProd._id}
-                  to={`/product/${relatedProd._id}`}
-                  className="group block bg-white rounded-lg shadow hover:shadow-lg"
-                >
-                  <img
-                    src={relatedProd.mainImage || relatedProd.image || house1}
-                    alt={relatedProd.name}
-                    className="w-full h-48 object-cover rounded-t-lg"
-                  />
-                  <div className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {relatedProd.name}
-                    </h3>
-                    <p className="text-gray-600 mb-3">{relatedProd.plotSize}</p>
-                    <div className="text-xl font-bold text-primary">
-                      ₹
-                      {(relatedProd.isSale
-                        ? relatedProd.salePrice
-                        : relatedProd.price
-                      )?.toLocaleString()}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Related products can be added here */}
       </div>
       <Footer />
     </div>
