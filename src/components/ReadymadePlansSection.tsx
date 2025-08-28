@@ -14,7 +14,7 @@ const planTypes = [
     name: "Floor Plan + 3D Elevations",
     image:
       "https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-    href: "/Floor Plan + 3d-plans",
+    href: "/3d-plans",
   },
   {
     name: "Interior Designs",

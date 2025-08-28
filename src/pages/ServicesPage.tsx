@@ -502,6 +502,7 @@ const ServicesPage = () => {
         </motion.section>
         <StandardPackagesSection />
         <PremiumPackagesSection />
+        <CorporatePackagesSection />
         <FaqSection />
         <CtaSection />
       </main>
