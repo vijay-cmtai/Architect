@@ -271,7 +271,7 @@ const ProductCard = ({ product, userOrders }) => {
   const linkTo =
     product.source === "admin"
       ? `/product/${product._id}`
-      : `/professional-plan/${product._id}`;
+      : `/product/${product._id}`;
 
   // Check if user has purchased this product
   const hasPurchased = userOrders?.some(
