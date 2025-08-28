@@ -1,4 +1,14 @@
-import React, { useState, useEffect } from "react";
+// src/components/SellersSection.tsx
+
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  FC,
+  ReactNode,
+  FormEvent,
+} from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
 import { fetchSellers } from "@/lib/features/users/userSlice";
@@ -25,12 +35,14 @@ import {
   MapPin,
   Briefcase,
   Phone,
-  SlidersHorizontal,
   X,
   Send,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
+// Data
 const materialTypes = [
   "Cement & Steel",
   "Bricks & Blocks",
@@ -39,33 +51,48 @@ const materialTypes = [
   "Other",
 ];
 
-// Contact Modal Component (Self-contained and Integrated)
-const ContactModal = ({ isOpen, onClose, user }) => {
+// Type definitions
+type SellerType = {
+  _id: string;
+  businessName?: string;
+  name?: string;
+  city?: string;
+  address?: string;
+  materialType?: string;
+  photoUrl?: string;
+  phone?: string;
+};
+
+type ContactModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  user: SellerType | null;
+};
+
+const ContactModal: FC<ContactModalProps> = ({ isOpen, onClose, user }) => {
   const dispatch: AppDispatch = useDispatch();
   const { actionStatus } = useSelector((state: RootState) => state.inquiries);
 
   if (!isOpen || !user) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-
     const inquiryData = {
       recipient: user._id,
       recipientInfo: {
-        name: user.businessName,
+        name: user.businessName || user.name,
         role: "seller",
         phone: user.phone,
         city: user.city,
         address: user.address,
         detail: user.materialType,
       },
-      senderName: formData.get("name"),
-      senderEmail: formData.get("email"),
-      senderWhatsapp: formData.get("whatsapp"),
-      requirements: formData.get("requirements"),
+      senderName: formData.get("name") as string,
+      senderEmail: formData.get("email") as string,
+      senderWhatsapp: formData.get("whatsapp") as string,
+      requirements: formData.get("requirements") as string,
     };
-
     dispatch(createInquiry(inquiryData)).then((result) => {
       if (createInquiry.fulfilled.match(result)) {
         toast.success(`Your inquiry has been sent to ${user.businessName}!`);
@@ -105,6 +132,7 @@ const ContactModal = ({ isOpen, onClose, user }) => {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={onClose}
                 className="p-2 text-gray-500 hover:text-gray-800"
               >
@@ -166,54 +194,54 @@ const ContactModal = ({ isOpen, onClose, user }) => {
   );
 };
 
-const SellersSection = () => {
+const SellersSection: FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const { sellers, sellerListStatus } = useSelector(
     (state: RootState) => state.user
   );
-  const [filters, setFilters] = useState({
-    name: "",
-    city: "",
-    address: "",
-    materialType: "all",
-  });
-  const [filteredSellers, setFilteredSellers] = useState([]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const [filters, setFilters] = useState({ city: "", materialType: "all" });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedSeller, setSelectedSeller] = useState(null);
+  const [selectedSeller, setSelectedSeller] = useState<SellerType | null>(null);
 
   useEffect(() => {
     dispatch(fetchSellers());
   }, [dispatch]);
 
-  useEffect(() => {
-    let currentSellers = Array.isArray(sellers)
-      ? sellers
-          .filter((s) =>
-            s.businessName?.toLowerCase().includes(filters.name.toLowerCase())
-          )
-          .filter((s) =>
-            s.city?.toLowerCase().includes(filters.city.toLowerCase())
-          )
-          .filter((s) =>
-            s.address?.toLowerCase().includes(filters.address.toLowerCase())
-          )
-      : [];
-    if (filters.materialType !== "all") {
-      currentSellers = currentSellers.filter(
-        (s) => s.materialType === filters.materialType
-      );
-    }
-    setFilteredSellers(currentSellers.slice(0, 8));
+  const filteredSellers = useMemo(() => {
+    if (!Array.isArray(sellers)) return [];
+
+    return sellers.filter((s: SellerType) => {
+      const matchesCity = filters.city
+        ? s.city?.toLowerCase().includes(filters.city.toLowerCase())
+        : true;
+      const matchesMaterial =
+        filters.materialType !== "all"
+          ? s.materialType === filters.materialType
+          : true;
+      return matchesCity && matchesMaterial;
+    });
   }, [filters, sellers]);
 
-  const handleContactClick = (seller) => {
+  const handleContactClick = (seller: SellerType) => {
     setSelectedSeller(seller);
     setIsModalOpen(true);
   };
-  const handleFilterChange = (value, type) =>
-    setFilters((p) => ({ ...p, [type]: value }));
-  const clearFilters = () =>
-    setFilters({ name: "", city: "", address: "", materialType: "all" });
+
+  const handleFilterChange = (value: string, type: "city" | "materialType") => {
+    setFilters((prev) => ({ ...prev, [type]: value }));
+  };
+
+  const scroll = (direction: "left" | "right") => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 300;
+      scrollContainerRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
 
   return (
     <>
@@ -224,42 +252,27 @@ const SellersSection = () => {
               Find Material Suppliers
             </h2>
             <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-              Connect with trusted material suppliers for every construction
-              need.
+              Connect with trusted suppliers for every construction need.
             </p>
           </div>
-          <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md mb-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-            <div className="col-span-1 md:col-span-2 lg:col-span-1">
-              <Label>Business Name</Label>
+
+          <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md mb-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end max-w-3xl mx-auto">
+            <div className="lg:col-span-1">
+              <Label htmlFor="city-filter">City</Label>
               <Input
-                placeholder="Search..."
-                value={filters.name}
-                onChange={(e) => handleFilterChange(e.target.value, "name")}
-              />
-            </div>
-            <div className="col-span-1">
-              <Label>City</Label>
-              <Input
+                id="city-filter"
                 placeholder="e.g., Jaipur"
                 value={filters.city}
                 onChange={(e) => handleFilterChange(e.target.value, "city")}
               />
             </div>
-            <div className="col-span-1">
-              <Label>Address / Area</Label>
-              <Input
-                placeholder="e.g., Sitapura"
-                value={filters.address}
-                onChange={(e) => handleFilterChange(e.target.value, "address")}
-              />
-            </div>
-            <div className="col-span-1">
-              <Label>Business Type</Label>
+            <div className="lg:col-span-1">
+              <Label htmlFor="material-filter">Business Type</Label>
               <Select
                 value={filters.materialType}
                 onValueChange={(v) => handleFilterChange(v, "materialType")}
               >
-                <SelectTrigger>
+                <SelectTrigger id="material-filter">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -274,11 +287,11 @@ const SellersSection = () => {
             </div>
             <Button
               variant="outline"
-              onClick={clearFilters}
+              onClick={() => setFilters({ city: "", materialType: "all" })}
               className="w-full lg:w-auto"
+              type="button"
             >
-              <X className="w-4 h-4 mr-2 lg:mr-0" />
-              <span className="lg:hidden">Clear Filters</span>
+              <X className="w-4 h-4 mr-2" /> Clear
             </Button>
           </div>
 
@@ -287,55 +300,84 @@ const SellersSection = () => {
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
             </div>
           )}
-          {sellerListStatus === "succeeded" &&
-            (filteredSellers.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {filteredSellers.map((seller) => (
-                  <div
-                    key={seller._id}
-                    className="bg-white rounded-xl p-4 flex flex-col group transition-all duration-300 border-2 border-transparent hover:border-primary hover:shadow-xl hover:-translate-y-2"
-                  >
-                    <Avatar className="w-20 h-20 mx-auto mb-3 border-4 border-white shadow-md">
-                      <AvatarImage
-                        src={seller.photoUrl}
-                        alt={seller.businessName}
-                      />
-                      <AvatarFallback className="text-xl font-bold bg-gray-200 text-gray-600">
-                        {seller.businessName?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="text-center flex-grow">
-                      <h3 className="font-bold text-lg text-gray-800">
-                        {seller.businessName}
-                      </h3>
-                      <div className="mt-2 space-y-1.5 text-sm text-left text-gray-500">
-                        <div className="flex items-start gap-2">
-                          <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
-                          <span>
-                            {seller.address}, {seller.city}
-                          </span>
+
+          {sellerListStatus === "succeeded" && (
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 rounded-full h-12 w-12 bg-white/80 backdrop-blur-sm hover:bg-white hidden md:flex"
+                onClick={() => scroll("left")}
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </Button>
+
+              <div
+                ref={scrollContainerRef}
+                className="flex overflow-x-auto scroll-smooth py-4 -mx-4 px-4 snap-x snap-mandatory"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
+                <div className="flex gap-8">
+                  {filteredSellers.length > 0 ? (
+                    filteredSellers.map((seller) => (
+                      <div
+                        key={seller._id}
+                        className="bg-white rounded-xl p-4 flex flex-col group transition-all duration-300 border-2 border-transparent hover:border-primary hover:shadow-xl hover:-translate-y-2 w-72 flex-shrink-0 snap-start"
+                      >
+                        <Avatar className="w-20 h-20 mx-auto mb-3 border-4 border-white shadow-md">
+                          <AvatarImage
+                            src={seller.photoUrl}
+                            alt={seller.businessName}
+                          />
+                          <AvatarFallback className="text-xl font-bold bg-gray-200 text-gray-600">
+                            {seller.businessName?.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="text-center flex-grow">
+                          <h3 className="font-bold text-lg text-gray-800">
+                            {seller.businessName}
+                          </h3>
+                          <div className="mt-2 space-y-1.5 text-sm text-left text-gray-500">
+                            <div className="flex items-start gap-2">
+                              <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+                              <span>
+                                {seller.address}, {seller.city}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Briefcase className="w-4 h-4 shrink-0 text-primary" />
+                              <span>{seller.materialType}</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Briefcase className="w-4 h-4 shrink-0 text-primary" />
-                          <span>{seller.materialType}</span>
-                        </div>
+                        <Button
+                          onClick={() => handleContactClick(seller)}
+                          className="mt-4 w-full btn-primary h-10"
+                          type="button"
+                        >
+                          <Phone className="w-4 h-4 mr-2" />
+                          Contact Now
+                        </Button>
                       </div>
+                    ))
+                  ) : (
+                    <div className="w-full text-center py-12 text-gray-500 bg-white/50 rounded-xl">
+                      <p>No sellers found matching your criteria.</p>
                     </div>
-                    <Button
-                      onClick={() => handleContactClick(seller)}
-                      className="mt-4 w-full btn-primary h-10"
-                    >
-                      <Phone className="w-4 h-4 mr-2" />
-                      Contact Now
-                    </Button>
-                  </div>
-                ))}
+                  )}
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-12 text-gray-500 bg-white rounded-xl">
-                <p>No sellers found matching your criteria.</p>
-              </div>
-            ))}
+
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 rounded-full h-12 w-12 bg-white/80 backdrop-blur-sm hover:bg-white hidden md:flex"
+                onClick={() => scroll("right")}
+              >
+                <ChevronRight className="h-6 w-6" />
+              </Button>
+            </div>
+          )}
         </div>
       </section>
       <ContactModal
