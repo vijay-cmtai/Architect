@@ -1,4 +1,14 @@
-import React, { useState, useEffect } from "react";
+// src/components/ContractorsSection.tsx
+
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  FC,
+  ReactNode,
+  FormEvent,
+} from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
 import { fetchContractors } from "@/lib/features/users/userSlice";
@@ -12,18 +22,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { MapPin, Star, Building, Phone, X, Send, Loader2 } from "lucide-react";
+import {
+  MapPin,
+  Star,
+  Building,
+  Phone,
+  X,
+  Send,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
-// Type definitions for contractors and modal props
+// Type definitions
 type ContractorType = {
   _id: string;
   name: string;
@@ -41,27 +54,15 @@ type ContactModalProps = {
   user: ContractorType | null;
 };
 
-const contractorExperience = [
-  "0-2 years",
-  "2-5 years",
-  "5-10 years",
-  "10+ years",
-];
-
-const ContactModal: React.FC<ContactModalProps> = ({
-  isOpen,
-  onClose,
-  user,
-}) => {
+const ContactModal: FC<ContactModalProps> = ({ isOpen, onClose, user }) => {
   const dispatch: AppDispatch = useDispatch();
   const { actionStatus } = useSelector((state: RootState) => state.inquiries);
 
   if (!isOpen || !user) return null;
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-
     const inquiryData = {
       recipient: user._id,
       recipientInfo: {
@@ -72,20 +73,19 @@ const ContactModal: React.FC<ContactModalProps> = ({
         address: user.address,
         detail: user.experience,
       },
-      senderName: formData.get("name"),
-      senderEmail: formData.get("email"),
-      senderWhatsapp: formData.get("whatsapp"),
-      requirements: formData.get("requirements"),
+      senderName: formData.get("name") as string,
+      senderEmail: formData.get("email") as string,
+      senderWhatsapp: formData.get("whatsapp") as string,
+      requirements: formData.get("requirements") as string,
     };
-
-    dispatch(createInquiry(inquiryData) as any).then((result: any) => {
+    dispatch(createInquiry(inquiryData)).then((result) => {
       if (createInquiry.fulfilled.match(result)) {
         toast.success(`Your inquiry has been sent to ${user.name}!`);
-        dispatch(resetActionStatus() as any);
+        dispatch(resetActionStatus());
         onClose();
       } else {
         toast.error(String(result.payload) || "An error occurred.");
-        dispatch(resetActionStatus() as any);
+        dispatch(resetActionStatus());
       }
     });
   };
@@ -179,63 +179,46 @@ const ContactModal: React.FC<ContactModalProps> = ({
   );
 };
 
-const ContractorsSection: React.FC = () => {
+const ContractorsSection: FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const { contractors, contractorListStatus } = useSelector(
     (state: RootState) => state.user
   );
-  const [filters, setFilters] = useState({
-    name: "",
-    city: "",
-    address: "",
-    experience: "all",
-  });
-  const [filteredContractors, setFilteredContractors] = useState<
-    ContractorType[]
-  >([]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const [cityFilter, setCityFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedContractor, setSelectedContractor] =
     useState<ContractorType | null>(null);
 
   useEffect(() => {
-    dispatch(fetchContractors() as any);
+    dispatch(fetchContractors());
   }, [dispatch]);
 
-  useEffect(() => {
-    let currentContractors = Array.isArray(contractors)
-      ? contractors
-          .filter(
-            (c: ContractorType) =>
-              c.name?.toLowerCase().includes(filters.name.toLowerCase()) ||
-              c.companyName?.toLowerCase().includes(filters.name.toLowerCase())
-          )
-          .filter((c: ContractorType) =>
-            filters.city
-              ? c.city?.toLowerCase().includes(filters.city.toLowerCase())
-              : true
-          )
-          .filter((c: ContractorType) =>
-            filters.address
-              ? c.address?.toLowerCase().includes(filters.address.toLowerCase())
-              : true
-          )
-      : [];
-    if (filters.experience !== "all") {
-      currentContractors = currentContractors.filter(
-        (c: ContractorType) => c.experience === filters.experience
-      );
+  const filteredContractors = useMemo(() => {
+    if (!Array.isArray(contractors)) return [];
+    if (!cityFilter) {
+      return contractors;
     }
-    setFilteredContractors(currentContractors.slice(0, 8));
-  }, [filters, contractors]);
+    return contractors.filter((c: ContractorType) =>
+      c.city?.toLowerCase().includes(cityFilter.toLowerCase())
+    );
+  }, [cityFilter, contractors]);
 
   const handleContactClick = (contractor: ContractorType) => {
     setSelectedContractor(contractor);
     setIsModalOpen(true);
   };
-  const handleFilterChange = (value: string, type: string) =>
-    setFilters((p) => ({ ...p, [type]: value }));
-  const clearFilters = () =>
-    setFilters({ name: "", city: "", address: "", experience: "all" });
+
+  const scroll = (direction: "left" | "right") => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 300;
+      scrollContainerRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
 
   return (
     <>
@@ -246,62 +229,28 @@ const ContractorsSection: React.FC = () => {
               Hire Local Contractors
             </h2>
             <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-              Find experienced contractors to bring your projects to life.
+              Find experienced contractors in your city to bring projects to
+              life.
             </p>
           </div>
-          <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md mb-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-            <div className="col-span-1 md:col-span-2 lg:col-span-1">
-              <Label>Name / Company</Label>
-              <Input
-                placeholder="Search..."
-                value={filters.name}
-                onChange={(e) => handleFilterChange(e.target.value, "name")}
-              />
-            </div>
-            <div className="col-span-1">
-              <Label>City</Label>
-              <Input
-                placeholder="e.g., Pune"
-                value={filters.city}
-                onChange={(e) => handleFilterChange(e.target.value, "city")}
-              />
-            </div>
-            <div className="col-span-1">
-              <Label>Address / Area</Label>
-              <Input
-                placeholder="e.g., Hinjewadi"
-                value={filters.address}
-                onChange={(e) => handleFilterChange(e.target.value, "address")}
-              />
-            </div>
-            <div className="col-span-1">
-              <Label>Experience</Label>
-              <Select
-                value={filters.experience}
-                onValueChange={(v) => handleFilterChange(v, "experience")}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Levels</SelectItem>
-                  {contractorExperience.map((opt) => (
-                    <SelectItem key={opt} value={opt}>
-                      {opt}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button
-              variant="outline"
-              onClick={clearFilters}
-              className="w-full lg:w-auto"
-              type="button"
+
+          <div className="max-w-md mx-auto mb-10 bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md">
+            <Label
+              htmlFor="city-filter"
+              className="font-semibold text-gray-700"
             >
-              <X className="w-4 h-4 mr-2 lg:mr-0" />
-              <span className="lg:hidden">Clear Filters</span>
-            </Button>
+              Filter by City
+            </Label>
+            <div className="relative mt-2">
+              <Input
+                id="city-filter"
+                placeholder="e.g., Pune, Mumbai..."
+                value={cityFilter}
+                onChange={(e) => setCityFilter(e.target.value)}
+                className="pl-10 h-12"
+              />
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            </div>
           </div>
 
           {contractorListStatus === "loading" && (
@@ -309,62 +258,90 @@ const ContractorsSection: React.FC = () => {
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
             </div>
           )}
-          {contractorListStatus === "succeeded" &&
-            (filteredContractors.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {filteredContractors.map((contractor) => (
-                  <div
-                    key={contractor._id}
-                    className="bg-white rounded-xl p-4 flex flex-col group transition-all duration-300 border-2 border-transparent hover:border-primary hover:shadow-xl hover:-translate-y-2"
-                  >
-                    <Avatar className="w-20 h-20 mx-auto mb-3 border-4 border-white shadow-md">
-                      <AvatarImage
-                        src={contractor.photoUrl}
-                        alt={contractor.name}
-                      />
-                      <AvatarFallback className="text-xl font-bold bg-gray-200 text-gray-600">
-                        {contractor.name?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="text-center flex-grow">
-                      <h3 className="font-bold text-lg text-gray-800">
-                        {contractor.name}
-                      </h3>
-                      <div className="flex items-center justify-center gap-1.5 text-gray-500 text-sm mt-1">
-                        <Building className="w-4 h-4 text-primary" />
-                        <span className="font-medium">
-                          {contractor.companyName}
-                        </span>
-                      </div>
-                      <div className="mt-2 space-y-1.5 text-sm text-left text-gray-500">
-                        <div className="flex items-start gap-2">
-                          <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
-                          <span>
-                            {contractor.address}, {contractor.city}
-                          </span>
+
+          {contractorListStatus === "succeeded" && (
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 rounded-full h-12 w-12 bg-white/80 backdrop-blur-sm hover:bg-white hidden md:flex"
+                onClick={() => scroll("left")}
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </Button>
+
+              <div
+                ref={scrollContainerRef}
+                className="flex overflow-x-auto scroll-smooth py-4 -mx-4 px-4 snap-x snap-mandatory"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
+                <div className="flex gap-8">
+                  {filteredContractors.length > 0 ? (
+                    filteredContractors.map((contractor) => (
+                      <div
+                        key={contractor._id}
+                        className="bg-white rounded-xl p-4 flex flex-col group transition-all duration-300 border-2 border-transparent hover:border-primary hover:shadow-xl hover:-translate-y-2 w-72 flex-shrink-0 snap-start"
+                      >
+                        <Avatar className="w-20 h-20 mx-auto mb-3 border-4 border-white shadow-md">
+                          <AvatarImage
+                            src={contractor.photoUrl}
+                            alt={contractor.name}
+                          />
+                          <AvatarFallback className="text-xl font-bold bg-gray-200 text-gray-600">
+                            {contractor.name?.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="text-center flex-grow">
+                          <h3 className="font-bold text-lg text-gray-800">
+                            {contractor.name}
+                          </h3>
+                          <div className="flex items-center justify-center gap-1.5 text-gray-500 text-sm mt-1">
+                            <Building className="w-4 h-4 text-primary" />
+                            <span className="font-medium">
+                              {contractor.companyName}
+                            </span>
+                          </div>
+                          <div className="mt-2 space-y-1.5 text-sm text-left text-gray-500">
+                            <div className="flex items-start gap-2">
+                              <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+                              <span>
+                                {contractor.address}, {contractor.city}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Star className="w-4 h-4 shrink-0 text-primary" />
+                              <span>{contractor.experience} Experience</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Star className="w-4 h-4 shrink-0 text-primary" />
-                          <span>{contractor.experience} Experience</span>
-                        </div>
+                        <Button
+                          onClick={() => handleContactClick(contractor)}
+                          className="mt-4 w-full btn-primary h-10"
+                          type="button"
+                        >
+                          <Phone className="w-4 h-4 mr-2" />
+                          Contact Now
+                        </Button>
                       </div>
+                    ))
+                  ) : (
+                    <div className="w-full text-center py-12 text-gray-500 bg-white/50 rounded-xl">
+                      <p>No contractors found for "{cityFilter}".</p>
                     </div>
-                    <Button
-                      onClick={() => handleContactClick(contractor)}
-                      className="mt-4 w-full btn-primary h-10"
-                      type="button"
-                    >
-                      <Phone className="w-4 h-4 mr-2" />
-                      Contact Now
-                    </Button>
-                  </div>
-                ))}
+                  )}
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-12 text-gray-500 bg-white rounded-xl">
-                <p>No contractors found matching your criteria.</p>
-              </div>
-            ))}
+
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 rounded-full h-12 w-12 bg-white/80 backdrop-blur-sm hover:bg-white hidden md:flex"
+                onClick={() => scroll("right")}
+              >
+                <ChevronRight className="h-6 w-6" />
+              </Button>
+            </div>
+          )}
         </div>
       </section>
       <ContactModal

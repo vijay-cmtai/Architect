@@ -1,76 +1,66 @@
-// src/pages/ProductDetail.jsx
-
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
 import { fetchProducts } from "@/lib/features/products/productSlice";
-import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice";
 import { Heart, Plus, Minus, Loader2, ServerCrash } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
-import { useToast } from "@/components/ui/use-toast"; // Shadcn toast
+import { useToast } from "@/components/ui/use-toast";
 import house1 from "@/assets/house-1.jpg";
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
-  const { toast } = useToast(); // Initialize Shadcn toast
+  const { toast } = useToast();
 
-  const { products: adminProducts, listStatus: adminListStatus } = useSelector(
+  const { products, listStatus } = useSelector(
     (state: RootState) => state.products
   );
-  const { plans: professionalPlans, listStatus: profListStatus } = useSelector(
-    (state: RootState) => state.professionalPlans
-  );
 
-  const { state: cartState, addItem } = useCart();
+  const { state: cartState, addItem } = useCart(); // Get cart state and addItem function
+
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isLiked, setIsLiked] = useState(false); // Wishlist state
+  const [isLiked, setIsLiked] = useState(false);
 
   useEffect(() => {
-    if (adminListStatus === "idle") {
-      dispatch(fetchProducts({}));
+    if (
+      listStatus === "idle" ||
+      !Array.isArray(products) ||
+      products.length === 0
+    ) {
+      dispatch(fetchProducts({}) as any);
     }
-    if (profListStatus === "idle") {
-      dispatch(fetchAllApprovedPlans());
-    }
-  }, [dispatch, adminListStatus, profListStatus]);
+  }, [dispatch, listStatus, products]);
 
   const product = useMemo(() => {
-    const allProducts = [
-      ...(Array.isArray(adminProducts)
-        ? adminProducts.map((p) => ({ ...p, name: p.name, image: p.mainImage }))
-        : []),
-      ...(Array.isArray(professionalPlans)
-        ? professionalPlans.map((p) => ({
-            ...p,
-            name: p.planName,
-            image: p.mainImage,
-          }))
-        : []),
-    ];
-    return allProducts.find((p) => p._id === id) || null;
-  }, [adminProducts, professionalPlans, id]);
+    return Array.isArray(products)
+      ? products.find((p: any) => p._id === id)
+      : null;
+  }, [products, id]);
 
   const productImages = useMemo(() => {
     if (!product) return [house1];
-    const images = [product.image, ...(product.galleryImages || [])].filter(
-      Boolean
-    );
+    const images = [
+      product.mainImage || product.image,
+      ...(product.images || []),
+    ].filter(Boolean);
     return images.length > 0 ? images : [house1];
   }, [product]);
 
-  // --- ✨ UPDATED handleAddToCart function ---
+  // ==========================================================
+  // ✨ FIX IS HERE: Made the function async and added await ✨
+  // ==========================================================
   const handleAddToCart = async () => {
     if (!product) return;
 
+    // The addItem function is now async. We wait for it to complete.
     await addItem({
-      productId: product._id,
+      id: product._id,
       name: product.name,
       price: product.isSale ? product.salePrice : product.price,
       image: productImages[0],
@@ -78,7 +68,6 @@ const ProductDetail = () => {
       quantity: quantity,
     });
 
-    // Use Shadcn toast
     toast({
       title: "Added to Cart!",
       description: `${quantity} x ${product.name} has been added to your cart.`,
@@ -92,47 +81,36 @@ const ProductDetail = () => {
       if (shouldGoToCart) {
         navigate("/cart");
       }
-    }, 500);
+    }, 500); // Shorter delay for better user experience
   };
 
   const handleBuyNow = async () => {
     if (!product) return;
+
+    // Also await here to ensure the item is in the cart before navigating
     await addItem({
-      productId: product._id,
+      id: product._id,
       name: product.name,
       price: product.isSale ? product.salePrice : product.price,
       image: productImages[0],
       size: product.plotSize,
       quantity: quantity,
     });
+
+    // Navigate immediately after the item is added
     navigate("/checkout");
   };
 
   const relatedProducts = useMemo(() => {
-    if (!product) return [];
-    const allProducts = [
-      ...(Array.isArray(adminProducts)
-        ? adminProducts.map((p) => ({ ...p, name: p.name, image: p.mainImage }))
-        : []),
-      ...(Array.isArray(professionalPlans)
-        ? professionalPlans.map((p) => ({
-            ...p,
-            name: p.planName,
-            image: p.mainImage,
-          }))
-        : []),
-    ];
-    return allProducts
+    if (!product || !Array.isArray(products)) return [];
+    return products
       .filter((p: any) => p.category === product.category && p._id !== id)
       .slice(0, 2);
-  }, [adminProducts, professionalPlans, product, id]);
+  }, [products, product, id]);
 
-  const isLoading =
-    adminListStatus === "loading" || profListStatus === "loading";
-
-  if (isLoading) {
+  if (listStatus === "loading" || (listStatus === "succeeded" && !product)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-12 h-12 animate-spin text-primary" />
       </div>
     );
@@ -234,8 +212,8 @@ const ProductDetail = () => {
                   {product.plotArea} sqft
                 </div>
                 <div>
-                  <span className="font-medium text-gray-600">Rooms:</span>{" "}
-                  {product.rooms || product.bhk} BHK
+                  <span className="font-medium text-gray-600">Bedrooms:</span>{" "}
+                  {product.bedrooms || product.rooms}
                 </div>
                 <div>
                   <span className="font-medium text-gray-600">Bathrooms:</span>{" "}
@@ -277,6 +255,7 @@ const ProductDetail = () => {
               </div>
               <div className="space-y-3">
                 <div className="flex space-x-4">
+                  {/* ✨ Using cartState.loading for disabled state ✨ */}
                   <Button
                     onClick={handleAddToCart}
                     disabled={cartState.loading}
@@ -321,7 +300,6 @@ const ProductDetail = () => {
             </div>
           </div>
         </div>
-
         {relatedProducts.length > 0 && (
           <div>
             <h2 className="text-2xl font-bold text-gray-800 mb-8">

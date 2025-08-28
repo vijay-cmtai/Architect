@@ -11,7 +11,7 @@ const planTypes = [
     href: "/floor-plans",
   },
   {
-    name: "3D Elevations",
+    name: "Floor Plan + 3D Elevations",
     image:
       "https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
     href: "/3d-plans",

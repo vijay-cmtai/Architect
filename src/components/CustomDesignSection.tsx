@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Wrench } from "lucide-react"; 
+import { Wrench, Video } from "lucide-react";
 
 const customServices = [
   {
@@ -27,8 +27,15 @@ const customServices = [
       "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
     href: "/customize/interior-designs",
   },
+  {
+    name: "3D Video WalkThrough",
+    description:
+      "Experience your future home with immersive 3D video walkthroughs.",
+    image:
+      "https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2", 
+    href: "/customize/3d-video-walkthrough",
+  },
 ];
-
 const CustomDesignSection = () => {
   return (
     <section className="py-20 bg-soft-teal">
@@ -46,8 +53,10 @@ const CustomDesignSection = () => {
           <div className="mt-4 h-1 w-24 bg-primary mx-auto rounded-full"></div>
         </motion.div>
 
-        {/* --- NEW CARD-BASED UI --- */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        {/* --- UPDATED CARD-BASED UI for 4 cards in one row --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+          {" "}
+          {/* 'lg:grid-cols-4' for 4 in a row on large screens */}
           {customServices.map((service, index) => (
             <motion.div
               key={service.name}
@@ -68,7 +77,11 @@ const CustomDesignSection = () => {
                   </div>
                   <div className="p-6 text-center">
                     <div className="inline-block p-3 mb-4 bg-primary/10 rounded-full">
-                      <Wrench className="w-6 h-6 text-primary" />
+                      {service.name === "3D Video WalkThrough" ? (
+                        <Video className="w-6 h-6 text-primary" />
+                      ) : (
+                        <Wrench className="w-6 h-6 text-primary" />
+                      )}
                     </div>
                     <h3 className="text-xl font-bold text-foreground mb-2">
                       {service.name}

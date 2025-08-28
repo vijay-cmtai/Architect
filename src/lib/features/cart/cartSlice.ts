@@ -142,7 +142,6 @@ const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    // This local action is now dispatched by the thunk upon success and for logout
     clearCart: (state) => {
       state.items = [];
       state.total = 0;
@@ -190,6 +189,5 @@ const cartSlice = createSlice({
       });
   },
 });
-
 export const { clearCart } = cartSlice.actions;
 export default cartSlice.reducer;

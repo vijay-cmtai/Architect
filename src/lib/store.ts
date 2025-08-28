@@ -11,6 +11,7 @@ import cartReducer from "./features/cart/cartSlice";
 import wishlistReducer from "./features/wishlist/wishlistSlice";
 import orderReducer from "./features/orders/orderSlice";
 import adminReducer from "./features/admin/adminSlice";
+import blogReducer from "./features/blog/blogSlice";
 
 export const store = configureStore({
   reducer: {
@@ -26,6 +27,7 @@ export const store = configureStore({
     wishlist: wishlistReducer,
     orders: orderReducer,
     admin: adminReducer,
+    blog: blogReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

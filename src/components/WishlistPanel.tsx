@@ -1,4 +1,6 @@
-import { Link, useNavigate } from "react-router-dom"; // ✨ useNavigate imported
+// components/WishlistPanel.tsx
+
+import { Link, useNavigate } from "react-router-dom";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
@@ -10,49 +12,36 @@ import {
 } from "@/components/ui/sheet";
 import { X, HeartCrack, ShoppingCart, Loader2 } from "lucide-react";
 
-// Add types for props and wishlist/cart items
 type WishlistPanelProps = {
   isOpen: boolean;
   onClose: () => void;
 };
 
-type WishlistItem = {
-  id: string;
-  _id?: string;
+interface WishlistItem {
+  productId: string;
   name: string;
   price: number;
   salePrice?: number;
   image: string;
   size?: string;
-};
+}
 
 const WishlistPanel: React.FC<WishlistPanelProps> = ({ isOpen, onClose }) => {
   const { wishlistItems, removeFromWishlist } = useWishlist();
   const { addItem, state: cartState } = useCart();
-  const navigate = useNavigate(); // ✨ useNavigate hook initialized
+  const navigate = useNavigate();
 
-  // ==========================================================
-  // ✨ FIX IS HERE: The function is now async and uses await ✨
-  // ==========================================================
   const handleAddToCart = async (item: WishlistItem) => {
-    // 1. Wait for the item to be successfully added to the cart
     await addItem({
-      id: item.id,
-      _id: item._id,
+      productId: item.productId, // Use productId
       name: item.name,
-      price: item.price,
-      salePrice: item.salePrice,
+      price: item.salePrice || item.price,
       image: item.image,
       size: item.size,
+      quantity: 1,
     });
-
-    // 2. Remove the item from the wishlist
-    removeFromWishlist(item.id);
-
-    // 3. Close the wishlist panel
+    removeFromWishlist(item.productId); // Use productId
     onClose();
-
-    // 4. Navigate to the cart page
     navigate("/cart");
   };
 
@@ -69,8 +58,7 @@ const WishlistPanel: React.FC<WishlistPanelProps> = ({ isOpen, onClose }) => {
             <HeartCrack className="w-16 h-16 mb-4 text-primary/30" />
             <h3 className="text-xl font-semibold">Your Wishlist is Empty</h3>
             <p className="mt-2 max-w-xs">
-              Looks like you haven't added anything yet. Start exploring and add
-              your favorite plans!
+              Start exploring and add your favorite plans!
             </p>
             <Button asChild className="mt-6" onClick={onClose}>
               <Link to="/products">Explore Plans</Link>
@@ -80,10 +68,10 @@ const WishlistPanel: React.FC<WishlistPanelProps> = ({ isOpen, onClose }) => {
           <div className="flex-grow overflow-y-auto p-6 space-y-4">
             {wishlistItems.map((item) => (
               <div
-                key={item.id}
+                key={item.productId}
                 className="flex items-start gap-4 p-2 rounded-lg hover:bg-muted/50"
               >
-                <Link to={`/product/${item.id}`} onClick={onClose}>
+                <Link to={`/product/${item.productId}`} onClick={onClose}>
                   <img
                     src={item.image}
                     alt={item.name}
@@ -92,7 +80,7 @@ const WishlistPanel: React.FC<WishlistPanelProps> = ({ isOpen, onClose }) => {
                 </Link>
                 <div className="flex-grow">
                   <Link
-                    to={`/product/${item.id}`}
+                    to={`/product/${item.productId}`}
                     onClick={onClose}
                     className="hover:underline"
                   >
@@ -102,10 +90,7 @@ const WishlistPanel: React.FC<WishlistPanelProps> = ({ isOpen, onClose }) => {
                     {item.size}
                   </p>
                   <p className="text-lg font-bold text-primary mt-1">
-                    ₹
-                    {item.salePrice
-                      ? item.salePrice.toLocaleString()
-                      : item.price.toLocaleString()}
+                    ₹{(item.salePrice || item.price).toLocaleString()}
                   </p>
                   <Button
                     size="sm"
@@ -125,7 +110,7 @@ const WishlistPanel: React.FC<WishlistPanelProps> = ({ isOpen, onClose }) => {
                   variant="ghost"
                   size="icon"
                   className="text-muted-foreground hover:text-destructive h-8 w-8 flex-shrink-0"
-                  onClick={() => removeFromWishlist(item.id)}
+                  onClick={() => removeFromWishlist(item.productId)}
                 >
                   <X className="w-4 h-4" />
                 </Button>

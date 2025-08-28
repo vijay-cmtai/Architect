@@ -1,13 +1,9 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  ReactNode,
-} from "react";
+// contexts/WishlistContext.tsx
+
+import React, { createContext, useContext, useEffect, ReactNode } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useToast } from "@/components/ui/use-toast";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 import { RootState, AppDispatch } from "@/lib/store";
 import {
   fetchWishlist,
@@ -16,19 +12,18 @@ import {
   clearWishlist,
 } from "@/lib/features/wishlist/wishlistSlice";
 
-interface Product {
-  id: string;
-  _id: string;
+interface WishlistItem {
+  productId: string;
   name: string;
-  size?: string;
   price: number;
   salePrice?: number;
   image: string;
+  size?: string;
 }
 
 interface WishlistContextType {
-  wishlistItems: Product[];
-  addToWishlist: (product: Product) => void;
+  wishlistItems: WishlistItem[];
+  addToWishlist: (product: WishlistItem) => void;
   removeFromWishlist: (productId: string) => void;
   isInWishlist: (productId: string) => boolean;
 }
@@ -37,30 +32,17 @@ const WishlistContext = createContext<WishlistContextType | undefined>(
   undefined
 );
 
-interface WishlistProviderProps {
-  children: ReactNode;
-}
-
-export const WishlistProvider: React.FC<WishlistProviderProps> = ({
+export const WishlistProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const dispatch: AppDispatch = useDispatch();
-  const navigate = useNavigate(); // Hook for navigation
-  const { items: wishlistData } = useSelector(
+  const navigate = useNavigate();
+  const { items: wishlistItems } = useSelector(
     (state: RootState) => state.wishlist
   );
   const { userInfo } = useSelector((state: RootState) => state.user);
   const { toast } = useToast();
 
-  const wishlistItems: Product[] = useMemo(
-    () =>
-      Array.isArray(wishlistData)
-        ? wishlistData.map((item: any) => ({ ...item, id: item.productId }))
-        : [],
-    [wishlistData]
-  );
-
-  // Fetch wishlist when user logs in, clear it on logout
   useEffect(() => {
     if (userInfo) {
       dispatch(fetchWishlist());
@@ -70,19 +52,19 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
   }, [userInfo, dispatch]);
 
   const isInWishlist = (productId: string): boolean => {
-    return wishlistItems.some((item) => item.id === productId);
+    return wishlistItems.some((item) => item.productId === productId);
   };
 
-  const addToWishlistAPI = (product: Product) => {
+  const addToWishlistAPI = (product: WishlistItem) => {
     if (!userInfo) {
       toast({
         title: "Login Required",
         description: "Please log in to add items to your wishlist.",
       });
-      navigate("/login"); // Redirect to login page
+      navigate("/login");
       return;
     }
-    if (isInWishlist(product.id)) return;
+    if (isInWishlist(product.productId)) return;
 
     toast({
       title: "Added to Wishlist",
@@ -93,16 +75,12 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
 
   const removeFromWishlistAPI = (productId: string) => {
     if (!userInfo) {
-      // This case is less likely but good for safety
-      toast({
-        title: "Login Required",
-        description: "Please log in to manage your wishlist.",
-      });
       navigate("/login");
       return;
     }
-
-    const itemToRemove = wishlistItems.find((item) => item.id === productId);
+    const itemToRemove = wishlistItems.find(
+      (item) => item.productId === productId
+    );
     if (!itemToRemove) return;
 
     toast({

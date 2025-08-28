@@ -111,6 +111,7 @@ const Footer = () => {
                 { name: "Refund Policy", href: "/refund-policy" },
                 { name: "Terms of Service", href: "/terms" },
                 { name: "Privacy Policy", href: "/privacy-policy" },
+                { name: "Blogs", href: "/blogs" },
               ].map((item) => (
                 <li key={item.name}>
                   <Link

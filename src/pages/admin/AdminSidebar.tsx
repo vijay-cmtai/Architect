@@ -1,3 +1,5 @@
+// src/components/admin/AdminSidebar.jsx
+
 import React, { useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -9,7 +11,6 @@ import {
   PlusCircle,
   Users,
   BarChart2,
-  Settings,
   UserCircle,
   LogOut,
   X,
@@ -20,6 +21,7 @@ import {
   HelpCircle,
   FileCheck2,
   Gem,
+  PenSquare, // New Icon for Blog
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/features/users/userSlice";
@@ -52,6 +54,12 @@ const productLinks = [
   { name: "Add New Product", path: "/admin/products/add", icon: PlusCircle },
 ];
 
+// ✨ NEW: Blog Links Array ✨
+const blogLinks = [
+  { name: "All Posts", path: "/admin/blogs", icon: Box },
+  { name: "Add New Post", path: "/admin/blogs/add", icon: PlusCircle },
+];
+
 const userLinks = [
   { name: "All Users", path: "/admin/users", icon: Users },
   { name: "Add New User", path: "/admin/users/add", icon: PlusCircle },
@@ -63,6 +71,7 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
     users: false,
     requests: false,
     inquiries: false,
+    blogs: false, // ✨ New state for blogs menu ✨
   });
 
   const dispatch = useDispatch();
@@ -90,6 +99,7 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
       className={({ isActive }) =>
         `${baseLinkClasses} my-1 ${isActive ? activeClasses : inactiveClasses}`
       }
+      onClick={() => setIsOpen(false)} // Close sidebar on mobile link click
     >
       <link.icon className="h-5 w-5 mr-3" />
       <span>{link.name}</span>
@@ -157,6 +167,10 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
         <nav className="flex-grow overflow-y-auto pr-2">
           {mainLinks.map(renderNavLink)}
           {renderSubMenu("Products", ShoppingBag, "products", productLinks)}
+
+          {/* ✨ NEW BLOG SUBMENU ✨ */}
+          {renderSubMenu("Blog", PenSquare, "blogs", blogLinks)}
+
           {renderSubMenu("Users", Users, "users", userLinks)}
           {renderSubMenu("Requests", Building, "requests", requestLinks)}
           {renderSubMenu("Inquiries", HelpCircle, "inquiries", inquiryLinks)}

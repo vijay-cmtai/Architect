@@ -1,3 +1,5 @@
+// src/components/FeaturedProducts.tsx
+
 import React, { useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, store } from "@/lib/store";
@@ -52,13 +54,9 @@ const FeaturedProducts = () => {
     if (!userInfo || !Array.isArray(orders)) {
       return new Set();
     }
-
-    // Get all items from all paid orders
     const paidItems = orders
       .filter((order) => order.isPaid)
       .flatMap((order) => order.orderItems);
-
-    // Return a Set of just the product IDs
     return new Set(
       paidItems.map((item) => item.productId?._id || item.productId)
     );
@@ -75,7 +73,6 @@ const FeaturedProducts = () => {
     }
 
     if (!purchasedProductIds.has(product._id)) {
-      // User is logged in but has not purchased this product
       toast({
         title: "Product Not Purchased",
         description: "You must purchase this plan to download the file.",
@@ -100,34 +97,23 @@ const FeaturedProducts = () => {
       const response = await fetch(product.planFile);
       if (!response.ok) throw new Error("Network response was not ok.");
       const blob = await response.blob();
-
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-
       const fileExtension =
         product.planFile.split(".").pop()?.split("?")[0] || "pdf";
       link.setAttribute(
         "download",
         `ArchHome-${product.name.replace(/\s+/g, "-")}.${fileExtension}`
       );
-
       document.body.appendChild(link);
       link.click();
-
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-
-      toast({
-        title: "Success",
-        description: "Your download has started!",
-      });
+      toast({ title: "Success", description: "Your download has started!" });
     } catch (error) {
       console.error("Download failed:", error);
-      toast({
-        title: "Error",
-        description: "Failed to download the file.",
-      });
+      toast({ title: "Error", description: "Failed to download the file." });
     }
   };
 
@@ -141,11 +127,13 @@ const FeaturedProducts = () => {
     }
   };
 
+  // --- ✨ FIX IS HERE ---
   const handleWishlistToggle = (product: any) => {
     const isWishlisted = isInWishlist(product._id);
+
+    // Create an object with the key 'productId' as expected by the context and slice
     const productForWishlist = {
-      id: product._id,
-      _id: product._id,
+      productId: product._id, // Use productId
       name: product.name,
       price: product.price,
       salePrice: product.salePrice,
@@ -159,6 +147,7 @@ const FeaturedProducts = () => {
       addToWishlist(productForWishlist);
     }
   };
+  // --- END OF FIX ---
 
   return (
     <section className="py-20 bg-background">
@@ -337,11 +326,7 @@ const FeaturedProducts = () => {
                           </Link>
                           <Button
                             size="sm"
-                            className={`w-full text-white text-sm h-10 ${
-                              hasPurchased
-                                ? "bg-teal-500 hover:bg-teal-600"
-                                : "bg-gray-400 hover:bg-gray-500"
-                            }`}
+                            className={`w-full text-white text-sm h-10 ${hasPurchased ? "bg-teal-500 hover:bg-teal-600" : "bg-gray-400 hover:bg-gray-500"}`}
                             onClick={() => handleDownload(product)}
                             disabled={!hasPurchased}
                           >
@@ -363,7 +348,6 @@ const FeaturedProducts = () => {
                 })}
               </div>
             </div>
-
             <Button
               variant="outline"
               size="icon"

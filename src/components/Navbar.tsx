@@ -12,7 +12,6 @@ import {
   LogOut,
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
-import { useWishlist } from "@/contexts/WishlistContext";
 import { Button } from "@/components/ui/button";
 import WishlistPanel from "@/components/WishlistPanel";
 import { useSelector, useDispatch } from "react-redux";
@@ -35,7 +34,10 @@ const Navbar = () => {
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
 
   const { state: cartState } = useCart();
-  const { wishlistItems } = useWishlist();
+  const { items: wishlistItems } = useSelector(
+    (state: RootState) => state.wishlist
+  );
+
   const location = useLocation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -91,7 +93,7 @@ const Navbar = () => {
       <header
         className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? "bg-white/95 shadow-md backdrop-blur-lg" : "bg-white"}`}
       >
-        <div className="max-w-screen-xl mx-auto px-2 sm:px-6 lg:px-8">
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <Link to="/" className="flex items-center gap-2">
               <div className="relative">
@@ -103,6 +105,7 @@ const Navbar = () => {
                 />
               </div>
             </Link>
+
             <nav className="hidden lg:flex items-center space-x-8">
               {navLinks.map((link) => (
                 <Link
@@ -128,86 +131,124 @@ const Navbar = () => {
                 </Link>
               ))}
             </nav>
-            <div className="hidden lg:flex items-center space-x-5">
-              <button className="text-gray-600 hover:text-orange-600 transition-colors">
-                <Search className="w-5 h-5" />
-              </button>
-              {showCartAndWishlist && (
-                <>
-                  <button
-                    onClick={() => setIsWishlistOpen(true)}
-                    className="text-gray-600 hover:text-orange-600 transition-colors"
-                  >
-                    <Heart className="w-5 h-5" />
-                  </button>
-                  <Link
-                    to="/cart"
-                    className="relative text-gray-600 hover:text-orange-600 transition-colors"
-                  >
-                    <ShoppingCart className="w-5 h-5" />
-                    {cartState.items.length > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
-                        {cartState.items.reduce(
-                          (sum, item) => sum + item.quantity,
-                          0
-                        )}
-                      </span>
-                    )}
-                  </Link>
-                </>
-              )}
-              {isUserAllowed ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-2">
-                      <Avatar className="w-9 h-9 border-2 border-orange-500">
-                        <AvatarFallback className="bg-orange-500 text-white font-bold">
-                          {userInfo.name
-                            ? userInfo.name.charAt(0).toUpperCase()
-                            : "V"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium text-gray-700">
-                        {userInfo.name}
-                      </span>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <Link to={getDashboardPath()}>
-                      <DropdownMenuItem className="cursor-pointer">
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Dashboard</span>
-                      </DropdownMenuItem>
-                    </Link>
-                    <DropdownMenuItem
-                      onClick={handleLogout}
-                      className="cursor-pointer text-red-600"
+
+            <div className="flex items-center space-x-4">
+              {/* Desktop Icons */}
+              <div className="hidden lg:flex items-center space-x-5">
+                <button className="text-gray-600 hover:text-orange-600 transition-colors">
+                  <Search className="w-5 h-5" />
+                </button>
+                {showCartAndWishlist && (
+                  <>
+                    <button
+                      onClick={() => setIsWishlistOpen(true)}
+                      className="relative text-gray-600 hover:text-orange-600 transition-colors"
                     >
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Sign Out</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Link to="/login">
-                  <Button className="bg-orange-500 hover:bg-orange-600 rounded-full">
-                    Login
-                  </Button>
-                </Link>
-              )}
-            </div>
-            <div className="lg:hidden">
-              <button
-                onClick={() => setIsMenuOpen(true)}
-                className="text-gray-600"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
+                      <Heart className="w-5 h-5" />
+                      {wishlistItems.length > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                          {wishlistItems.length}
+                        </span>
+                      )}
+                    </button>
+                    <Link
+                      to="/cart"
+                      className="relative text-gray-600 hover:text-orange-600 transition-colors"
+                    >
+                      <ShoppingCart className="w-5 h-5" />
+                      {cartState.items.length > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                          {cartState.items.reduce(
+                            (sum, item) => sum + item.quantity,
+                            0
+                          )}
+                        </span>
+                      )}
+                    </Link>
+                  </>
+                )}
+                {isUserAllowed ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="flex items-center gap-2">
+                        <Avatar className="w-9 h-9 border-2 border-orange-500">
+                          <AvatarFallback className="bg-orange-500 text-white font-bold">
+                            {userInfo.name
+                              ? userInfo.name.charAt(0).toUpperCase()
+                              : "V"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium text-gray-700">
+                          {userInfo.name}
+                        </span>
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <Link to={getDashboardPath()}>
+                        <DropdownMenuItem className="cursor-pointer">
+                          <User className="mr-2 h-4 w-4" />
+                          <span>Dashboard</span>
+                        </DropdownMenuItem>
+                      </Link>
+                      <DropdownMenuItem
+                        onClick={handleLogout}
+                        className="cursor-pointer text-red-600"
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Sign Out</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Link to="/login">
+                    <Button className="bg-orange-500 hover:bg-orange-600 rounded-full">
+                      Login
+                    </Button>
+                  </Link>
+                )}
+              </div>
+
+              {/* --- ✨ MOBILE VIEW ICONS & MENU ✨ --- */}
+              <div className="lg:hidden flex items-center gap-4">
+                {showCartAndWishlist && (
+                  <>
+                    <button
+                      onClick={() => setIsWishlistOpen(true)}
+                      className="relative text-gray-600"
+                    >
+                      <Heart className="w-6 h-6" />
+                      {wishlistItems.length > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                          {wishlistItems.length}
+                        </span>
+                      )}
+                    </button>
+                    <Link to="/cart" className="relative text-gray-600">
+                      <ShoppingCart className="w-6 h-6" />
+                      {cartState.items.length > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                          {cartState.items.reduce(
+                            (sum, item) => sum + item.quantity,
+                            0
+                          )}
+                        </span>
+                      )}
+                    </Link>
+                  </>
+                )}
+                <button
+                  onClick={() => setIsMenuOpen(true)}
+                  className="text-gray-600"
+                >
+                  <Menu className="w-6 h-6" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
+
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
@@ -225,6 +266,8 @@ const Navbar = () => {
                   <X className="w-6 h-6" />
                 </button>
               </div>
+
+              {/* --- ✨ MOBILE MENU CONTENT ✨ --- */}
               <nav className="flex flex-col space-y-4">
                 {navLinks.map((link) => (
                   <Link
@@ -236,6 +279,50 @@ const Navbar = () => {
                   </Link>
                 ))}
               </nav>
+
+              {/* ✨ Mobile User/Auth Section ✨ */}
+              <div className="mt-8 border-t pt-6">
+                {isUserAllowed ? (
+                  <div className="space-y-4">
+                    <Link
+                      to={getDashboardPath()}
+                      className="flex items-center p-3 rounded-lg text-gray-700 hover:bg-gray-100"
+                    >
+                      <Avatar className="w-10 h-10 border-2 border-orange-500 mr-3">
+                        <AvatarFallback className="bg-orange-500 text-white font-bold">
+                          {userInfo.name
+                            ? userInfo.name.charAt(0).toUpperCase()
+                            : "V"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-semibold">{userInfo.name}</p>
+                        <p className="text-sm text-gray-500">View Dashboard</p>
+                      </div>
+                    </Link>
+                    <Button
+                      onClick={handleLogout}
+                      variant="ghost"
+                      className="w-full justify-start text-red-600 hover:bg-red-50"
+                    >
+                      <LogOut className="mr-3 h-5 w-5" /> Logout
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <Link to="/login" className="flex-1">
+                      <Button variant="outline" className="w-full">
+                        Login
+                      </Button>
+                    </Link>
+                    <Link to="/register" className="flex-1">
+                      <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white">
+                        Register
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
