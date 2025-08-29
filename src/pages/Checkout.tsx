@@ -46,7 +46,7 @@ const CheckoutPage = () => {
   const [paypalClientId, setPaypalClientId] = useState("");
   const [isPaypalSdkReady, setIsPaypalSdkReady] = useState(false);
 
-  const shipping = 5000;
+  const shipping = 0;
   const tax = Math.round(cartState.total * 0.18);
   const finalTotal = cartState.total + shipping + tax;
 
@@ -199,7 +199,6 @@ const CheckoutPage = () => {
       shippingAddress: data,
       paymentMethod: paymentMethod,
       itemsPrice: cartState.total,
-      shippingPrice: shipping,
       taxPrice: tax,
       totalPrice: finalTotal,
     };

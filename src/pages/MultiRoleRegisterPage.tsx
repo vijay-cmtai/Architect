@@ -52,6 +52,14 @@ const materialTypes = [
   "Other",
 ];
 
+// ++ CHANGE HERE: Added an array for contractor experience levels.
+const contractorExperienceLevels = [
+  "0-2 Years",
+  "2-5 Years",
+  "5-10 Years",
+  "10+ Years",
+];
+
 const MultiRoleRegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState("user");
@@ -74,21 +82,20 @@ const MultiRoleRegisterPage = () => {
     city: "",
     materialType: "",
     companyName: "",
+    // ++ CHANGE HERE: Added 'experience' to the form state.
+    experience: "",
     photo: null,
   });
 
   const isLoading = actionStatus === "loading";
 
-  // Updated redirection logic - sellers and contractors don't go to dashboard
   useEffect(() => {
     if (actionStatus === "failed" && error) {
-      toast.error(error);
+      toast.error(String(error));
       dispatch(resetActionStatus());
     }
     if (actionStatus === "succeeded" && userInfo) {
       dispatch(resetActionStatus());
-
-      // Role ke anusaar alag-alag message aur redirection
       switch (userInfo.role) {
         case "admin":
           toast.success("Admin registration successful! Redirecting...");
@@ -120,18 +127,23 @@ const MultiRoleRegisterPage = () => {
     }
   }, [actionStatus, userInfo, error, navigate, dispatch]);
 
-  const handleChange = (e) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setFormData((prev) => ({ ...prev, [e.target.id]: e.target.value }));
   };
-  const handleSelectChange = (value, fieldName) => {
+
+  const handleSelectChange = (value: string, fieldName: string) => {
     setFormData((prev) => ({ ...prev, [fieldName]: value }));
   };
-  const handleFileChange = (e) => {
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setFormData((prev) => ({ ...prev, photo: e.target.files[0] }));
     }
   };
-  const handleRoleChange = (value) => {
+
+  const handleRoleChange = (value: string) => {
     setSelectedRole(value);
     setFormData({
       role: value,
@@ -145,16 +157,19 @@ const MultiRoleRegisterPage = () => {
       city: "",
       materialType: "",
       companyName: "",
+      // ++ CHANGE HERE: Reset 'experience' when the role changes.
+      experience: "",
       photo: null,
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const dataToSubmit = new FormData();
     for (const key in formData) {
-      if (formData[key]) {
-        dataToSubmit.append(key, formData[key]);
+      const value = formData[key as keyof typeof formData];
+      if (value) {
+        dataToSubmit.append(key, value as string | Blob);
       }
     }
     (dispatch as AppDispatch)(registerUser(dataToSubmit));
@@ -335,6 +350,26 @@ const MultiRoleRegisterPage = () => {
                 value={formData.phone}
                 onChange={handleChange}
               />
+            </div>
+            {/* ++ CHANGE HERE: Added the Experience dropdown for Contractors. */}
+            <div>
+              <Label>Experience*</Label>
+              <Select
+                onValueChange={(v) => handleSelectChange(v, "experience")}
+                value={formData.experience}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your experience level" />
+                </SelectTrigger>
+                <SelectContent>
+                  {contractorExperienceLevels.map((level) => (
+                    <SelectItem key={level} value={level}>
+                      {level}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Address*</Label>

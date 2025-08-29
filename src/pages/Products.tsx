@@ -22,11 +22,13 @@ import {
 import { fetchProducts } from "@/lib/features/products/productSlice";
 import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice";
 import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
+import { submitCustomizationRequest } from "@/lib/features/customization/customizationSlice";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -229,7 +231,7 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
           onValueChange={(value) =>
             setFilters((prev) => ({
               ...prev,
-              budget: value as [number, number],
+              budget: value,
             }))
           }
           max={50000}
@@ -265,7 +267,7 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
 const ProductCard = ({ product, userOrders }) => {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-  const { userInfo } = useSelector((state: RootState) => state.user);
+  const { userInfo } = useSelector((state) => state.user);
 
   const isWishlisted = isInWishlist(product._id);
   const linkTo =
@@ -274,22 +276,42 @@ const ProductCard = ({ product, userOrders }) => {
       : `/product/${product._id}`;
 
   // Check if user has purchased this product
-  const hasPurchased = userOrders?.some(
-    (order) =>
-      order.isPaid &&
-      order.orderItems?.some(
-        (item) =>
-          item.productId === product._id || item.productId?._id === product._id
-      )
-  );
+  const hasPurchased = useMemo(() => {
+    if (!userInfo || !userOrders || userOrders.length === 0) return false;
+    return userOrders.some(
+      (order) =>
+        order.isPaid &&
+        order.orderItems?.some(
+          (item) =>
+            item.productId === product._id ||
+            item.productId?._id === product._id
+        )
+    );
+  }, [userOrders, userInfo, product._id]);
 
-  const handleWishlistClick = () => {
+  // Fixed wishlist logic - same as second version
+  const handleWishlistToggle = () => {
     if (!userInfo) {
       toast.error("Please log in to add items to your wishlist.");
       navigate("/login");
       return;
     }
-    isWishlisted ? removeFromWishlist(product._id) : addToWishlist(product);
+
+    // Create an object with the key 'productId' as expected by the context and slice
+    const productForWishlist = {
+      productId: product._id, // Use productId
+      name: product.name,
+      price: product.price,
+      salePrice: product.salePrice,
+      image: product.image || product.mainImage,
+      size: product.plotSize,
+    };
+
+    if (isWishlisted) {
+      removeFromWishlist(product._id);
+    } else {
+      addToWishlist(productForWishlist);
+    }
   };
 
   const handleDownload = async () => {
@@ -344,7 +366,7 @@ const ProductCard = ({ product, userOrders }) => {
       <div className="relative p-2">
         <Link to={linkTo}>
           <img
-            src={product.image || house3}
+            src={product.image || product.mainImage || house3}
             alt={product.name}
             className="w-full h-48 object-cover rounded-md group-hover:scale-105 transition-transform duration-500"
           />
@@ -366,9 +388,9 @@ const ProductCard = ({ product, userOrders }) => {
             Purchased
           </div>
         )}
-        <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
-            onClick={handleWishlistClick}
+            onClick={handleWishlistToggle}
             className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-gray-600 hover:text-red-500 hover:scale-110"}`}
             aria-label="Toggle Wishlist"
           >
@@ -377,6 +399,17 @@ const ProductCard = ({ product, userOrders }) => {
               fill={isWishlisted ? "currentColor" : "none"}
             />
           </button>
+          {product.youtubeLink && (
+            <a
+              href={product.youtubeLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="w-9 h-9 bg-red-500/90 rounded-full flex items-center justify-center shadow-sm text-white hover:bg-red-600"
+            >
+              <Youtube className="w-5 h-5" />
+            </a>
+          )}
         </div>
       </div>
       <div className="p-4 grid grid-cols-2 gap-4 border-t text-center text-sm">
@@ -421,7 +454,7 @@ const ProductCard = ({ product, userOrders }) => {
           </span>
         </div>
       </div>
-      <div className="p-4 pt-0 mt-auto grid grid-cols-1 gap-2">
+      <div className="p-4 pt-0 mt-auto space-y-2">
         <Link to={linkTo}>
           <Button
             variant="outline"
@@ -456,10 +489,223 @@ const ProductCard = ({ product, userOrders }) => {
   );
 };
 
+// --- Country Customization Form Component ---
+
+// --- Componente CountryCustomizationForm (CON CORRECCIONES) ---
+// --- Componente CountryCustomizationForm (CON CORRECCIONES) ---
+const CountryCustomizationForm = ({ countryName }) => {
+  const dispatch = useDispatch();
+  const { actionStatus, error } = useSelector((state) => state.customization);
+
+  const [formData, setFormData] = useState({
+    country: countryName || "",
+    name: "",
+    email: "",
+    whatsappNumber: "",
+    width: "",
+    length: "",
+    // FIX 1: Se eliminó el campo 'direction' que no está en el JSON de respuesta.
+    description: "",
+  });
+  const [referenceFile, setReferenceFile] = useState(null);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files.length > 0) {
+      setReferenceFile(e.target.files[0]);
+    }
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+
+    const submitData = new FormData();
+    Object.keys(formData).forEach((key) => {
+      submitData.append(key, formData[key]);
+    });
+
+    if (referenceFile) {
+      submitData.append("referenceFile", referenceFile);
+    }
+
+    // Este campo es requerido por el backend y se añade aquí.
+    submitData.append("requestType", "Floor Plan Customization");
+
+    try {
+      await dispatch(submitCustomizationRequest(submitData)).unwrap();
+      toast.success(
+        `Customization request for ${countryName || "your location"} sent successfully!`
+      );
+
+      // Reiniciar el formulario
+      setFormData({
+        country: countryName || "",
+        name: "",
+        email: "",
+        whatsappNumber: "",
+        width: "",
+        length: "",
+        // FIX 2: Se eliminó 'direction' del objeto de reseteo.
+        description: "",
+      });
+      setReferenceFile(null);
+    } catch (rejectedError) {
+      toast.error(rejectedError || "Failed to submit customization request");
+    }
+  };
+
+  return (
+    <div className="bg-gray-50 py-16 mt-12">
+      <div className="container mx-auto px-4">
+        <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl p-8 md:p-12 flex flex-col lg:flex-row items-center gap-12">
+          {/* Lado Izquierdo: Formulario */}
+          <div className="w-full lg:w-1/2">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              Customize a Plan for {countryName || "Your Location"}
+            </h2>
+            <form onSubmit={handleFormSubmit} className="space-y-5">
+              {/* Campo de País */}
+              <div>
+                <Label htmlFor="country">Country</Label>
+                <Input
+                  id="country"
+                  name="country"
+                  value={formData.country}
+                  onChange={handleInputChange}
+                  className="mt-1 bg-gray-200 border-gray-300 text-gray-500"
+                  readOnly={!!countryName}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="mt-1 bg-gray-100 border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="mt-1 bg-gray-100 border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="whatsappNumber">WhatsApp Number *</Label>
+                <Input
+                  type="tel"
+                  id="whatsappNumber"
+                  name="whatsappNumber"
+                  value={formData.whatsappNumber}
+                  onChange={handleInputChange}
+                  className="mt-1 bg-gray-100 border-transparent"
+                  required
+                />
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="width">Width (ft)</Label>
+                  <Input
+                    id="width"
+                    name="width"
+                    value={formData.width}
+                    onChange={handleInputChange}
+                    className="mt-1 bg-gray-100 border-transparent"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor="length">Length (ft)</Label>
+                  <Input
+                    id="length"
+                    name="length"
+                    value={formData.length}
+                    onChange={handleInputChange}
+                    className="mt-1 bg-gray-100 border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* FIX 3: Se eliminó por completo el bloque del campo 'Facing Direction'. */}
+
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Your message..."
+                  className="mt-1 bg-gray-100 border-transparent"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="referenceFile">
+                  Upload Reference (Image or PDF)
+                </Label>
+                <Input
+                  id="referenceFile"
+                  name="referenceFile"
+                  type="file"
+                  onChange={handleFileChange}
+                  accept="image/*,.pdf"
+                  className="mt-1"
+                />
+              </div>
+
+              <Button
+                type="submit"
+                disabled={actionStatus === "loading"}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-12 text-base disabled:opacity-50"
+              >
+                {actionStatus === "loading" ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Request"
+                )}
+              </Button>
+            </form>
+          </div>
+
+          {/* Lado Derecho: Imagen */}
+          <div className="w-full lg:w-1/2 hidden lg:block">
+            <img
+              src="https://images.pexels.com/photos/276724/pexels-photo-276724.jpeg?auto=compress&cs=tinysrgb&w=600"
+              alt="Beautiful modern house"
+              className="w-full h-full object-cover rounded-xl"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Products = () => {
-  const dispatch: AppDispatch = useDispatch();
+  const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
-  const { userInfo } = useSelector((state: RootState) => state.user);
+  const { userInfo } = useSelector((state) => state.user);
 
   const categoryQuery = searchParams.get("category");
   const searchQuery = searchParams.get("search");
@@ -469,17 +715,15 @@ const Products = () => {
     products: adminProducts,
     listStatus: adminListStatus,
     error: adminError,
-  } = useSelector((state: RootState) => state.products);
+  } = useSelector((state) => state.products);
   const {
     plans: professionalPlans,
     listStatus: profListStatus,
     error: profError,
-  } = useSelector((state: RootState) => state.professionalPlans);
+  } = useSelector((state) => state.professionalPlans);
 
   // Get user orders
-  const { orders: userOrders } = useSelector(
-    (state: RootState) => state.orders
-  );
+  const { orders: userOrders } = useSelector((state) => state.orders);
 
   const [viewMode, setViewMode] = useState("grid");
   const [filters, setFilters] = useState({
@@ -498,7 +742,7 @@ const Products = () => {
 
   useEffect(() => {
     // Only send filters that are not "all" or default
-    const apiParams: Record<string, any> = {};
+    const apiParams = {};
     Object.entries(filters).forEach(([key, value]) => {
       if (key === "budget") {
         apiParams.budget = value.join("-");
@@ -802,6 +1046,10 @@ const Products = () => {
           </div>
         </div>
       </div>
+
+      {/* Country Customization Form - Only show when country query is present */}
+      {countryQuery && <CountryCustomizationForm countryName={countryQuery} />}
+
       <Footer />
     </div>
   );

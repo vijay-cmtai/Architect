@@ -32,7 +32,7 @@ const customServices = [
     description:
       "Experience your future home with immersive 3D video walkthroughs.",
     image:
-      "https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2", 
+      "https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2", // Example image for video walkthroughs
     href: "/customize/3d-video-walkthrough",
   },
 ];

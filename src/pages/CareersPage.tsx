@@ -47,6 +47,11 @@ const jobOpenings = [
     type: "Part-time / Consultant",
   },
   { title: "Site Engineer", location: "On-site", type: "Full-time" },
+  {
+    title: "MEP Consultant",
+    location: "Remote / On-site",
+    type: "Part-time / Consultant",
+  },
 ];
 
 const corporatePackages = [
@@ -64,7 +69,7 @@ const corporatePackages = [
     slug: "offices-shops",
   },
   {
-    title: "Factories & Educational",
+    title: "Factories,Hostpital & Industires",
     icon: <Factory size={48} className="text-orange-500" />,
     description:
       "Specialized plans for industrial buildings, schools, and colleges.",
@@ -78,13 +83,7 @@ const corporatePackages = [
     slug: "franchisee",
     highlight: true,
   },
-  {
-    title: "MEP Consultant",
-    icon: <Briefcase size={48} className="text-orange-500" />,
-    description:
-      "Expert consultancy for Mechanical, Electrical, and Plumbing systems.",
-    slug: "mep-consultant",
-  },
+
   {
     title: "Social Media / Content Creator",
     icon: <Users2 size={48} className="text-orange-500" />,

@@ -51,6 +51,7 @@ const InteriorDesignRequestPage: React.FC = () => {
           imageAlt="Example of modern interior design"
           isLoading={actionStatus === "loading"}
         >
+          {/* Your other form fields */}
           <div>
             <label htmlFor="name" className={formStyles.label}>
               Name
@@ -87,6 +88,23 @@ const InteriorDesignRequestPage: React.FC = () => {
               required
             />
           </div>
+
+          {/* FIX IS HERE: Added the missing 'country' input field */}
+          <div>
+            <label htmlFor="country" className={formStyles.label}>
+              Country
+            </label>
+            <input
+              type="text"
+              id="country"
+              name="country"
+              className={formStyles.input}
+              defaultValue="India" // You can set a default or dynamic value
+              required
+            />
+          </div>
+          {/* End of fix */}
+
           <div className="flex gap-4">
             <div className="flex-1">
               <label htmlFor="roomWidth" className={formStyles.label}>
@@ -120,8 +138,12 @@ const InteriorDesignRequestPage: React.FC = () => {
               name="designFor"
               className={formStyles.select}
             >
-              <option>Residential Interior Design</option>
-              <option>Commercial Interior Design</option>
+              <option value="Residential Interior Design">
+                Residential Interior Design
+              </option>
+              <option value="Commercial Interior Design">
+                Commercial Interior Design
+              </option>
             </select>
           </div>
           <div>

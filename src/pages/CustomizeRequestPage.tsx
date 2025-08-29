@@ -1,3 +1,5 @@
+// src/pages/CustomizeRequestPage.tsx
+
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, store } from "@/lib/store";
@@ -50,6 +52,7 @@ const CustomizeRequestPage: React.FC = () => {
           imageAlt="Beautiful house exterior"
           isLoading={actionStatus === "loading"}
         >
+          {/* Your other form fields remain the same */}
           <div>
             <label htmlFor="name" className={formStyles.label}>
               Name
@@ -86,6 +89,23 @@ const CustomizeRequestPage: React.FC = () => {
               required
             />
           </div>
+
+          {/* ++ FIX IS HERE: Added the missing 'country' input field ++ */}
+          <div>
+            <label htmlFor="country" className={formStyles.label}>
+              Country
+            </label>
+            <input
+              type="text"
+              id="country"
+              name="country" // This 'name' must match the backend controller's expectation
+              className={formStyles.input}
+              defaultValue="India" // You can set a default value or get it from props
+              required
+            />
+          </div>
+          {/* End of fix */}
+
           <div className="flex gap-4">
             <div className="flex-1">
               <label htmlFor="width" className={formStyles.label}>
@@ -119,10 +139,10 @@ const CustomizeRequestPage: React.FC = () => {
               name="facingDirection"
               className={formStyles.select}
             >
-              <option>North</option>
-              <option>South</option>
-              <option>East</option>
-              <option>West</option>
+              <option value="North">North</option>
+              <option value="South">South</option>
+              <option value="East">East</option>
+              <option value="West">West</option>
             </select>
           </div>
           <div>
@@ -137,10 +157,11 @@ const CustomizeRequestPage: React.FC = () => {
             ></textarea>
           </div>
           <div>
-            <label className={formStyles.label}>
+            <label htmlFor="referenceFile" className={formStyles.label}>
               Upload Reference (Image or PDF)
             </label>
             <input
+              id="referenceFile"
               type="file"
               name="referenceFile"
               className={formStyles.fileInput}

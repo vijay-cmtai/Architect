@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState, store } from "@/lib/store";
+// FIX 1: Se eliminaron los tipos 'RootState' y 'store' que son de TypeScript.
 import { toast } from "sonner";
 import {
   submitCustomizationRequest,
@@ -12,7 +12,7 @@ import RequestPageLayout from "../components/RequestPageLayout";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 
-// Assuming formStyles is exported from your layout component
+// Asumiendo que formStyles se exporta desde tu componente de layout
 export const formStyles = {
   label: "block text-sm font-semibold mb-2 text-gray-700",
   input:
@@ -25,22 +25,23 @@ export const formStyles = {
     "w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100",
 };
 
-const ThreeDWalkthroughPage: React.FC = () => {
+// FIX 2: Se eliminó la anotación de tipo ': React.FC'
+const ThreeDWalkthroughPage = () => {
   const dispatch = useDispatch();
-  const { actionStatus, error } = useSelector(
-    (state: RootState) => state.customization
-  );
+  // FIX 3: Se eliminó la anotación de tipo ': RootState'
+  const { actionStatus, error } = useSelector((state) => state.customization);
 
-  const [formKey, setFormKey] = useState<number>(Date.now());
+  // FIX 4: Se eliminó el genérico '<number>' de useState
+  const [formKey, setFormKey] = useState(Date.now());
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  // FIX 5: Se eliminó el tipo del evento
+  const handleSubmit = (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-
-    // ✨ FIX IS HERE: Use the correct requestType value ✨
     formData.append("requestType", "3D Video Walkthrough");
 
-    (dispatch as typeof store.dispatch)(submitCustomizationRequest(formData));
+    // FIX 6: Se eliminó la aserción de tipo
+    dispatch(submitCustomizationRequest(formData));
   };
 
   useEffect(() => {
@@ -49,7 +50,7 @@ const ThreeDWalkthroughPage: React.FC = () => {
         "Request submitted successfully! Our team will contact you shortly."
       );
       dispatch(resetStatus());
-      setFormKey(Date.now()); // Reset form
+      setFormKey(Date.now()); // Reiniciar el formulario
     }
     if (actionStatus === "failed") {
       toast.error(String(error) || "Submission failed. Please try again.");
@@ -67,7 +68,7 @@ const ThreeDWalkthroughPage: React.FC = () => {
           imageAlt="Example of a 3D house walkthrough"
           isLoading={actionStatus === "loading"}
         >
-          {/* Form fields */}
+          {/* Campos del formulario */}
           <div>
             <label htmlFor="name" className={formStyles.label}>
               Name
@@ -104,6 +105,22 @@ const ThreeDWalkthroughPage: React.FC = () => {
               required
             />
           </div>
+
+          {/* FIX 7: Se añadió el campo 'country' que faltaba */}
+          <div>
+            <label htmlFor="country" className={formStyles.label}>
+              Country
+            </label>
+            <input
+              type="text"
+              id="country"
+              name="country"
+              className={formStyles.input}
+              defaultValue="India"
+              required
+            />
+          </div>
+
           <div>
             <label htmlFor="projectScope" className={formStyles.label}>
               Project Scope (e.g., Number of Floors)

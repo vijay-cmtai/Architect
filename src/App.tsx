@@ -1,16 +1,17 @@
 // src/App.jsx
 
 import { Provider } from "react-redux";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { store } from "./lib/store";
+import ScrollToTop from "@/components/ScrollToTop";
 
-// Import all page components
+// --- Public Page Imports ---
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
@@ -27,41 +28,60 @@ import ThreeDPlansPage from "./pages/ThreeDPlansPage";
 import InteriorDesignsPage from "./pages/InteriorDesignsPage";
 import ConstructionProductsPage from "./pages/ConstructionProductsPage";
 import CustomizeRequestPage from "./pages/CustomizeRequestPage";
-import ScrollToTop from "@/components/ScrollToTop";
 import CareersPage from "./pages/CareersPage";
 import ApplicationPage from "./pages/ApplicationPage";
 import DownloadsPage1 from "./pages/DownloadsPage";
-import BlogsPage from "./pages/BlogsPage"; // Public blogs list
-import SingleBlogPostPage from "./pages/SingleBlogPostPage"; // Single blog post
+import BlogsPage from "./pages/BlogsPage";
+import SingleBlogPostPage from "./pages/SingleBlogPostPage";
+import ThankYou from "./pages/ThankYou";
+import InteriorDesignRequestPage from "./pages/InteriorDesignRequestPage";
+import ThreeDElevationPage from "./pages/ThreeDElevationPage";
+import CorporateInquiryPage from "./pages/CorporateInquiryPage";
+import BrandPartnersSection from "./components/BrandPartnersSection";
+import BookingPage from "./pages/BookingPage";
+import PremiumBookingPage from "./pages/PremiumBookingPage";
+import TermsAndConditions from "./pages/TermsAndConditions";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import PaymentPolicy from "./pages/PaymentPolicy";
+import RefundPolicy from "./pages/RefundPolicy";
+import ThreeDWalkthroughPage from "./pages/ThreeDVideoWalkthorugh";
+import ProfessionalProductDetail from "./pages/ProfessionalProduct";
 
-// === DASHBOARD PAGES IMPORTS ===
+// --- User Dashboard Imports ---
 import DashboardLayout from "./pages/Userdashboard/DashboardLayout";
 import DashboardPage from "./pages/Userdashboard/DashboardPage";
 import OrdersPage from "./pages/Userdashboard/OrdersPage";
 import DownloadsPage from "./pages/Userdashboard/DownloadsPage";
+import AddressesPage from "./pages/Userdashboard/AddressesPage";
 import AccountDetailsPage from "./pages/Userdashboard/AccountDetailsPage";
 
-// === ADMIN PAGES IMPORTS ===
+// --- Admin Dashboard Imports ---
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AllProductsPage from "./pages/admin/products/AllProductsPage";
 import AddProductPage from "./pages/admin/products/AddProductPage";
 import AllUsersPage from "./pages/admin/users/AllUsersPage";
 import AddNewUserPage from "./pages/admin/users/AddNewUserPage";
+import AdminProfilePage from "./pages/admin/ProfilePage";
 import AdminOrdersPage from "./pages/admin/OrdersPage";
 import CustomersPage from "./pages/admin/CustomersPage";
 import ReportsPage from "./pages/admin/ReportsPage";
-// ✨ Blog Admin Pages Imports ✨
+import SettingsPage from "./pages/admin/SettingsPage";
+import AdminCustomizationRequestsPage from "./pages/admin/AdminCustomizationRequestsPage";
+import StandardRequestsPage from "./pages/admin/StandardRequestsPage";
+import PremiumRequestsPage from "./pages/admin/PremiumRequestsPage";
+import AllInquiriesPage from "./pages/admin/AllInquiriesPage";
+import AllInquiriesSCPage from "./pages/admin/AllInquiriesSCPage";
+import AdminBlogsPage from "./pages/admin/AdminBlogsPage";
 import AdminAddEditBlogPage from "./pages/admin/AdminAddEditBlogPage";
 
-// === PROFESSIONAL DASHBOARD PAGES IMPORTS ===
+// --- Professional Dashboard Imports ---
 import ProfessionalLayout from "./pages/professional/ProfessionalLayout";
 import ProfessionalDashboardPage from "./pages/professional/DashboardPage";
 import MyProductsPage from "./pages/professional/MyProductsPage";
 import AddProductPageProf from "./pages/professional/AddProductPage";
-import ProfilePage from "./pages/professional/ProfilePage";
+import ProfilePageProf from "./pages/professional/ProfilePage";
 import ProfessionalOrdersPage from "./pages/professional/OrdersPage";
-import AdminBlogsPage from "./pages/admin/AdminBlogsPage";
 
 const queryClient = new QueryClient();
 
@@ -80,8 +100,13 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
+                <Route
+                  path="/professional-plan/:id"
+                  element={<ProfessionalProductDetail />}
+                />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
+                <Route path="/thank-you" element={<ThankYou />} />
                 <Route path="/services" element={<ServicePage />} />
                 <Route path="/about" element={<AboutUs />} />
                 <Route path="/download" element={<DownloadsPage1 />} />
@@ -90,8 +115,20 @@ const App = () => (
                 <Route path="/register" element={<Register />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/apply" element={<ApplicationPage />} />
+                <Route path="/terms" element={<TermsAndConditions />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/payment-policy" element={<PaymentPolicy />} />
+                <Route path="/refund-policy" element={<RefundPolicy />} />
                 <Route path="/blogs" element={<BlogsPage />} />
                 <Route path="/blog/:slug" element={<SingleBlogPostPage />} />
+                <Route
+                  path="/category/:categoryName"
+                  element={<BrowseProductsPage />}
+                />
+                <Route
+                  path="/plans/:regionName"
+                  element={<BrowseProductsPage />}
+                />
                 <Route path="/floor-plans" element={<BrowseProductsPage />} />
                 <Route path="/3D-plans" element={<ThreeDPlansPage />} />
                 <Route
@@ -106,12 +143,38 @@ const App = () => (
                   path="/customize/floor-plans"
                   element={<CustomizeRequestPage />}
                 />
+                <Route
+                  path="/customize/interior-designs"
+                  element={<InteriorDesignRequestPage />}
+                />
+                <Route
+                  path="/customize/3d-elevation"
+                  element={<ThreeDElevationPage />}
+                />
+                <Route
+                  path="/customize/3d-video-walkthrough"
+                  element={<ThreeDWalkthroughPage />}
+                />
+                <Route
+                  path="/corporate-inquiry/:packageType"
+                  element={<CorporateInquiryPage />}
+                />
+                <Route
+                  path="/brand-partners"
+                  element={<BrandPartnersSection />}
+                />
+                <Route path="/booking-form" element={<BookingPage />} />
+                <Route
+                  path="/premium-booking-form"
+                  element={<PremiumBookingPage />}
+                />
 
                 {/* --- User Dashboard Routes --- */}
                 <Route path="/dashboard" element={<DashboardLayout />}>
                   <Route index element={<DashboardPage />} />
                   <Route path="orders" element={<OrdersPage />} />
                   <Route path="downloads" element={<DownloadsPage />} />
+                  <Route path="addresses" element={<AddressesPage />} />
                   <Route
                     path="account-details"
                     element={<AccountDetailsPage />}
@@ -127,7 +190,7 @@ const App = () => (
                     element={<ProfessionalOrdersPage />}
                   />
                   <Route path="add-product" element={<AddProductPageProf />} />
-                  <Route path="profile" element={<ProfilePage />} />
+                  <Route path="profile" element={<ProfilePageProf />} />
                 </Route>
 
                 {/* --- Admin Dashboard Routes --- */}
@@ -138,20 +201,33 @@ const App = () => (
                   <Route path="orders" element={<AdminOrdersPage />} />
                   <Route path="customers" element={<CustomersPage />} />
                   <Route path="reports" element={<ReportsPage />} />
-                  <Route path="profile" element={<ProfilePage />} />
+                  <Route path="settings" element={<SettingsPage />} />
                   <Route path="users" element={<AllUsersPage />} />
                   <Route path="users/add" element={<AddNewUserPage />} />
-
-                  {/* ✨ NEW BLOG ADMIN ROUTES ✨ */}
-                  <Route path="blogs/add" element={<AdminAddEditBlogPage />} />
+                  <Route path="profile" element={<AdminProfilePage />} />
+                  <Route
+                    path="standard-requests"
+                    element={<StandardRequestsPage />}
+                  />
+                  <Route
+                    path="premium-requests"
+                    element={<PremiumRequestsPage />}
+                  />
+                  <Route
+                    path="customization-requests"
+                    element={<AdminCustomizationRequestsPage />}
+                  />
+                  <Route path="inquiries" element={<AllInquiriesPage />} />
+                  <Route path="inquiries-sc" element={<AllInquiriesSCPage />} />
                   <Route path="blogs" element={<AdminBlogsPage />} />
+                  <Route path="blogs/add" element={<AdminAddEditBlogPage />} />
                   <Route
                     path="blogs/edit/:slug"
                     element={<AdminAddEditBlogPage />}
                   />
                 </Route>
 
-                {/* 404 Not Found Route */}
+                {/* --- 404 Not Found Route --- */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </TooltipProvider>

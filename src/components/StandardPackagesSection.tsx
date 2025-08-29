@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { CheckCircle } from "lucide-react";
-import { Link } from "react-router-dom"; // Link ko import karein
+import { Link } from "react-router-dom";
 
+// FIX: Se actualizó este array con el contenido de tus notas.
 const packages = [
   {
     title: "Floor Plan",
@@ -9,28 +10,57 @@ const packages = [
     unit: "Per sq.ft.",
     areaType: "Built-up Area",
     isPopular: false,
+    features: [
+      "Revision Unlimited upto satisfaction",
+      "Requirements fixed",
+      "General vastu follows",
+      "24 Hours Delivery",
+    ],
   },
   {
-    title: "Floor Plan + 3D",
+    title: "Floor Plan + 3D Elevation", // Título actualizado
     price: "8",
     unit: "Per sq.ft.",
     areaType: "Built-up Area",
     isPopular: true,
+    features: [
+      "Plan Revision Unlimited upto satisfaction",
+      "1 3D model on Reference",
+      "Design & colour change flexibility",
+      "Plan 24 Hours. Elevation 48 Hours Delivery",
+    ],
   },
   {
-    title: "Complete File",
-    price: "10",
-    unit: "Per sq.ft.",
-    areaType: "Built-up Area",
+    title: "Complete House Plan File", // Título actualizado
+    price: "Custom", // Precio actualizado ya que no está en las notas
+    unit: "Price",
+    areaType: "", // Sin tipo de área especificado
     isPopular: false,
+    // Se añadió una nueva propiedad 'includes'
+    includes: [
+      "Floor plan",
+      "3D Elevation + working plan",
+      "Structural Detail plan",
+      "Electrical Detail plan",
+      "Plumbing Detail plan",
+      "Sanitary Detail plan",
+      "Door window Detail",
+      "Staircase Detail",
+    ],
+    // Se añadió una nueva propiedad 'note'
+    note: "Delivery in 3 working days after plan & elevation final. Condition Same as Package-2.",
   },
   {
-    title: "Interior Designing",
-    price: "20",
+    title: "Interior Design", // Título actualizado
+    price: "25", // Precio actualizado desde las notas
     unit: "Per sq.ft.",
     areaType: "Carpet Area",
-    features: ["3D + 2D Drawings Included"],
     isPopular: false,
+    features: [
+      "24 Hours Delivery",
+      "Changes are accepted",
+      "Revisions are accepted",
+    ],
   },
 ];
 
@@ -84,6 +114,7 @@ const StandardPackagesSection = () => {
                   {pkg.areaType}
                 </p>
 
+                {/* Bloque para renderizar 'features' */}
                 {pkg.features && (
                   <div className="text-left mt-4 text-sm space-y-2">
                     {pkg.features.map((feature) => (
@@ -94,13 +125,32 @@ const StandardPackagesSection = () => {
                     ))}
                   </div>
                 )}
+
+                {/* FIX: Se añadió este bloque para renderizar la lista 'includes' */}
+                {pkg.includes && (
+                  <div className="text-left mt-4 text-sm space-y-2">
+                    <p className="font-bold text-foreground mb-2">Includes:</p>
+                    {pkg.includes.map((item) => (
+                      <div key={item} className="flex items-center gap-2">
+                        <CheckCircle size={16} className="text-green-500" />
+                        <span className="text-foreground">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* FIX: Se añadió este bloque para renderizar la 'note' */}
+                {pkg.note && (
+                  <div className="text-left mt-4 text-xs text-muted-foreground border-t pt-2 italic">
+                    {pkg.note}
+                  </div>
+                )}
               </div>
 
-              {/* ✨ YAHAN BADLAAV HAI: Button ab ek Link hai jo state pass kar raha hai ✨ */}
               <Link
                 to="/booking-form"
                 state={{ packageName: pkg.title }}
-                className="mt-6 w-full btn-primary text-center block" // `block` zaroori hai
+                className="mt-6 w-full btn-primary text-center block"
               >
                 Choose Plan
               </Link>

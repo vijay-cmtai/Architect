@@ -1,3 +1,5 @@
+// src/pages/ThreeDElevationPage.tsx
+
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, store } from "@/lib/store";
@@ -50,6 +52,7 @@ const ThreeDElevationPage: React.FC = () => {
           imageAlt="Example of a 3D house elevation"
           isLoading={actionStatus === "loading"}
         >
+          {/* Your other form fields */}
           <div>
             <label htmlFor="name" className={formStyles.label}>
               Name
@@ -86,6 +89,23 @@ const ThreeDElevationPage: React.FC = () => {
               required
             />
           </div>
+
+          {/* ++ FIX IS HERE: Added the missing 'country' input field ++ */}
+          <div>
+            <label htmlFor="country" className={formStyles.label}>
+              Country
+            </label>
+            <input
+              type="text"
+              id="country"
+              name="country"
+              className={formStyles.input}
+              defaultValue="India" // Set a default value
+              required
+            />
+          </div>
+          {/* End of fix */}
+
           <div>
             <label htmlFor="planForFloor" className={formStyles.label}>
               Plan for Floor
@@ -95,9 +115,9 @@ const ThreeDElevationPage: React.FC = () => {
               name="planForFloor"
               className={formStyles.select}
             >
-              <option>G</option>
-              <option>G+1</option>
-              <option>G+2</option>
+              <option value="G">G</option>
+              <option value="G+1">G+1</option>
+              <option value="G+2">G+2</option>
             </select>
           </div>
           <div>
