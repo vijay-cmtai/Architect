@@ -64,14 +64,31 @@ const ProductCard = ({ product }) => {
     );
   }, [userOrders, userInfo, product._id]);
 
-  const handleWishlistClick = () => {
+  // --- ✨ FIXED WISHLIST LOGIC - Same as FeaturedProducts ---
+  const handleWishlistToggle = () => {
     if (!userInfo) {
       toast.error("Please log in to add items to your wishlist.");
       navigate("/login");
       return;
     }
-    isWishlisted ? removeFromWishlist(product._id) : addToWishlist(product);
+
+    // Create an object with the key 'productId' as expected by the context and slice
+    const productForWishlist = {
+      productId: product._id, // Use productId
+      name: product.name,
+      price: product.price,
+      salePrice: product.salePrice,
+      image: product.image || product.mainImage,
+      size: product.plotSize,
+    };
+
+    if (isWishlisted) {
+      removeFromWishlist(product._id);
+    } else {
+      addToWishlist(productForWishlist);
+    }
   };
+  // --- END OF FIX ---
 
   const handleDownload = async () => {
     if (!userInfo) {
@@ -131,15 +148,34 @@ const ProductCard = ({ product }) => {
             Sale!
           </div>
         )}
-        <button
-          onClick={handleWishlistClick}
-          className={`absolute top-4 right-4 w-9 h-9 bg-white/80 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500" : "text-gray-600 hover:text-red-500"}`}
-        >
-          <Heart
-            className="w-5 h-5"
-            fill={isWishlisted ? "currentColor" : "none"}
-          />
-        </button>
+        {hasPurchased && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md">
+            Purchased
+          </div>
+        )}
+        <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={handleWishlistToggle}
+            className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-gray-600 hover:text-red-500 hover:scale-110"}`}
+            aria-label="Toggle Wishlist"
+          >
+            <Heart
+              className="w-5 h-5"
+              fill={isWishlisted ? "currentColor" : "none"}
+            />
+          </button>
+          {product.youtubeLink && (
+            <a
+              href={product.youtubeLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="w-9 h-9 bg-red-500/90 rounded-full flex items-center justify-center shadow-sm text-white hover:bg-red-600"
+            >
+              <Youtube className="w-5 h-5" />
+            </a>
+          )}
+        </div>
       </div>
       <div className="p-4 grid grid-cols-2 gap-4 border-t text-center text-sm">
         <div>
@@ -193,8 +229,9 @@ const ProductCard = ({ product }) => {
           </Button>
         </Link>
         <Button
-          className={`w-full text-white rounded-md`}
+          className={`w-full text-white rounded-md ${hasPurchased ? "bg-teal-500 hover:bg-teal-600" : "bg-gray-400 hover:bg-gray-500"}`}
           onClick={handleDownload}
+          disabled={!hasPurchased}
         >
           {hasPurchased ? (
             <>
