@@ -1,5 +1,3 @@
-// src/pages/CustomizeRequestPage.tsx
-
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, store } from "@/lib/store";
@@ -52,7 +50,7 @@ const CustomizeRequestPage: React.FC = () => {
           imageAlt="Beautiful house exterior"
           isLoading={actionStatus === "loading"}
         >
-          {/* Your other form fields remain the same */}
+          {/* Los otros campos del formulario se mantienen igual */}
           <div>
             <label htmlFor="name" className={formStyles.label}>
               Name
@@ -90,7 +88,6 @@ const CustomizeRequestPage: React.FC = () => {
             />
           </div>
 
-          {/* ++ FIX IS HERE: Added the missing 'country' input field ++ */}
           <div>
             <label htmlFor="country" className={formStyles.label}>
               Country
@@ -98,38 +95,43 @@ const CustomizeRequestPage: React.FC = () => {
             <input
               type="text"
               id="country"
-              name="country" // This 'name' must match the backend controller's expectation
+              name="country"
               className={formStyles.input}
-              defaultValue="India" // You can set a default value or get it from props
+              defaultValue="India"
               required
             />
           </div>
-          {/* End of fix */}
 
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label htmlFor="width" className={formStyles.label}>
-                Width (Ft)
-              </label>
-              <input
-                type="number"
-                id="width"
-                name="width"
-                className={formStyles.input}
-              />
-            </div>
-            <div className="flex-1">
-              <label htmlFor="length" className={formStyles.label}>
-                Length (Ft)
-              </label>
-              <input
-                type="number"
-                id="length"
-                name="length"
-                className={formStyles.input}
-              />
+          {/* FIX: Se añadió un div contenedor y un título para "Plot Size" */}
+          <div>
+            <label className={formStyles.label}>Plot Size</label>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label htmlFor="width" className={formStyles.label}>
+                  Width (Ft)
+                </label>
+                <input
+                  type="number"
+                  id="width"
+                  name="width"
+                  className={formStyles.input}
+                />
+              </div>
+              <div className="flex-1">
+                <label htmlFor="length" className={formStyles.label}>
+                  Length (Ft)
+                </label>
+                <input
+                  type="number"
+                  id="length"
+                  name="length"
+                  className={formStyles.input}
+                />
+              </div>
             </div>
           </div>
+          {/* Fin del arreglo */}
+
           <div>
             <label htmlFor="facingDirection" className={formStyles.label}>
               Facing Direction

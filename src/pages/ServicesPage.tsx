@@ -3,20 +3,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
+// FIX: Se importaron los componentes de paquetes en lugar de definirlos aquí
+import StandardPackagesSection from "@/components/StandardPackagesSection"; // Asegúrate de que esta ruta sea correcta
+import PremiumPackagesSection from "@/components/PremiumPackagesSection"; // Asegúrate de que esta ruta sea correcta
+import CorporatePackagesSection from "@/components/CorporatePackagesSection"; // Asegúrate de que esta ruta sea correcta
+// FIX: Se importaron los iconos para la nueva sección de servicios
 import {
-  Users,
-  MessageSquare,
-  FileEdit,
   ChevronDown,
-  CheckCircle,
-  Star,
   Building2,
   Store,
   Factory,
   PhoneCall,
-  ClipboardCheck,
-  Trophy,
-  CreditCard,
   Lightbulb,
   Handshake,
   Youtube,
@@ -24,170 +21,41 @@ import {
   Users2,
   BrainCircuit,
   Building,
+  Home,
+  Sofa,
+  Wrench,
+  MapPin,
+  Video,
+  Compass,
+  HardHat,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-const processSteps = [
+
+// ==========================================================
+// ✨ NUEVO: Sección de Servicios Principales (de tu chat) ✨
+// ==========================================================
+const coreServices = [
+  { icon: Home, title: "Home Designing", link: "/contact" },
+  { icon: Sofa, title: "Interior Designing", link: "/contact" },
+  { icon: Building, title: "Structural Designing", link: "/contact" },
+  { icon: Wrench, title: "MEP Designing and Consultation", link: "/contact" },
   {
-    icon: PhoneCall,
-    title: "Consultation",
-    description:
-      "We start with a detailed call to understand your vision, requirements, and budget perfectly.",
+    icon: MapPin,
+    title: "Site Visit - Physical",
+    isContact: true,
+    link: "/contact",
   },
   {
-    icon: CreditCard,
-    title: "Secure Payment",
-    description:
-      "Once you're ready, make a secure online payment to book your slot and kickstart the design phase.",
+    icon: Video,
+    title: "Site Visit on Video Call",
+    isContact: true,
+    link: "/contact",
   },
-  {
-    icon: MessageSquare,
-    title: "Discussion & Brainstorming",
-    description:
-      "We collaborate and brainstorm ideas, refining the concept based on your valuable feedback.",
-  },
-  {
-    icon: Users,
-    title: "WhatsApp Group",
-    description:
-      "A dedicated WhatsApp group is created for seamless communication between you and our design team.",
-  },
-  {
-    icon: FileEdit,
-    title: "Drafting",
-    description:
-      "Our expert architects create initial drafts, including 2D floor plans and 3D models for your review.",
-  },
-  {
-    icon: ClipboardCheck,
-    title: "Correction",
-    description:
-      "We incorporate all your suggestions and make necessary revisions to perfect every detail of the design.",
-  },
-  {
-    icon: Trophy,
-    title: "Final Delivery",
-    description:
-      "Once you are completely satisfied, we deliver the final, ready-to-use architectural files.",
-  },
+  { icon: Compass, title: "Vastu Consultation", link: "/contact" },
+  { icon: HardHat, title: "Construction Services", link: "/contact" },
 ];
 
-const standardPackages = [
-  {
-    title: "Floor Plan",
-    price: "2",
-    unit: "Per sq.ft.",
-    areaType: "Built-up Area",
-    isPopular: false,
-    linkTo: "/customize/floor-plans",
-  },
-  {
-    title: "Floor Plan + 3D",
-    price: "8",
-    unit: "Per sq.ft.",
-    areaType: "Built-up Area",
-    isPopular: true,
-    linkTo: "/customize/3d-elevation",
-  },
-  {
-    title: "Complete File",
-    price: "10",
-    unit: "Per sq.ft.",
-    areaType: "Built-up Area",
-    isPopular: false,
-    linkTo: "/products",
-  },
-  {
-    title: "Interior Designing",
-    price: "20",
-    unit: "Per sq.ft.",
-    areaType: "Carpet Area",
-    features: ["3D + 2D Drawings Included"],
-    isPopular: false,
-    linkTo: "/customize/interior-designs",
-  },
-];
-const StandardPackagesSection = () => (
-  <section className="py-20 bg-background">
-    <div className="container mx-auto px-4">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-        className="text-center mb-16"
-      >
-        <h2 className="text-4xl font-bold text-foreground">
-          Standard Packages
-        </h2>
-        <p className="mt-2 text-lg text-muted-foreground">
-          Choose the plan that's right for you.
-        </p>
-      </motion.div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-        {standardPackages.map((pkg, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
-            className={`bg-card border-2 rounded-xl p-6 text-center transition-all duration-300 relative ${pkg.isPopular ? "border-primary shadow-orange -translate-y-2" : "border-border hover:border-primary hover:shadow-medium"}`}
-          >
-            {pkg.isPopular && (
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-4 py-1 rounded-full">
-                MOST POPULAR
-              </div>
-            )}
-            <h3 className="text-2xl font-bold text-foreground mb-4">
-              {pkg.title}
-            </h3>
-            <div className="mb-4">
-              <span className="text-5xl font-extrabold text-primary">{`₹${pkg.price}`}</span>
-              <p className="text-muted-foreground">{pkg.unit}</p>
-            </div>
-            <p className="text-sm text-muted-foreground mb-6">{pkg.areaType}</p>
-            {pkg.features && (
-              <div className="text-left mt-4 text-sm space-y-2">
-                <div className="flex items-center gap-2">
-                  <CheckCircle size={16} className="text-accent" />
-                  <span>{pkg.features[0]}</span>
-                </div>
-              </div>
-            )}
-            <Link to={pkg.linkTo}>
-              <Button className="mt-6 w-full btn-primary">Choose Plan</Button>
-            </Link>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  </section>
-);
-const premiumPackages = [
-  {
-    title: "Floor Plan",
-    price: "5",
-    features: ["3 Options", "Premium Quality"],
-    isPopular: false,
-    linkTo: "/customize/floor-plans",
-  },
-  {
-    title: "Floor Plan + 3D",
-    price: "12",
-    features: ["Premium Quality", "All Side Render", "Video Walkthrough"],
-    isPopular: true,
-    linkTo: "/customize/3d-elevation",
-  },
-  {
-    title: "Complete File + Interior",
-    price: "30",
-    features: ["Everything Included", "Full Support"],
-    areaType: "Built-up Area",
-    isPopular: false,
-    linkTo: "/customize/interior-designs",
-  },
-];
-const PremiumPackagesSection = () => (
+const CoreServicesSection = () => (
   <section className="py-20 bg-soft-teal">
     <div className="container mx-auto px-4">
       <motion.div
@@ -197,170 +65,38 @@ const PremiumPackagesSection = () => (
         transition={{ duration: 0.5 }}
         className="text-center mb-16"
       >
-        <h2 className="text-4xl font-bold text-foreground">Premium Packages</h2>
-        <p className="mt-2 text-lg text-muted-foreground">
-          Upgrade to a premium experience with more features.
-        </p>
-      </motion.div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
-        {premiumPackages.map((pkg, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
-            className={`bg-card border-2 rounded-xl p-8 text-center transition-all duration-300 relative flex flex-col ${pkg.isPopular ? "border-primary shadow-orange -translate-y-2" : "border-border hover:border-primary hover:shadow-medium"}`}
-          >
-            {pkg.isPopular && (
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-4 py-1 rounded-full flex items-center gap-1">
-                <Star size={12} className="fill-current" />
-                <span>BEST VALUE</span>
-              </div>
-            )}
-            <div className="flex-grow">
-              <h3 className="text-2xl font-bold text-foreground mb-4">
-                {pkg.title}
-              </h3>
-              <div className="mb-6">
-                <span className="text-5xl font-extrabold text-primary">{`₹${pkg.price}`}</span>
-                <p className="text-muted-foreground">Per sq.ft.</p>
-              </div>
-              <div className="text-left mt-6 mb-8 text-base space-y-3">
-                {pkg.features.map((feature) => (
-                  <div key={feature} className="flex items-center gap-3">
-                    <CheckCircle size={18} className="text-accent" />
-                    <span>{feature}</span>
-                  </div>
-                ))}
-              </div>
-              {pkg.areaType && (
-                <p className="text-sm text-muted-foreground mb-6">
-                  {pkg.areaType}
-                </p>
-              )}
-            </div>
-            <Link to={pkg.linkTo}>
-              <Button className="w-full btn-primary mt-auto">
-                Select Premium Plan
-              </Button>
-            </Link>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  </section>
-);
-
-// ==========================================================
-// ✨ UPDATED: Corporate Packages Section Data ✨
-// ==========================================================
-const corporatePackages = [
-  {
-    title: "Builders & Colonizers",
-    icon: <Building2 size={48} className="text-primary" />,
-    description: "Architectural solutions for large-scale housing projects.",
-    slug: "builders-colonizers",
-  },
-  {
-    title: "Offices & Shops",
-    icon: <Store size={48} className="text-primary" />,
-    description:
-      "Modern designs for commercial spaces, offices, and retail stores.",
-    slug: "offices-shops",
-  },
-  {
-    title: "Factories & Educational",
-    icon: <Factory size={48} className="text-primary" />,
-    description:
-      "Specialized plans for industrial buildings, schools, and colleges.",
-    slug: "factories-educational",
-  },
-  {
-    title: "Franchisee",
-    icon: <Handshake size={48} className="text-primary" />,
-    description:
-      "Partner with us and grow your business with our established brand.",
-    slug: "franchisee",
-    highlight: true,
-  },
-  {
-    title: "MEP Consultant",
-    icon: <Briefcase size={48} className="text-primary" />,
-    description:
-      "Expert consultancy for Mechanical, Electrical, and Plumbing systems.",
-    slug: "mep-consultant",
-  },
-  {
-    title: "Social Media / Content Creator",
-    icon: <Users2 size={48} className="text-primary" />,
-    description:
-      "Collaborate with experts for digital marketing and content creation.",
-    slug: "social-media",
-  },
-  {
-    title: "Technology Expert (AI)",
-    icon: <BrainCircuit size={48} className="text-primary" />,
-    description: "Integrate cutting-edge AI and technology into your projects.",
-    slug: "technology-expert",
-  },
-  {
-    title: "Innovator (New Ideas)",
-    icon: <Lightbulb size={48} className="text-primary" />,
-    description: "Partner on new ideas and innovative product development.",
-    slug: "innovator",
-  },
-  {
-    title: "Industry Expert (Collaboration)",
-    icon: <Building size={48} className="text-primary" />,
-    description: "For Hotels, Hospitals, and other large-scale projects.",
-    slug: "industry-expert",
-  },
-  {
-    title: "3D Visualizer",
-    icon: <Youtube size={48} className="text-primary" />,
-    description: "High-quality 3D walkthroughs and visualization services.",
-    slug: "3d-visualizer",
-  },
-];
-
-const CorporatePackagesSection = () => (
-  <section className="py-20 bg-background">
-    <div className="container mx-auto px-4">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-        className="text-center mb-16"
-      >
         <h2 className="text-4xl font-bold text-foreground">
-          Corporate Packages & Collaborations
+          Our Core Services
         </h2>
         <p className="mt-2 text-lg text-muted-foreground">
-          Tailored solutions for your business and large-scale needs.
+          Comprehensive solutions for every step of your project.
         </p>
       </motion.div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-        {corporatePackages.map((pkg, index) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        {coreServices.map((service, index) => (
           <motion.div
             key={index}
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            // ✨ Conditional styling for highlighted card ✨
-            className={`bg-card rounded-xl p-8 text-center flex flex-col items-center transition-all duration-300 border-2 ${pkg.highlight ? "border-primary shadow-lg" : "border-transparent"} hover:border-primary hover:shadow-xl hover:-translate-y-2`}
+            className="group"
           >
-            <div className="mb-6">{pkg.icon}</div>
-            <h3 className="text-2xl font-bold text-foreground mb-4">
-              {pkg.title}
-            </h3>
-            <p className="text-muted-foreground flex-grow mb-6">
-              {pkg.description}
-            </p>
-            <Link to={`/corporate-inquiry/${pkg.slug}`} className="mt-auto">
-              <Button className="btn-primary">Inquire Now</Button>
+            <Link
+              to={service.link}
+              className="bg-card rounded-xl p-6 text-center flex flex-col items-center h-full transition-all duration-300 border-2 border-transparent group-hover:border-primary group-hover:shadow-xl group-hover:-translate-y-2"
+            >
+              <div className="mb-4 text-primary transition-colors duration-300">
+                <service.icon size={40} />
+              </div>
+              <h3 className="text-lg font-bold text-foreground flex-grow">
+                {service.title}
+              </h3>
+              {service.isContact && (
+                <span className="mt-4 text-sm font-semibold text-primary">
+                  Contact for Details
+                </span>
+              )}
             </Link>
           </motion.div>
         ))}
@@ -369,7 +105,8 @@ const CorporatePackagesSection = () => (
   </section>
 );
 
-// Section 5: FAQ
+// --- Componentes específicos de esta página (FAQ, CTA) se mantienen aquí ---
+
 const faqData = [
   {
     question: "How long does it take to get a house plan?",
@@ -449,7 +186,6 @@ const FaqSection = () => {
   );
 };
 
-// Section 6: Call to Action
 const CtaSection = () => (
   <section className="gradient-orange py-20">
     <motion.div
@@ -478,7 +214,7 @@ const CtaSection = () => (
   </section>
 );
 
-// Final Services Page Component
+// --- Componente Final de la Página de Servicios ---
 const ServicesPage = () => {
   return (
     <>
@@ -500,8 +236,16 @@ const ServicesPage = () => {
             </p>
           </div>
         </motion.section>
+
+        {/* FIX: La nueva sección de Core Services se añade aquí */}
+        <CoreServicesSection />
+
+        {/* FIX: Las secciones de paquetes ahora se importan */}
         <StandardPackagesSection />
         <PremiumPackagesSection />
+        <CorporatePackagesSection />
+
+        {/* Las otras secciones se mantienen como estaban */}
         <FaqSection />
         <CtaSection />
       </main>

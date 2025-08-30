@@ -378,8 +378,8 @@ const AddProductPage: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Floor Plans">Floor Plans</SelectItem>
-                      <SelectItem value="3D Elevations">
-                        3D Elevations
+                      <SelectItem value="Floor Plan + 3D Elevations">
+                        Floor Plans + 3D Elevations
                       </SelectItem>
                       <SelectItem value="Interior Designs">
                         Interior Designs

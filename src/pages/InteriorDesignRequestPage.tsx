@@ -51,7 +51,7 @@ const InteriorDesignRequestPage: React.FC = () => {
           imageAlt="Example of modern interior design"
           isLoading={actionStatus === "loading"}
         >
-          {/* Your other form fields */}
+          {/* Los otros campos se mantienen igual */}
           <div>
             <label htmlFor="name" className={formStyles.label}>
               Name
@@ -89,7 +89,6 @@ const InteriorDesignRequestPage: React.FC = () => {
             />
           </div>
 
-          {/* FIX IS HERE: Added the missing 'country' input field */}
           <div>
             <label htmlFor="country" className={formStyles.label}>
               Country
@@ -99,36 +98,41 @@ const InteriorDesignRequestPage: React.FC = () => {
               id="country"
               name="country"
               className={formStyles.input}
-              defaultValue="India" // You can set a default or dynamic value
+              defaultValue="India"
               required
             />
           </div>
-          {/* End of fix */}
 
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label htmlFor="roomWidth" className={formStyles.label}>
-                Room Width (Ft)
-              </label>
-              <input
-                type="number"
-                id="roomWidth"
-                name="roomWidth"
-                className={formStyles.input}
-              />
-            </div>
-            <div className="flex-1">
-              <label htmlFor="roomLength" className={formStyles.label}>
-                Room Length (Ft)
-              </label>
-              <input
-                type="number"
-                id="roomLength"
-                name="roomLength"
-                className={formStyles.input}
-              />
+          {/* FIX: Se ha corregido la estructura de la sección "Plot Size" */}
+          <div>
+            <label className={formStyles.label}>Room Size</label>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label htmlFor="roomWidth" className={formStyles.label}>
+                  Width (Ft)
+                </label>
+                <input
+                  type="number"
+                  id="roomWidth"
+                  name="roomWidth"
+                  className={formStyles.input}
+                />
+              </div>
+              <div className="flex-1">
+                <label htmlFor="roomLength" className={formStyles.label}>
+                  Length (Ft)
+                </label>
+                <input
+                  type="number"
+                  id="roomLength"
+                  name="roomLength"
+                  className={formStyles.input}
+                />
+              </div>
             </div>
           </div>
+          {/* Fin del arreglo */}
+
           <div>
             <label htmlFor="designFor" className={formStyles.label}>
               Design For

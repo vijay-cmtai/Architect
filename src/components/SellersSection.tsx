@@ -44,10 +44,14 @@ import {
 
 // Data
 const materialTypes = [
-  "Cement & Steel",
+  "Cement & Concrete",
   "Bricks & Blocks",
+  "Steel & Rebar",
   "Paints",
-  "Electricals & Plumbing",
+  "Electricals",
+  "Plumbing",
+  "Interior Design Materials",
+  "Construction Machinery",
   "Other",
 ];
 

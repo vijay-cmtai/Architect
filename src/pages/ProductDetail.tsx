@@ -1,24 +1,33 @@
-// src/pages/ProductDetail.jsx
-
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
 import { fetchProducts } from "@/lib/features/products/productSlice";
 import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice";
-import { Heart, Plus, Minus, Loader2, ServerCrash } from "lucide-react";
+import {
+  Heart,
+  Plus,
+  Minus,
+  Loader2,
+  ServerCrash,
+  Facebook,
+  Twitter,
+  Linkedin,
+  Instagram,
+  MessageSquare,
+} from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
-import { useToast } from "@/components/ui/use-toast"; // Shadcn toast
+import { useToast } from "@/components/ui/use-toast";
 import house1 from "@/assets/house-1.jpg";
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
-  const { toast } = useToast(); // Initialize Shadcn toast
+  const { toast } = useToast();
 
   const { products: adminProducts, listStatus: adminListStatus } = useSelector(
     (state: RootState) => state.products
@@ -30,7 +39,7 @@ const ProductDetail = () => {
   const { state: cartState, addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isLiked, setIsLiked] = useState(false); // Wishlist state
+  const [isLiked, setIsLiked] = useState(false);
 
   useEffect(() => {
     if (adminListStatus === "idle") {
@@ -65,10 +74,52 @@ const ProductDetail = () => {
     return images.length > 0 ? images : [house1];
   }, [product]);
 
-  // --- ✨ UPDATED handleAddToCart function ---
+  // --- Social Share Logic ---
+  const [currentUrl, setCurrentUrl] = useState("");
+  useEffect(() => {
+    setCurrentUrl(window.location.href);
+  }, []);
+
+  const encodedUrl = encodeURIComponent(currentUrl);
+  const encodedTitle = encodeURIComponent(product?.name || "");
+  const encodedImage = encodeURIComponent(productImages[selectedImageIndex]);
+
+  const socialPlatforms = [
+    {
+      name: "Facebook",
+      icon: <Facebook size={20} />,
+      color: "bg-blue-600",
+      href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+    },
+    {
+      name: "WhatsApp",
+      icon: <MessageSquare size={20} />,
+      color: "bg-green-500",
+      href: `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`,
+    },
+    {
+      name: "Twitter",
+      icon: <Twitter size={20} />,
+      color: "bg-sky-500",
+      href: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
+    },
+    {
+      name: "LinkedIn",
+      icon: <Linkedin size={20} />,
+      color: "bg-blue-700",
+      href: `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`,
+    },
+    {
+      name: "Instagram",
+      icon: <Instagram size={20} />,
+      color: "bg-gradient-to-br from-purple-400 via-pink-500 to-yellow-500",
+      href: `https://www.instagram.com`,
+    },
+  ];
+  // --- End of Social Share Logic ---
+
   const handleAddToCart = async () => {
     if (!product) return;
-
     await addItem({
       productId: product._id,
       name: product.name,
@@ -77,14 +128,10 @@ const ProductDetail = () => {
       size: product.plotSize,
       quantity: quantity,
     });
-
-    // Use Shadcn toast
     toast({
       title: "Added to Cart!",
       description: `${quantity} x ${product.name} has been added to your cart.`,
     });
-
-    // Optional: Ask user if they want to navigate to the cart page
     setTimeout(() => {
       const shouldGoToCart = window.confirm(
         "Item added to cart. Would you like to view your cart?"
@@ -181,7 +228,7 @@ const ProductDetail = () => {
               <img
                 src={productImages[selectedImageIndex]}
                 alt={product.name}
-                className="w-full h-96 lg:h-[500px] object-cover"
+                className="w-full h-96 lg:h-[500px] object-cover transform scale-125 transition-transform duration-500 group-hover:scale-110"
               />
             </div>
             <div className="grid grid-cols-3 gap-4">
@@ -251,6 +298,27 @@ const ProductDetail = () => {
                 </div>
               </div>
             </div>
+
+            <div className="pt-4 border-t">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                Share to
+              </h3>
+              <div className="flex items-center gap-2">
+                {socialPlatforms.map((platform) => (
+                  <a
+                    key={platform.name}
+                    href={platform.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`Share on ${platform.name}`}
+                    className={`w-9 h-9 flex items-center justify-center rounded-md text-white ${platform.color} transition-opacity hover:opacity-80`}
+                  >
+                    {platform.icon}
+                  </a>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
                 <span className="text-gray-800 font-medium">Quantity:</span>

@@ -42,6 +42,15 @@ const professionalSubRoles = [
   "Site Engineer",
 ];
 
+// ++ CHANGE HERE: Added the new array for Contractor Professions based on your image.
+const contractorProfessions = [
+  "General Contractor",
+  "Civil Contractor",
+  "Interior Contractor",
+  "Electrical Contractor",
+  "Plumbing Contractor",
+];
+
 const materialTypes = [
   "Cement & Concrete",
   "Bricks & Blocks",
@@ -49,10 +58,11 @@ const materialTypes = [
   "Paints",
   "Electricals",
   "Plumbing",
+  "Interior Design Materials",
+  "Construction Machinery",
   "Other",
 ];
 
-// ++ CHANGE HERE: Added an array for contractor experience levels.
 const contractorExperienceLevels = [
   "0-2 Years",
   "2-5 Years",
@@ -82,7 +92,6 @@ const MultiRoleRegisterPage = () => {
     city: "",
     materialType: "",
     companyName: "",
-    // ++ CHANGE HERE: Added 'experience' to the form state.
     experience: "",
     photo: null,
   });
@@ -157,7 +166,6 @@ const MultiRoleRegisterPage = () => {
       city: "",
       materialType: "",
       companyName: "",
-      // ++ CHANGE HERE: Reset 'experience' when the role changes.
       experience: "",
       photo: null,
     });
@@ -351,7 +359,28 @@ const MultiRoleRegisterPage = () => {
                 onChange={handleChange}
               />
             </div>
-            {/* ++ CHANGE HERE: Added the Experience dropdown for Contractors. */}
+
+            {/* ++ CHANGE HERE: Added the new Profession dropdown for Contractors. */}
+            <div>
+              <Label>Profession*</Label>
+              <Select
+                onValueChange={(v) => handleSelectChange(v, "profession")}
+                value={formData.profession}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Profession" />
+                </SelectTrigger>
+                <SelectContent>
+                  {contractorProfessions.map((prof) => (
+                    <SelectItem key={prof} value={prof}>
+                      {prof}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div>
               <Label>Experience*</Label>
               <Select
@@ -418,7 +447,11 @@ const MultiRoleRegisterPage = () => {
                   />
                   <label
                     htmlFor={`${role.id}-radio`}
-                    className={`flex items-center justify-between w-full p-4 rounded-lg cursor-pointer border-2 transition-all duration-300 ${selectedRole === role.id ? "bg-accent text-accent-foreground border-transparent shadow-md" : "bg-input border-border hover:border-primary/50"}`}
+                    className={`flex items-center justify-between w-full p-4 rounded-lg cursor-pointer border-2 transition-all duration-300 ${
+                      selectedRole === role.id
+                        ? "bg-accent text-accent-foreground border-transparent shadow-md"
+                        : "bg-input border-border hover:border-primary/50"
+                    }`}
                   >
                     <span className="font-semibold">{role.label}</span>
                     {selectedRole === role.id && <CheckCircle size={20} />}
@@ -488,4 +521,5 @@ const MultiRoleRegisterPage = () => {
     </>
   );
 };
+
 export default MultiRoleRegisterPage;

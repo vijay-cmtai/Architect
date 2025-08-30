@@ -15,20 +15,22 @@ import CorporatePackagesSection from "../components/CorporatePackagesSection";
 import BrandPartnersSection from "@/components/BrandPartnersSection";
 import SellersSection from "@/components/SellersSection";
 import ContractorsSection from "@/components/ContractorsSection";
+import TopBar from "@/components/TopBar";
 
 const Index = () => {
   return (
     <div className="min-h-screen">
+      <TopBar />
       <Navbar />
       <Hero />
       <ReadymadePlansSection />
       <CustomDesignSection />
-      <StandardPackagesSection />
-      <PremiumPackagesSection />
-      <CorporatePackagesSection />
       <FeaturedProducts />
       <SellersSection />
       <ContractorsSection />
+      <StandardPackagesSection />
+      <PremiumPackagesSection />
+      <CorporatePackagesSection />
       <RegionalPlansSection />
       <BrandPartnersSection />
       <Testimonials />

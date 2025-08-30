@@ -1,32 +1,50 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react"; // A nice icon for user guidance
+import {
+  ArrowRight,
+  LayoutTemplate,
+  Building2,
+  Sofa,
+  HardHat,
+} from "lucide-react";
 
-// Data for the plan types with updated, more descriptive images
+// FIX 1: Se han añadido propiedades de color para cada icono.
 const planTypes = [
   {
     name: "Floor Plans",
+    icon: LayoutTemplate,
     image:
       "https://images.pexels.com/photos/271816/pexels-photo-271816.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
     href: "/floor-plans",
+    bgColor: "bg-blue-100",
+    iconColor: "text-blue-500",
   },
   {
     name: "Floor Plan + 3D Elevations",
+    icon: Building2,
     image:
       "https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
     href: "/3d-plans",
+    bgColor: "bg-purple-100",
+    iconColor: "text-purple-500",
   },
   {
     name: "Interior Designs",
+    icon: Sofa,
     image:
       "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
     href: "/interior-designs",
+    bgColor: "bg-teal-100",
+    iconColor: "text-teal-500",
   },
   {
     name: "Construction Products",
+    icon: HardHat,
     image:
       "https://images.pexels.com/photos/1216589/pexels-photo-1216589.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
     href: "/construction-products",
+    bgColor: "bg-yellow-100",
+    iconColor: "text-yellow-500",
   },
 ];
 
@@ -34,7 +52,7 @@ const ReadymadePlansSection = () => {
   return (
     <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
-        {/* Section Title remains the same */}
+        {/* El título de la sección no ha cambiado */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -48,7 +66,6 @@ const ReadymadePlansSection = () => {
           <div className="mt-4 h-1 w-24 bg-primary mx-auto rounded-full"></div>
         </motion.div>
 
-        {/* --- NEW CARD-BASED UI --- */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {planTypes.map((plan, index) => (
             <motion.div
@@ -62,27 +79,43 @@ const ReadymadePlansSection = () => {
                 to={plan.href}
                 className="group block relative rounded-2xl overflow-hidden shadow-soft hover:shadow-xl transition-all duration-300 aspect-[3/4]"
               >
-                {/* Background Image */}
+                {/* Imagen de fondo (sin cambios) */}
                 <img
                   src={plan.image}
                   alt={plan.name}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
 
-                {/* Gradient Overlay for Text Readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent transition-opacity duration-300"></div>
+                {/* Capa de gradiente (sin cambios) */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
 
-                {/* Content with Text and Icon */}
-                <div className="relative h-full flex flex-col justify-end p-6 text-white">
-                  <h3 className="text-2xl font-bold transition-colors duration-300 group-hover:text-primary">
-                    {plan.name}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-2 text-primary-foreground/80 opacity-0 transform -translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-                    <span>Explore</span>
-                    <ArrowRight
-                      size={16}
-                      className="transition-transform duration-300 group-hover:translate-x-1"
-                    />
+                {/* Contenido (Icono + Texto) */}
+                <div className="relative h-full flex flex-col p-6 text-white">
+                  {/* --- ÁREA DEL ICONO --- */}
+                  <div className="flex-grow flex items-center justify-center">
+                    {/* FIX 2: Se ha añadido un 'div' contenedor para el fondo de color del icono. */}
+                    <div
+                      className={`p-6 rounded-full ${plan.bgColor} transition-transform duration-300 group-hover:scale-110`}
+                    >
+                      <plan.icon
+                        className={`h-16 w-16 ${plan.iconColor}`}
+                        strokeWidth={1.5}
+                      />
+                    </div>
+                  </div>
+
+                  {/* --- ÁREA DEL TEXTO (SIN CAMBIOS) --- */}
+                  <div className="relative">
+                    <h3 className="text-2xl font-bold transition-colors duration-300 group-hover:text-primary">
+                      {plan.name}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-2 text-primary-foreground/80 opacity-0 transform -translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                      <span>Explore</span>
+                      <ArrowRight
+                        size={16}
+                        className="transition-transform duration-300 group-hover:translate-x-1"
+                      />
+                    </div>
                   </div>
                 </div>
               </Link>
