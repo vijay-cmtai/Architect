@@ -26,9 +26,8 @@ const Index = () => {
       <ReadymadePlansSection />
       <CustomDesignSection />
       <FeaturedProducts />
-       <ContractorsSection />
       <SellersSection />
-     
+      <ContractorsSection />
       <StandardPackagesSection />
       <PremiumPackagesSection />
       <CorporatePackagesSection />
