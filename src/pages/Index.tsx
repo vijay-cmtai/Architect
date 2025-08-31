@@ -15,6 +15,7 @@ import CorporatePackagesSection from "../components/CorporatePackagesSection";
 import BrandPartnersSection from "@/components/BrandPartnersSection";
 import SellersSection from "@/components/SellersSection";
 import ContractorsSection from "@/components/ContractorsSection";
+import ConstructionPartnersSection from "@/components/ConstructionPartnersSection";
 import TopBar from "@/components/TopBar";
 
 const Index = () => {
@@ -26,8 +27,9 @@ const Index = () => {
       <ReadymadePlansSection />
       <CustomDesignSection />
       <FeaturedProducts />
-      <SellersSection />
+      <ConstructionPartnersSection />
       <ContractorsSection />
+      <SellersSection />
       <StandardPackagesSection />
       <PremiumPackagesSection />
       <CorporatePackagesSection />

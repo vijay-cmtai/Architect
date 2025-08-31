@@ -9,8 +9,7 @@ const customServices = [
     name: "Customize Floor Plans",
     description:
       "Tailor any floor plan to match your exact needs and lifestyle.",
-    image:
-      "https://images.pexels.com/photos/271816/pexels-photo-271816.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+    image: "/c1.png",
     icon: LayoutTemplate,
     bgColor: "bg-blue-100",
     iconColor: "text-blue-500",
@@ -20,8 +19,7 @@ const customServices = [
     name: "Customize 3D Elevation",
     description:
       "Modify the exterior look of your home with custom 3D renders.",
-    image:
-      "https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+    image: "/c2.webp",
     icon: Building2,
     bgColor: "bg-purple-100",
     iconColor: "text-purple-500",
@@ -31,8 +29,7 @@ const customServices = [
     name: "Complete House Plan File",
     description:
       "Personalize your living spaces with our expert interior designers.",
-    image:
-      "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+    image: "c3.jpeg",
     icon: Sofa,
     bgColor: "bg-teal-100",
     iconColor: "text-teal-500",
@@ -42,8 +39,7 @@ const customServices = [
     name: "3D Video WalkThrough",
     description:
       "Experience your future home with immersive 3D video walkthroughs.",
-    image:
-      "https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+    image: "c4.jpg",
     icon: Video,
     bgColor: "bg-red-100",
     iconColor: "text-red-500",

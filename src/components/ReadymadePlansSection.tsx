@@ -13,8 +13,7 @@ const planTypes = [
   {
     name: "Floor Plans",
     icon: LayoutTemplate,
-    image:
-      "https://images.pexels.com/photos/271816/pexels-photo-271816.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+    image: "/r1.png",
     href: "/floor-plans",
     bgColor: "bg-blue-100",
     iconColor: "text-blue-500",
@@ -22,8 +21,7 @@ const planTypes = [
   {
     name: "Floor Plan + 3D Elevations",
     icon: Building2,
-    image:
-      "https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+    image: "/r2.jpeg",
     href: "/3d-plans",
     bgColor: "bg-purple-100",
     iconColor: "text-purple-500",
@@ -31,8 +29,7 @@ const planTypes = [
   {
     name: "Interior Designs",
     icon: Sofa,
-    image:
-      "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+    image: "/r3.jpg",
     href: "/interior-designs",
     bgColor: "bg-teal-100",
     iconColor: "text-teal-500",
@@ -40,8 +37,7 @@ const planTypes = [
   {
     name: "Construction Products",
     icon: HardHat,
-    image:
-      "https://images.pexels.com/photos/1216589/pexels-photo-1216589.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+    image: "/r4.avif",
     href: "/construction-products",
     bgColor: "bg-yellow-100",
     iconColor: "text-yellow-500",

@@ -18,19 +18,20 @@ import {
 
 const slides = [
   {
-    image:
-      "https://images.pexels.com/photos/186077/pexels-photo-186077.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+    image: "/b4.jpeg",
     alt: "Modern white house with a lawn",
   },
   {
-    image:
-      "https://images.pexels.com/photos/221540/pexels-photo-221540.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+    image: "/b6.webp",
     alt: "Classic house with a beautiful garden",
   },
   {
-    image:
-      "https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+    image: "/b5.jpeg",
     alt: "Luxurious apartment building exterior",
+  },
+  {
+    image: "/b3.webp",
+    alt: "Luxurious apartment building Interior",
   },
 ];
 
