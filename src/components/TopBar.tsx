@@ -1,15 +1,23 @@
 // Example file path: src/components/TopBar.jsx
 
 import React from "react";
-// FIX: Imported the Twitter icon and removed Phone/Mail as they are not used in the new design's icon style.
-import { Facebook, Instagram, Youtube, Twitter } from "lucide-react";
+import {
+  Facebook,
+  Instagram,
+  Youtube,
+  Twitter,
+  Linkedin,
+  Send,
+  AtSign,
+  Mail,
+  Phone,
+} from "lucide-react";
 
-// This custom WhatsApp icon is still useful for the contact section.
 const WhatsAppIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="20"
-    height="20"
+    width="18"
+    height="18"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -21,45 +29,72 @@ const WhatsAppIcon = () => (
   </svg>
 );
 
+const PinterestIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M12 2C6.477 2 2 6.477 2 12c0 4.237 2.636 7.855 6.356 9.312-.084-.602-.167-1.592.034-2.327.185-.68.995-4.223.995-4.223s-.255-.51-.255-1.267c0-1.185.688-2.072 1.553-2.072.73 0 1.08.547 1.08 1.202 0 .73-.465 1.822-.705 2.832-.202.84.42 1.532 1.258 1.532 1.508 0 2.65-1.59 2.65-3.868 0-2.046-1.445-3.48-3.566-3.48-2.35 0-3.738 1.743-3.738 3.355 0 .64.246 1.332.558 1.727.06.074.068.103.05.178-.02.083-.07.28-.09.358-.026.09-.105.12-.24.06-1.1-.47-1.8-1.82-1.8-3.132 0-2.438 2.085-4.73 5.25-4.73 2.76 0 4.86 1.956 4.86 4.418 0 2.712-1.72 4.882-4.14 4.882-.828 0-1.606-.43-1.865-.934 0 0-.405 1.616-.502 2.01-.132.52-.25.99-.4 1.392.36.11.732.17 1.114.17 6.627 0 12-5.373 12-12S18.627 2 12 2z" />
+  </svg>
+);
+
 const TopBar = () => {
-  // DATA NOT CHANGED, as requested.
   const contactInfo = {
     email: "houseplansdesignsfile@gmail.com",
     phone: "+919755248864",
   };
 
-  // FIX: Updated social links to match the new icon set.
   const socialLinks = [
     {
       name: "Facebook",
-      href: "https://facebook.com", // Replace with your actual link
       icon: <Facebook size={18} />,
+      color: "bg-blue-800",
+      href: "https://facebook.com",
+    },
+    {
+      name: "WhatsApp",
+      icon: <WhatsAppIcon />,
+      color: "bg-green-500",
+      href: `https://wa.me/${contactInfo.phone.replace("+", "")}`,
     },
     {
       name: "Twitter",
-      href: "https://twitter.com", // Replace with your actual link
       icon: <Twitter size={18} />,
+      color: "bg-sky-500",
+      href: "https://twitter.com",
     },
     {
-      name: "Instagram",
-      href: "https://instagram.com", // Replace with your actual link
-      icon: <Instagram size={18} />,
+      name: "LinkedIn",
+      icon: <Linkedin size={18} />,
+      color: "bg-sky-700",
+      href: "https://linkedin.com",
     },
     {
-      name: "YouTube",
-      href: "https://youtube.com", // Replace with your actual link
-      icon: <Youtube size={18} />,
+      name: "Pinterest",
+      icon: <PinterestIcon />,
+      color: "bg-red-600",
+      href: "https://pinterest.com",
     },
+    {
+      name: "Telegram",
+      icon: <Send size={18} />,
+      color: "bg-sky-400",
+      href: "https://telegram.org",
+    },
+    { name: "Koo", icon: <AtSign size={18} />, color: "bg-black", href: "#" },
   ];
 
   return (
-    // FIX: Updated header style to match the new design (white background, borders).
     <header className="bg-white border-b border-gray-200 relative">
       <div className="absolute top-0 left-0 w-full h-1 bg-sky-400"></div>
-      <div className="container mx-auto px-4 py-2 flex justify-between items-center">
-        {/* Left Side: Social Media Icons */}
-        {/* FIX: Moved social icons to the left and updated their style. */}
-        <div className="flex items-center gap-x-4">
+
+      {/* FIX: Se ha cambiado 'flex' por 'block lg:flex' para que sea responsive. */}
+      <div className="container mx-auto px-4 py-2 block lg:flex lg:justify-between lg:items-center">
+        {/* Lado Izquierdo: Iconos de Redes Sociales */}
+        <div className="flex items-center gap-x-2 justify-center lg:justify-start mb-2 lg:mb-0">
           {socialLinks.map((social) => (
             <a
               key={social.name}
@@ -67,41 +102,37 @@ const TopBar = () => {
               target="_blank"
               rel="noopener noreferrer"
               title={social.name}
-              className="text-gray-600 transition-colors hover:text-sky-500"
+              className={`w-8 h-8 flex items-center justify-center rounded-md text-white transition-opacity hover:opacity-80 ${social.color}`}
             >
               {social.icon}
             </a>
           ))}
         </div>
 
-        {/* Center: Title Text */}
-        {/* FIX: Added the central text element. */}
-        <div>
+        {/* Centro: Título */}
+        {/* FIX: Se ha añadido 'text-center' para la vista móvil. */}
+        <div className="text-center my-2 lg:my-0">
           <span className="font-semibold text-orange-500 text-sm tracking-wider">
-            INNOVATIVE DESIGN SOLUTIONS
+            Future-Ready Home Design: Innovative Solutions You Need
           </span>
         </div>
 
-        {/* Right Side: Contact Information */}
-        {/* FIX: Updated layout and style of contact info. */}
-        <div className="flex items-center gap-x-6 text-sm text-gray-700">
+        {/* Lado Derecho: Información de Contacto */}
+        {/* FIX: Se ha cambiado 'flex' por 'flex-wrap' y 'justify-center' para la vista móvil. */}
+        <div className="flex flex-wrap items-center justify-center lg:justify-end gap-x-6 gap-y-1 text-sm text-gray-700">
           <a
             href={`mailto:${contactInfo.email}`}
             className="flex items-center gap-x-2 transition-colors hover:text-sky-500"
           >
-            <span className="font-medium">Email Us:</span>
+            <Mail size={16} />
             <span>{contactInfo.email}</span>
           </a>
           <a
-            href={`https://wa.me/${contactInfo.phone.replace("+", "")}`}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={`tel:${contactInfo.phone}`}
             className="flex items-center gap-x-2 transition-colors hover:text-green-600"
           >
-            <div className="text-green-500">
-              <WhatsAppIcon />
-            </div>
-            <span className="font-medium">{contactInfo.phone}</span>
+            <Phone size={16} />
+            <span>{contactInfo.phone}</span>
           </a>
         </div>
       </div>

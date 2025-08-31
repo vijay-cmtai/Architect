@@ -18,6 +18,16 @@ const getToken = (state: RootState) => {
   return token;
 };
 
+// ++ CHANGE HERE: Added an interface for a single review
+interface Review {
+  _id: string;
+  name: string;
+  rating: number;
+  comment: string;
+  user: string;
+  createdAt: string;
+}
+
 interface Plan {
   _id: string;
   planName: string;
@@ -34,11 +44,15 @@ interface Plan {
   direction: string;
   floors: number;
   propertyType: string;
+  // ++ CHANGE HERE: Added the reviews array, rating, and numReviews to the Plan interface
+  reviews?: Review[];
+  rating?: number;
+  numReviews?: number;
   [key: string]: any;
 }
 
 interface ProfessionalPlanState {
-  plans: Plan[]; // This will store both myPlans and approvedPlans based on the action
+  plans: Plan[];
   plan: Plan | null;
   listStatus: "idle" | "loading" | "succeeded" | "failed";
   actionStatus: "idle" | "loading" | "succeeded" | "failed";
@@ -53,14 +67,15 @@ const initialState: ProfessionalPlanState = {
   error: null,
 };
 
-// ✨ NEW ACTION: Fetch all approved plans (public route)
+// --- ASYNC THUNKS ---
+
 export const fetchAllApprovedPlans = createAsyncThunk<
   Plan[],
   void,
   { rejectValue: string }
 >("professionalPlans/fetchAllApproved", async (_, { rejectWithValue }) => {
   try {
-    const { data } = await axios.get(API_URL); // This hits the public route
+    const { data } = await axios.get(API_URL);
     return Array.isArray(data) ? data : data.plans || [];
   } catch (error: any) {
     return rejectWithValue(
@@ -77,11 +92,10 @@ export const fetchMyPlans = createAsyncThunk<
   try {
     const state = getState();
     const token = getToken(state);
-    if (!token) {
+    if (!token)
       return rejectWithValue(
         "No authentication token found. Please log in again."
       );
-    }
     const config = { headers: { Authorization: `Bearer ${token}` } };
     const { data } = await axios.get(`${API_URL}/my-plans`, config);
     return Array.isArray(data) ? data : data.plans || [];
@@ -115,11 +129,10 @@ export const createPlan = createAsyncThunk<
     try {
       const state = getState();
       const token = getToken(state);
-      if (!token) {
+      if (!token)
         return rejectWithValue(
           "No authentication token found. Please log in again."
         );
-      }
       const config = {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -146,11 +159,10 @@ export const updatePlan = createAsyncThunk<
     try {
       const state = getState();
       const token = getToken(state);
-      if (!token) {
+      if (!token)
         return rejectWithValue(
           "No authentication token found. Please log in again."
         );
-      }
       const config = {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -179,11 +191,10 @@ export const deletePlan = createAsyncThunk<
   try {
     const state = getState();
     const token = getToken(state);
-    if (!token) {
+    if (!token)
       return rejectWithValue(
         "No authentication token found. Please log in again."
       );
-    }
     const config = { headers: { Authorization: `Bearer ${token}` } };
     await axios.delete(`${API_URL}/${planId}`, config);
     return planId;
@@ -193,6 +204,39 @@ export const deletePlan = createAsyncThunk<
     );
   }
 });
+
+// ==========================================================
+// ✨ NEW ASYNC THUNK FOR CREATING A PLAN REVIEW ✨
+// ==========================================================
+export const createPlanReview = createAsyncThunk<
+  { message: string },
+  { planId: string; reviewData: { rating: number; comment: string } },
+  { state: RootState; rejectValue: string }
+>(
+  "professionalPlans/createReview",
+  async ({ planId, reviewData }, { getState, rejectWithValue }) => {
+    try {
+      const state = getState();
+      const token = getToken(state);
+      const config = {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      const { data } = await axios.post(
+        `${API_URL}/${planId}/reviews`,
+        reviewData,
+        config
+      );
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to submit review"
+      );
+    }
+  }
+);
 
 const professionalPlanSlice = createSlice({
   name: "professionalPlans",
@@ -228,25 +272,26 @@ const professionalPlanSlice = createSlice({
       state.error = action.payload;
     };
 
-    // ✨ NEW CASES: Handle fetchAllApprovedPlans
+    // Fetch All Approved Plans
     builder
       .addCase(fetchAllApprovedPlans.pending, (state) => {
-        state.listStatus = "loading"; // Use listStatus instead of approvedListStatus
+        state.listStatus = "loading";
         state.error = null;
       })
       .addCase(
         fetchAllApprovedPlans.fulfilled,
         (state, action: PayloadAction<Plan[]>) => {
           state.listStatus = "succeeded";
-          state.plans = action.payload; // Store in plans instead of approvedPlans
+          state.plans = action.payload;
         }
       )
       .addCase(fetchAllApprovedPlans.rejected, (state, action: AnyAction) => {
         state.listStatus = "failed";
         state.error = action.payload;
-      })
+      });
 
-      // Existing cases for fetchMyPlans
+    // Fetch My Plans
+    builder
       .addCase(fetchMyPlans.pending, (state) => {
         state.listStatus = "loading";
         state.error = null;
@@ -261,9 +306,10 @@ const professionalPlanSlice = createSlice({
       .addCase(fetchMyPlans.rejected, (state, action: AnyAction) => {
         state.listStatus = "failed";
         state.error = action.payload;
-      })
+      });
 
-      // Handle fetchPlanById
+    // Fetch Plan By ID
+    builder
       .addCase(fetchPlanById.pending, (state) => {
         state.listStatus = "loading";
         state.error = null;
@@ -278,16 +324,18 @@ const professionalPlanSlice = createSlice({
       .addCase(fetchPlanById.rejected, (state, action: AnyAction) => {
         state.listStatus = "failed";
         state.error = action.payload;
-      })
+      });
 
-      // Handle create, update, delete
+    // Create, Update, Delete Plan
+    builder
       .addCase(createPlan.pending, actionPending)
       .addCase(createPlan.fulfilled, (state, action: PayloadAction<Plan>) => {
         state.actionStatus = "succeeded";
         state.plans.unshift(action.payload);
       })
-      .addCase(createPlan.rejected, actionRejected)
+      .addCase(createPlan.rejected, actionRejected);
 
+    builder
       .addCase(updatePlan.pending, actionPending)
       .addCase(updatePlan.fulfilled, (state, action: PayloadAction<Plan>) => {
         state.actionStatus = "succeeded";
@@ -298,8 +346,9 @@ const professionalPlanSlice = createSlice({
           state.plan = action.payload;
         }
       })
-      .addCase(updatePlan.rejected, actionRejected)
+      .addCase(updatePlan.rejected, actionRejected);
 
+    builder
       .addCase(deletePlan.pending, actionPending)
       .addCase(deletePlan.fulfilled, (state, action: PayloadAction<string>) => {
         state.actionStatus = "succeeded";
@@ -309,6 +358,18 @@ const professionalPlanSlice = createSlice({
         }
       })
       .addCase(deletePlan.rejected, actionRejected);
+
+    // ==========================================================
+    // ✨ NEW EXTRA REDUCER FOR HANDLING PLAN REVIEW CREATION ✨
+    // ==========================================================
+    builder
+      .addCase(createPlanReview.pending, actionPending)
+      .addCase(createPlanReview.fulfilled, (state) => {
+        state.actionStatus = "succeeded";
+        // We don't need to manually update the state here.
+        // It's better to refetch the plan data after a successful review to get the latest list.
+      })
+      .addCase(createPlanReview.rejected, actionRejected);
   },
 });
 

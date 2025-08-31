@@ -25,7 +25,12 @@ const BookingPage = () => {
   const { actionStatus, error } = useSelector(
     (state: RootState) => state.standardRequests
   );
-  const { packageName = "Consultation Service" } = location.state || {};
+
+  const {
+    packageName = "Consultation Service",
+    packageUnit = "",
+    packagePrice = "",
+  } = location.state || {};
 
   const [formData, setFormData] = useState({
     name: "",
@@ -64,6 +69,7 @@ const BookingPage = () => {
       floors: formData.floor,
       spaceType: formData.spaceType,
       preferredStyle: formData.style,
+      ratePlan: `${packagePrice} ${packageUnit}`,
     };
 
     dispatch(createStandardRequest(requestData));
@@ -96,6 +102,11 @@ const BookingPage = () => {
               <p className="text-lg text-primary font-semibold mt-1">
                 For: {packageName}
               </p>
+              {packagePrice && packageUnit && (
+                <p className="text-md text-muted-foreground">
+                  (Rate: ₹{packagePrice} {packageUnit})
+                </p>
+              )}
             </div>
             <form onSubmit={handleSubmit} className="p-6 md:p-8">
               <div className="space-y-5">

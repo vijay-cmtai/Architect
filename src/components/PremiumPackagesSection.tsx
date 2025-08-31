@@ -1,9 +1,10 @@
-import React, { useState } from "react"; // Se añadió useState
+// Example file path: src/components/home/PremiumPackagesSection.jsx
+
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, Star, ChevronDown, ChevronUp } from "lucide-react"; // Se añadieron más iconos
+import { CheckCircle, Star, ChevronDown, ChevronUp } from "lucide-react";
 import { Link } from "react-router-dom";
 
-// FIX 1: Se actualizó el array con el contenido exacto de tus nuevas notas.
 const premiumPackages = [
   {
     title: "Floor Plan",
@@ -38,22 +39,17 @@ const premiumPackages = [
     features: [
       "3 plan option",
       "2 3d model",
-      "Works under vastu Expert", // Interpretación de la escritura
+      "Works under vastu Expert",
       "With Interior Designing of Complete House",
     ],
   },
 ];
 
-// --- NUEVO COMPONENTE DE TARJETA PREMIUM CON LÓGICA DE EXPANSIÓN ---
 const PremiumPackageCard = ({ pkg, index }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-
   const allItems = pkg.features || [];
-
-  // Se mostrará el botón "Mostrar más" si hay más de 4 características
   const CONTENT_THRESHOLD = 4;
   const needsTruncation = allItems.length > CONTENT_THRESHOLD;
-
   const itemsToRender =
     needsTruncation && !isExpanded
       ? allItems.slice(0, CONTENT_THRESHOLD)
@@ -66,7 +62,6 @@ const PremiumPackageCard = ({ pkg, index }) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      // FIX 2: Se añadió 'h-full' para que todas las tarjetas tengan la misma altura.
       className={`bg-card border-2 rounded-xl p-8 text-center transition-all duration-300 relative flex flex-col h-full
         ${pkg.isPopular ? "border-primary shadow-lg scale-105" : "border-gray-200 hover:border-primary"}`}
     >
@@ -76,15 +71,12 @@ const PremiumPackageCard = ({ pkg, index }) => {
           <span>BEST VALUE</span>
         </div>
       )}
-
       <div className="flex-grow">
         <h3 className="text-2xl font-bold text-foreground mb-4">{pkg.title}</h3>
-
         <div className="mb-6">
           <span className="text-5xl font-extrabold text-primary">{`₹${pkg.price}`}</span>
           <p className="text-muted-foreground">{pkg.unit}</p>
         </div>
-
         <div className="text-left mt-6 mb-8 text-base space-y-3">
           {itemsToRender.map((feature) => (
             <div key={feature} className="flex items-center gap-3">
@@ -93,8 +85,6 @@ const PremiumPackageCard = ({ pkg, index }) => {
             </div>
           ))}
         </div>
-
-        {/* FIX 3: Botón para expandir/contraer si es necesario */}
         {needsTruncation && (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
@@ -108,15 +98,19 @@ const PremiumPackageCard = ({ pkg, index }) => {
             )}
           </button>
         )}
-
         {pkg.areaType && (
           <p className="text-sm text-muted-foreground mb-6">{pkg.areaType}</p>
         )}
       </div>
 
+      {/* FIX: Se han añadido packageUnit y packagePrice al estado del Link */}
       <Link
         to="/premium-booking-form"
-        state={{ packageName: pkg.title }}
+        state={{
+          packageName: pkg.title,
+          packageUnit: pkg.unit,
+          packagePrice: pkg.price,
+        }}
         className="w-full btn-primary text-center block mt-auto"
       >
         Select Premium Plan
@@ -125,7 +119,6 @@ const PremiumPackageCard = ({ pkg, index }) => {
   );
 };
 
-// --- COMPONENTE PRINCIPAL ACTUALIZADO ---
 const PremiumPackagesSection = () => {
   return (
     <section className="py-20 bg-soft-teal">
@@ -144,10 +137,8 @@ const PremiumPackagesSection = () => {
             Upgrade to a premium experience with more features.
           </p>
         </motion.div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {premiumPackages.map((pkg, index) => (
-            // FIX 4: Se renderiza el nuevo componente de tarjeta
             <PremiumPackageCard key={index} pkg={pkg} index={index} />
           ))}
         </div>

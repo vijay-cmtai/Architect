@@ -28,7 +28,7 @@ const customServices = [
     href: "/customize/3d-elevation",
   },
   {
-    name: "Customize Interior Designs",
+    name: "Complete House Plan File",
     description:
       "Personalize your living spaces with our expert interior designers.",
     image:

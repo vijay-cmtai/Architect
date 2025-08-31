@@ -1,5 +1,3 @@
-// src/components/Navbar.jsx
-
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -111,7 +109,7 @@ const Navbar = () => {
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`text-base font-medium relative transition-colors duration-300 ${isActive(link.path) ? "text-orange-600" : "text-gray-600 hover:text-orange-600"}`}
+                  className={`text-base font-medium relative transition-colors duration-300 group ${isActive(link.path) ? "text-orange-600" : "text-gray-600 hover:text-orange-600"}`}
                   style={
                     link.name === "About"
                       ? {
@@ -132,8 +130,8 @@ const Navbar = () => {
               ))}
             </nav>
 
-            <div className="flex items-center space-x-4">
-              {/* Desktop Icons */}
+            <div className="flex items-center">
+              {/* --- Desktop Icons & Login --- */}
               <div className="hidden lg:flex items-center space-x-5">
                 <button className="text-gray-600 hover:text-orange-600 transition-colors">
                   <Search className="w-5 h-5" />
@@ -175,7 +173,7 @@ const Navbar = () => {
                           <AvatarFallback className="bg-orange-500 text-white font-bold">
                             {userInfo.name
                               ? userInfo.name.charAt(0).toUpperCase()
-                              : "V"}
+                              : "U"}
                           </AvatarFallback>
                         </Avatar>
                         <span className="font-medium text-gray-700">
@@ -202,15 +200,25 @@ const Navbar = () => {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
-                  <Link to="/login">
-                    <Button className="bg-orange-500 hover:bg-orange-600 rounded-full">
-                      Login
-                    </Button>
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link to="/login">
+                      <Button className="bg-orange-500 hover:bg-orange-600 rounded-full">
+                        Login
+                      </Button>
+                    </Link>
+                    <Link to="/register">
+                      <Button
+                        variant="outline"
+                        className="rounded-full border-orange-500 text-orange-500 hover:bg-orange-50 hover:text-orange-600"
+                      >
+                        Register
+                      </Button>
+                    </Link>
+                  </div>
                 )}
               </div>
 
-              {/* --- ✨ MOBILE VIEW ICONS & MENU ✨ --- */}
+              {/* --- Mobile View --- */}
               <div className="lg:hidden flex items-center gap-4">
                 {showCartAndWishlist && (
                   <>
@@ -238,6 +246,14 @@ const Navbar = () => {
                     </Link>
                   </>
                 )}
+                {/* Profile/Login icon for mobile */}
+                <Link
+                  to={isUserAllowed ? getDashboardPath() : "/login"}
+                  className="text-gray-600"
+                >
+                  <User className="w-6 h-6" />
+                </Link>
+                {/* Hamburger Menu Icon */}
                 <button
                   onClick={() => setIsMenuOpen(true)}
                   className="text-gray-600"
@@ -249,6 +265,7 @@ const Navbar = () => {
           </div>
         </div>
 
+        {/* --- Mobile Menu Panel --- */}
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
@@ -266,8 +283,6 @@ const Navbar = () => {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-
-              {/* --- ✨ MOBILE MENU CONTENT ✨ --- */}
               <nav className="flex flex-col space-y-4">
                 {navLinks.map((link) => (
                   <Link
@@ -279,50 +294,7 @@ const Navbar = () => {
                   </Link>
                 ))}
               </nav>
-
-              {/* ✨ Mobile User/Auth Section ✨ */}
-              <div className="mt-8 border-t pt-6">
-                {isUserAllowed ? (
-                  <div className="space-y-4">
-                    <Link
-                      to={getDashboardPath()}
-                      className="flex items-center p-3 rounded-lg text-gray-700 hover:bg-gray-100"
-                    >
-                      <Avatar className="w-10 h-10 border-2 border-orange-500 mr-3">
-                        <AvatarFallback className="bg-orange-500 text-white font-bold">
-                          {userInfo.name
-                            ? userInfo.name.charAt(0).toUpperCase()
-                            : "V"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-semibold">{userInfo.name}</p>
-                        <p className="text-sm text-gray-500">View Dashboard</p>
-                      </div>
-                    </Link>
-                    <Button
-                      onClick={handleLogout}
-                      variant="ghost"
-                      className="w-full justify-start text-red-600 hover:bg-red-50"
-                    >
-                      <LogOut className="mr-3 h-5 w-5" /> Logout
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-4">
-                    <Link to="/login" className="flex-1">
-                      <Button variant="outline" className="w-full">
-                        Login
-                      </Button>
-                    </Link>
-                    <Link to="/register" className="flex-1">
-                      <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white">
-                        Register
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </div>
+              {/* User/Auth section is no longer needed here as it's in the header */}
             </motion.div>
           )}
         </AnimatePresence>

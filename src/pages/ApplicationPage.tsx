@@ -1,3 +1,5 @@
+// pages/ApplicationPage.tsx
+
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -46,7 +48,6 @@ const ApplicationPage = () => {
   const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
 
-  // "Careers" page se bheja gaya job title get karein
   const { jobTitle = "" } = location.state || {};
 
   const { actionStatus, error, userInfo } = useSelector(
@@ -60,22 +61,39 @@ const ApplicationPage = () => {
     phone: "",
     password: "",
     profession: jobTitle,
+    // ++ CHANGE HERE: Added state for the new files
+    businessCertification: null,
+    shopImage: null,
   });
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.id]: e.target.value }));
   };
 
-  const handleSelectChange = (value) => {
+  const handleSelectChange = (value: string) => {
     setFormData((prev) => ({ ...prev, profession: value }));
   };
 
-  const handleSubmit = (e) => {
+  // ++ CHANGE HERE: A unified handler for all file inputs
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, files } = e.target;
+    if (files && files.length > 0) {
+      setFormData((prev) => ({ ...prev, [id]: files[0] }));
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const dataToSubmit = new FormData();
-    for (const key in formData) {
-      if (formData[key]) dataToSubmit.append(key, formData[key]);
-    }
+    // Append all form data, including files
+    Object.keys(formData).forEach((key) => {
+      if (formData[key as keyof typeof formData]) {
+        dataToSubmit.append(
+          key,
+          formData[key as keyof typeof formData] as string | Blob
+        );
+      }
+    });
     dispatch(registerUser(dataToSubmit));
   };
 
@@ -86,7 +104,7 @@ const ApplicationPage = () => {
       navigate("/login");
     }
     if (actionStatus === "failed") {
-      toast.error(error || "Registration failed. Please try again.");
+      toast.error(String(error) || "Registration failed. Please try again.");
       dispatch(resetActionStatus());
     }
   }, [actionStatus, userInfo, error, dispatch, navigate]);
@@ -164,6 +182,23 @@ const ApplicationPage = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* ++ CHANGE HERE: Added new file input fields */}
+              <div>
+                <Label htmlFor="businessCertification">
+                  Business Certification (Optional)
+                </Label>
+                <Input
+                  id="businessCertification"
+                  type="file"
+                  onChange={handleFileChange}
+                />
+              </div>
+              <div>
+                <Label htmlFor="shopImage">Shop Image (Optional)</Label>
+                <Input id="shopImage" type="file" onChange={handleFileChange} />
+              </div>
+
               <Button
                 type="submit"
                 className="w-full btn-primary"

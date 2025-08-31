@@ -6,9 +6,10 @@ import { format } from "date-fns";
 import {
   fetchMyPlans,
   deletePlan,
-  updatePlan, // ✨ updatePlan thunk ko import karein
+  updatePlan,
   resetPlanActionStatus,
 } from "@/lib/features/professional/professionalPlanSlice";
+import { RootState, AppDispatch } from "@/lib/store";
 
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Edit, Trash2, Loader2, PackageOpen } from "lucide-react";
@@ -19,11 +20,11 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"; // ✨ Select component import karein
+} from "@/components/ui/select";
 import EditPlanModal from "@/pages/professional/EditPlanModal";
 
 // Helper function to get status color
-const getStatusClass = (status) => {
+const getStatusClass = (status: string) => {
   switch (status) {
     case "Published":
       return "bg-green-100 text-green-700";
@@ -37,28 +38,33 @@ const getStatusClass = (status) => {
 };
 
 const MyProductsPage = () => {
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { plans, listStatus, actionStatus, error } = useSelector(
-    (state) => state.professionalPlans
-  );
+  // Renamed 'plans' to 'myPlans' for clarity. This state only contains the logged-in user's plans.
+  const {
+    plans: myPlans,
+    listStatus,
+    actionStatus,
+    error,
+  } = useSelector((state: RootState) => state.professionalPlans);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
 
   useEffect(() => {
+    // This action correctly fetches ONLY the plans for the logged-in professional
     dispatch(fetchMyPlans());
   }, [dispatch]);
 
   useEffect(() => {
     if (actionStatus === "failed" && error) {
-      toast.error(error);
+      toast.error(String(error));
       dispatch(resetPlanActionStatus());
     }
   }, [actionStatus, error, dispatch]);
 
-  const handleDelete = (planId) => {
+  const handleDelete = (planId: string) => {
     if (window.confirm("Are you sure you want to delete this plan?")) {
       dispatch(deletePlan(planId)).then((res) => {
         if (!res.error) {
@@ -68,7 +74,7 @@ const MyProductsPage = () => {
     }
   };
 
-  const handleEdit = (plan) => {
+  const handleEdit = (plan: any) => {
     setSelectedPlan(plan);
     setIsEditModalOpen(true);
   };
@@ -78,8 +84,7 @@ const MyProductsPage = () => {
     setSelectedPlan(null);
   };
 
-  // ✨ NAYA FUNCTION: Status ko update karne ke liye ✨
-  const handleStatusChange = (planId, newStatus) => {
+  const handleStatusChange = (planId: string, newStatus: string) => {
     const planData = new FormData();
     planData.append("status", newStatus);
 
@@ -113,7 +118,7 @@ const MyProductsPage = () => {
               <Loader2 className="mr-2 h-6 w-6 animate-spin" /> Loading Your
               Plans...
             </div>
-          ) : plans.length === 0 ? (
+          ) : myPlans.length === 0 ? (
             <div className="p-12 text-center text-gray-500">
               <PackageOpen className="mx-auto h-12 w-12 text-gray-400" />
               <p className="mt-2">You haven't uploaded any plans yet.</p>
@@ -149,12 +154,12 @@ const MyProductsPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {plans.map((plan) => (
+                  {myPlans.map((plan) => (
                     <tr key={plan._id} className="border-t hover:bg-gray-50">
                       <td className="p-4">
                         <Avatar className="rounded-md">
                           <AvatarImage
-                            src={plan.mainImage || plan.image}
+                            src={plan.mainImage}
                             alt={plan.planName}
                             className="object-cover"
                           />
@@ -167,7 +172,6 @@ const MyProductsPage = () => {
                         {plan.planName}
                       </td>
                       <td className="p-4">
-                        {/* ✨ STATUS DROPDOWN YAHAN ADD KIYA GAYA HAI ✨ */}
                         <Select
                           value={plan.status}
                           onValueChange={(newStatus) =>

@@ -1,5 +1,3 @@
-// lib/features/products/productSlice.ts
-
 import axios from "axios";
 import {
   createSlice,
@@ -16,7 +14,17 @@ const getToken = (getState: () => RootState) => {
   return user.userInfo?.token;
 };
 
-// Define a detailed interface for the Product
+// Interface for a single review
+interface Review {
+  _id: string;
+  name: string;
+  rating: number;
+  comment: string;
+  user: string;
+  createdAt: string;
+}
+
+// Interface for a Product
 interface Product {
   _id: string;
   name: string;
@@ -39,19 +47,22 @@ interface Product {
   planFile?: string;
   galleryImages?: string[];
   youtubeLink?: string;
-  user?: string; // or a more detailed User interface
+  user?: string;
   createdAt?: string;
   updatedAt?: string;
-  [key: string]: any; // Allows for other properties not explicitly defined
+  reviews?: Review[];
+  rating?: number;
+  numReviews?: number;
+  [key: string]: any;
 }
 
-// Define the shape of the API response for fetchProducts
+// Shape of the API response for fetchProducts
 interface FetchProductsResponse {
   products: Product[];
   pagination?: any;
 }
 
-// Define the shape of the Redux state for this slice
+// Shape of the Redux state for this slice
 interface ProductState {
   products: Product[];
   product: Product | null;
@@ -70,6 +81,8 @@ const initialState: ProductState = {
   error: null,
 };
 
+// --- ASYNC THUNKS ---
+
 export const fetchProducts = createAsyncThunk<
   FetchProductsResponse,
   Record<string, any>,
@@ -77,7 +90,6 @@ export const fetchProducts = createAsyncThunk<
 >("products/fetchAll", async (params = {}, { rejectWithValue }) => {
   try {
     const { data } = await axios.get(API_URL, { params });
-    // Ensure the response always has a consistent shape
     return {
       products: Array.isArray(data) ? data : data.products || [],
       pagination: data.pagination || null,
@@ -172,6 +184,37 @@ export const deleteProduct = createAsyncThunk<
   }
 });
 
+export const createReview = createAsyncThunk<
+  { message: string }, // Expect a success message from the server
+  { productId: string; reviewData: { rating: number; comment: string } },
+  { state: RootState; rejectValue: string }
+>(
+  "products/createReview",
+  async ({ productId, reviewData }, { getState, rejectWithValue }) => {
+    try {
+      const token = getToken(getState);
+      const config = {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      const { data } = await axios.post(
+        `${API_URL}/${productId}/reviews`,
+        reviewData,
+        config
+      );
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to submit review"
+      );
+    }
+  }
+);
+
+// --- SLICE DEFINITION ---
+
 const productSlice = createSlice({
   name: "products",
   initialState,
@@ -192,6 +235,7 @@ const productSlice = createSlice({
       state.error = action.payload;
     };
 
+    // Fetch All Products
     builder
       .addCase(fetchProducts.pending, (state) => {
         state.listStatus = "loading";
@@ -210,6 +254,7 @@ const productSlice = createSlice({
         state.error = action.payload;
       });
 
+    // Fetch Single Product
     builder
       .addCase(fetchProductById.pending, (state) => {
         state.listStatus = "loading";
@@ -226,6 +271,7 @@ const productSlice = createSlice({
         state.error = action.payload;
       });
 
+    // Create Product
     builder
       .addCase(createProduct.pending, actionPending)
       .addCase(
@@ -237,6 +283,7 @@ const productSlice = createSlice({
       )
       .addCase(createProduct.rejected, actionRejected);
 
+    // Update Product
     builder
       .addCase(updateProduct.pending, actionPending)
       .addCase(
@@ -253,6 +300,7 @@ const productSlice = createSlice({
       )
       .addCase(updateProduct.rejected, actionRejected);
 
+    // Delete Product
     builder
       .addCase(deleteProduct.pending, actionPending)
       .addCase(
@@ -265,6 +313,17 @@ const productSlice = createSlice({
         }
       )
       .addCase(deleteProduct.rejected, actionRejected);
+
+    // Create Review
+    builder
+      .addCase(createReview.pending, actionPending)
+      .addCase(createReview.fulfilled, (state) => {
+        state.actionStatus = "succeeded";
+        // We don't need to manually update the reviews here.
+        // We can simply refetch the product data after a successful review
+        // to get the latest list, which is a safer pattern.
+      })
+      .addCase(createReview.rejected, actionRejected);
   },
 });
 

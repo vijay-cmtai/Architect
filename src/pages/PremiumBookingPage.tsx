@@ -41,7 +41,11 @@ const PremiumBookingPage: React.FC = () => {
     (state: RootState) => state.premiumRequests
   );
 
-  const { packageName = "Premium Consultation" } = location.state || {};
+  const {
+    packageName = "Premium Consultation",
+    packageUnit = "",
+    packagePrice = "",
+  } = location.state || {};
 
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -95,7 +99,6 @@ const PremiumBookingPage: React.FC = () => {
 
     setIsSubmitting(true);
 
-    // Format the data to match the backend model's field names
     const requestData = {
       packageName,
       name: formData.name.trim(),
@@ -107,7 +110,7 @@ const PremiumBookingPage: React.FC = () => {
       spaceType: formData.spaceType,
       preferredStyle: formData.style.trim(),
       projectDetails: formData.details.trim(),
-      // Include optional fields only if they have a value
+      ratePlan: `${packagePrice} ${packageUnit}`,
       ...(formData.email && { email: formData.email.trim() }),
       ...(formData.phone && { phone: formData.phone.trim() }),
       ...(formData.address && { address: formData.address.trim() }),
@@ -116,7 +119,7 @@ const PremiumBookingPage: React.FC = () => {
     try {
       await dispatch(createPremiumRequest(requestData)).unwrap();
     } catch (err) {
-      // Error is handled by the useEffect hook
+      // El error ya se maneja en el useEffect
     } finally {
       setIsSubmitting(false);
     }
@@ -151,6 +154,11 @@ const PremiumBookingPage: React.FC = () => {
               <p className="text-lg text-primary font-semibold mt-1">
                 For: {packageName}
               </p>
+              {packagePrice && packageUnit && (
+                <p className="text-md text-muted-foreground">
+                  (Rate: ₹{packagePrice} {packageUnit})
+                </p>
+              )}
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 md:p-8">
@@ -159,7 +167,6 @@ const PremiumBookingPage: React.FC = () => {
                   Fill Your Details
                 </h3>
 
-                {/* --- ✨ ALL DETAILED FORM FIELDS RESTORED ✨ --- */}
                 <div>
                   <Label htmlFor="name">Full Name *</Label>
                   <Input
