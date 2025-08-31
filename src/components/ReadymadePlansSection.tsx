@@ -13,7 +13,7 @@ const planTypes = [
   {
     name: "Floor Plans",
     icon: LayoutTemplate,
-    image: "/r1.png",
+    image: "/floorplan.jpg",
     href: "/floor-plans",
     bgColor: "bg-blue-100",
     iconColor: "text-blue-500",
@@ -21,7 +21,7 @@ const planTypes = [
   {
     name: "Floor Plan + 3D Elevations",
     icon: Building2,
-    image: "/r2.jpeg",
+    image: "/3d.jpg",
     href: "/3d-plans",
     bgColor: "bg-purple-100",
     iconColor: "text-purple-500",
@@ -29,7 +29,7 @@ const planTypes = [
   {
     name: "Interior Designs",
     icon: Sofa,
-    image: "/r3.jpg",
+    image: "/homeDesign.jpg",
     href: "/interior-designs",
     bgColor: "bg-teal-100",
     iconColor: "text-teal-500",

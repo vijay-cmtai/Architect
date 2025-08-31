@@ -20,7 +20,7 @@ const premiumPackages = [
   },
   {
     title: "Floor plan + 3d Elevation",
-    price: "12",
+    price: "10",
     unit: "Per sqft",
     isPopular: true,
     features: [
@@ -32,7 +32,8 @@ const premiumPackages = [
     ],
   },
   {
-    title: "Complete File",
+    title:
+      " Complete House Plan File With Interior Design And Video Walkthrough",
     price: "40",
     unit: "Per sqft",
     isPopular: false,

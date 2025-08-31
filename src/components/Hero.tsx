@@ -18,19 +18,19 @@ import {
 
 const slides = [
   {
-    image: "/b4.jpeg",
+    image: "/b11.jpg",
     alt: "Modern white house with a lawn",
   },
   {
-    image: "/b6.webp",
+    image: "/b12.jpg",
     alt: "Classic house with a beautiful garden",
   },
   {
-    image: "/b5.jpeg",
+    image: "/b13.jpg",
     alt: "Luxurious apartment building exterior",
   },
   {
-    image: "/b3.webp",
+    image: "/b14.jpg",
     alt: "Luxurious apartment building Interior",
   },
 ];

@@ -1,6 +1,7 @@
 // Example file path: src/components/TopBar.jsx
 
 import React from "react";
+// All necessary icons are imported
 import {
   Facebook,
   Instagram,
@@ -13,11 +14,12 @@ import {
   Phone,
 } from "lucide-react";
 
+// Custom WhatsApp Icon (no changes needed)
 const WhatsAppIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="18"
-    height="18"
+    width="16" // Adjusted size
+    height="16"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -29,11 +31,12 @@ const WhatsAppIcon = () => (
   </svg>
 );
 
+// Custom Pinterest Icon (no changes needed)
 const PinterestIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="18"
-    height="18"
+    width="16" // Adjusted size
+    height="16"
     viewBox="0 0 24 24"
     fill="currentColor"
   >
@@ -50,90 +53,85 @@ const TopBar = () => {
   const socialLinks = [
     {
       name: "Facebook",
-      icon: <Facebook size={18} />,
-      color: "bg-blue-800",
+      icon: <Facebook size={16} />,
       href: "https://facebook.com",
     },
     {
       name: "WhatsApp",
       icon: <WhatsAppIcon />,
-      color: "bg-green-500",
       href: `https://wa.me/${contactInfo.phone.replace("+", "")}`,
     },
     {
       name: "Twitter",
-      icon: <Twitter size={18} />,
-      color: "bg-sky-500",
+      icon: <Twitter size={16} />,
       href: "https://twitter.com",
     },
     {
       name: "LinkedIn",
-      icon: <Linkedin size={18} />,
-      color: "bg-sky-700",
+      icon: <Linkedin size={16} />,
       href: "https://linkedin.com",
     },
     {
       name: "Pinterest",
       icon: <PinterestIcon />,
-      color: "bg-red-600",
       href: "https://pinterest.com",
     },
     {
       name: "Telegram",
-      icon: <Send size={18} />,
-      color: "bg-sky-400",
+      icon: <Send size={16} />,
       href: "https://telegram.org",
     },
-    { name: "Koo", icon: <AtSign size={18} />, color: "bg-black", href: "#" },
+    { name: "Koo", icon: <AtSign size={16} />, href: "#" },
   ];
 
   return (
-    <header className="bg-white border-b border-gray-200 relative">
-      <div className="absolute top-0 left-0 w-full h-1 bg-sky-400"></div>
+    // The blue line is now part of the header structure, not a separate element
+    <header className="bg-white border-b border-gray-200 pt-1 bg-sky-400">
+      <div className="bg-white">
+        <div className="container mx-auto px-4 py-2 flex flex-col lg:flex-row lg:justify-between lg:items-center">
+          {/* Left Side: Social Media Icons */}
+          <div className="flex items-center gap-x-4 justify-center lg:justify-start mb-2 lg:mb-0">
+            {socialLinks.map((social) => (
+              <a
+                key={social.name}
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={social.name}
+                // FIX: Updated styles to be simple icons that change color on hover
+                className="text-gray-500 transition-colors hover:text-orange-500"
+              >
+                {social.icon}
+              </a>
+            ))}
+          </div>
 
-      {/* FIX: Se ha cambiado 'flex' por 'block lg:flex' para que sea responsive. */}
-      <div className="container mx-auto px-4 py-2 block lg:flex lg:justify-between lg:items-center">
-        {/* Lado Izquierdo: Iconos de Redes Sociales */}
-        <div className="flex items-center gap-x-2 justify-center lg:justify-start mb-2 lg:mb-0">
-          {socialLinks.map((social) => (
+          {/* Center: Title Text */}
+          <div className="text-center my-2 lg:my-0">
+            <span className="font-semibold text-orange-500 text-sm tracking-wider">
+              Future-Ready Home Design: Innovative Solutions You Need
+            </span>
+          </div>
+
+          {/* Right Side: Contact Information */}
+          <div className="flex flex-wrap items-center justify-center lg:justify-end gap-x-6 gap-y-1 text-sm text-gray-700">
             <a
-              key={social.name}
-              href={social.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={social.name}
-              className={`w-8 h-8 flex items-center justify-center rounded-md text-white transition-opacity hover:opacity-80 ${social.color}`}
+              href={`mailto:${contactInfo.email}`}
+              className="flex items-center gap-x-2 transition-colors hover:text-orange-500"
             >
-              {social.icon}
+              {/* FIX: Icon color updated */}
+              <Mail size={16} className="text-orange-500" />
+              <span>{contactInfo.email}</span>
             </a>
-          ))}
-        </div>
-
-        {/* Centro: Título */}
-        {/* FIX: Se ha añadido 'text-center' para la vista móvil. */}
-        <div className="text-center my-2 lg:my-0">
-          <span className="font-semibold text-orange-500 text-sm tracking-wider">
-            Future-Ready Home Design: Innovative Solutions You Need
-          </span>
-        </div>
-
-        {/* Lado Derecho: Información de Contacto */}
-        {/* FIX: Se ha cambiado 'flex' por 'flex-wrap' y 'justify-center' para la vista móvil. */}
-        <div className="flex flex-wrap items-center justify-center lg:justify-end gap-x-6 gap-y-1 text-sm text-gray-700">
-          <a
-            href={`mailto:${contactInfo.email}`}
-            className="flex items-center gap-x-2 transition-colors hover:text-sky-500"
-          >
-            <Mail size={16} />
-            <span>{contactInfo.email}</span>
-          </a>
-          <a
-            href={`tel:${contactInfo.phone}`}
-            className="flex items-center gap-x-2 transition-colors hover:text-green-600"
-          >
-            <Phone size={16} />
-            <span>{contactInfo.phone}</span>
-          </a>
+            <a
+              href={`tel:${contactInfo.phone}`}
+              className="flex items-center gap-x-2 transition-colors hover:text-orange-500"
+            >
+              {/* FIX: Icon color updated */}
+              <Phone size={16} className="text-orange-500" />
+              <span>{contactInfo.phone}</span>
+            </a>
+          </div>
         </div>
       </div>
     </header>
