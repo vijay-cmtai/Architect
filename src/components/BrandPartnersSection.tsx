@@ -3,37 +3,20 @@ import { motion } from "framer-motion";
 
 const logos = [
   {
-    name: "Ultratech Cement",
-    src: "https://upload.wikimedia.org/wikipedia/en/9/96/Ultratech_Cement_Logo.svg",
+    name: "Poperty News24.com",
+    src: "/brand1.jpg",
   },
   {
-    name: "Ambuja Cement",
-    src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcReqd2qw--8s6Jw_1vRDqrVptndwwgEYZMzeA&s",
+    name: "Himanshu Propertie Solution",
+    src: "/brand2.jpg",
   },
   {
-    name: "Asian Paints",
-    src: "https://images.seeklogo.com/logo-png/31/2/asian-paints-logo-png_seeklogo-315813.png",
+    name: "Krispa",
+    src: "/brand3.jpg",
   },
   {
-    name: "Tata Steel",
-    src: "https://www.tatasteel.com/media/3401/ts_logo_guidelines08.jpg",
-  },
-  { name: "JSW", src: "https://jswmi.in/jswm/storage/2020/04/jsw-logo-jv.png" },
-  {
-    name: "Havells",
-    src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ9Ep_TvJk4fPcM8G4ObeaqVU8AmBZYLI6SkA&s",
-  },
-  {
-    name: "Jaquar",
-    src: "https://5.imimg.com/data5/ON/TY/DT/ANDROID-106823024/product-jpeg.jpeg",
-  },
-  {
-    name: "Kajaria",
-    src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXbSooa46UVYmFQnwxlijEY_K5PiAe98g5XQ&s",
-  },
-  {
-    name: "Cera",
-    src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnEN0W10k2IoD0nA1dAwZFi9qK8lnmYnpuBg&s",
+    name: "Shri Laxminath Conlonizer & Developers ",
+    src: "/brand4.jpg",
   },
 ];
 
