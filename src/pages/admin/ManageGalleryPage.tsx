@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -42,7 +42,8 @@ const GalleryCard = ({
       <CardContent className="p-0">
         <div className="aspect-w-16 aspect-h-9">
           <img
-            src={item.secure_url}
+            // FIX: Changed src from item.secure_url to item.imageUrl
+            src={item.imageUrl}
             alt={item.title}
             className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
           />
@@ -61,16 +62,16 @@ const GalleryCard = ({
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                Esta acción no se puede deshacer. Esto eliminará permanentemente
-                la imagen de la galería y de los servidores.
+                This action cannot be undone. This will permanently delete the
+                image from the gallery and from the servers.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={() => onDelete(item._id)}>
-                Eliminar
+                Delete
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -93,16 +94,16 @@ const ManageGalleryPage: React.FC = () => {
   }, [status, dispatch]);
 
   useEffect(() => {
-    if (actionStatus === "succeeded" && items.length > 0) {
-      // Evita mostrar toast en la carga inicial
-      toast.success("Acción completada con éxito.");
+    // This effect handles notifications for create/delete actions
+    if (actionStatus === "succeeded") {
+      toast.success("Action completed successfully.");
       dispatch(resetActionStatus());
     }
     if (actionStatus === "failed") {
-      toast.error(error || "La acción ha fallado.");
+      toast.error(String(error) || "The action has failed.");
       dispatch(resetActionStatus());
     }
-  }, [actionStatus, dispatch, error, items.length]);
+  }, [actionStatus, dispatch, error]);
 
   const handleDelete = (id: string) => {
     dispatch(deleteGalleryItem(id));
@@ -111,10 +112,10 @@ const ManageGalleryPage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Gestionar Galería</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Manage Gallery</h1>
         <Link to="/admin/gallery/add">
           <Button>
-            <PlusCircle className="mr-2 h-4 w-4" /> Añadir Imagen
+            <PlusCircle className="mr-2 h-4 w-4" /> Add Image
           </Button>
         </Link>
       </div>
@@ -129,17 +130,17 @@ const ManageGalleryPage: React.FC = () => {
         <div className="text-center py-20 bg-red-50 rounded-lg">
           <ServerCrash className="mx-auto h-12 w-12 text-red-500" />
           <h3 className="mt-4 text-xl font-semibold text-red-600">
-            Error al Cargar la Galería
+            Error Loading Gallery
           </h3>
-          <p className="mt-2 text-red-500">{error}</p>
+          <p className="mt-2 text-red-500">{String(error)}</p>
         </div>
       )}
 
       {status === "succeeded" && items.length === 0 && (
         <div className="text-center py-20 border-2 border-dashed rounded-lg">
-          <h3 className="text-xl font-semibold">La Galería está Vacía</h3>
+          <h3 className="text-xl font-semibold">The Gallery is Empty</h3>
           <p className="mt-2 text-muted-foreground">
-            Comienza añadiendo tu primera imagen.
+            Start by adding your first image.
           </p>
         </div>
       )}

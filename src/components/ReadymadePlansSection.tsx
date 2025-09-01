@@ -35,7 +35,7 @@ const planTypes = [
     iconColor: "text-teal-500",
   },
   {
-    name: "Construction Products",
+    name: "Home Design Product",
     icon: HardHat,
     image: "/r4.avif",
     href: "/construction-products",

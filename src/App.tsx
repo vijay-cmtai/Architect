@@ -84,6 +84,7 @@ import MyProductsPage from "./pages/professional/MyProductsPage";
 import AddProductPageProf from "./pages/professional/AddProductPage";
 import ProfilePageProf from "./pages/professional/ProfilePage";
 import ProfessionalOrdersPage from "./pages/professional/OrdersPage";
+import GalleryPage from "./pages/GalleryPage";
 
 const queryClient = new QueryClient();
 
@@ -170,6 +171,11 @@ const App = () => (
                   path="/premium-booking-form"
                   element={<PremiumBookingPage />}
                 />
+                  <Route
+                  path="/gallery"
+                  element={<GalleryPage/>}
+                />
+
 
                 {/* --- User Dashboard Routes --- */}
                 <Route path="/dashboard" element={<DashboardLayout />}>

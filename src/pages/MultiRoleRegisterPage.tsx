@@ -28,7 +28,7 @@ const userRoles = [
   { id: "user", label: "Register as a User" },
   { id: "professional", label: "Register as a Professional" },
   { id: "seller", label: "Register as a Material Seller" },
-  { id: "Contractor", label: "Register as a Contractor and Interior Partner" },
+  { id: "Contractor", label: "Register as a Contractor and Interior Partners" },
   { id: "admin", label: "Register as an Admin" },
 ];
 

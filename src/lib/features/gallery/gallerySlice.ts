@@ -1,24 +1,25 @@
-// lib/features/gallery/gallerySlice.ts
-
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 import { RootState } from "@/lib/store";
 
-// Define la interfaz para un item de la galería
+// Define the API URL base for this slice
+const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/gallery`;
+
+// Define the interface for a gallery item
 export interface GalleryItem {
   _id: string;
   title: string;
   category: string;
-  secure_url: string; // La URL de Cloudinary
-  public_id: string;
+  imageUrl: string;
+  public_id: string; // <-- This is REQUIRED
   createdAt?: string;
 }
 
-// Define la interfaz para el estado del slice
+// Define the interface for the slice's state
 interface GalleryState {
   items: GalleryItem[];
   status: "idle" | "loading" | "succeeded" | "failed";
-  actionStatus: "idle" | "loading" | "succeeded" | "failed"; // Para acciones como crear/eliminar
+  actionStatus: "idle" | "loading" | "succeeded" | "failed"; // For actions like create/delete
   error: string | null;
 }
 
@@ -29,26 +30,24 @@ const initialState: GalleryState = {
   error: null,
 };
 
-// --- THUNKS ASÍNCRONOS ---
+// --- ASYNC THUNKS ---
 
-// Thunk para obtener todos los items de la galería
+// Thunk to fetch all gallery items
 export const fetchGalleryItems = createAsyncThunk(
   "gallery/fetchItems",
   async (_, { rejectWithValue }) => {
     try {
-      const { data } = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/gallery`
-      );
+      const { data } = await axios.get(API_URL);
       return data;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || "Erroor cannot create gallery item"
+        error.response?.data?.message || "Could not fetch gallery items."
       );
     }
   }
 );
 
-// Thunk para crear un nuevo item en la galería (subir imagen)
+// Thunk to create a new gallery item (upload image)
 export const createGalleryItem = createAsyncThunk<GalleryItem, FormData>(
   "gallery/createItem",
   async (formData, { getState, rejectWithValue }) => {
@@ -60,17 +59,18 @@ export const createGalleryItem = createAsyncThunk<GalleryItem, FormData>(
           Authorization: `Bearer ${user.userInfo?.token}`,
         },
       };
-      const { data } = await axios.post("/api/gallery", formData, config);
+      // FIX: Using the full API_URL, not a relative path
+      const { data } = await axios.post(API_URL, formData, config);
       return data;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || "Error al subir la imagen"
+        error.response?.data?.message || "Failed to upload image."
       );
     }
   }
 );
 
-// Thunk para eliminar un item de la galería
+// Thunk to delete a gallery item
 export const deleteGalleryItem = createAsyncThunk<string, string>(
   "gallery/deleteItem",
   async (id, { getState, rejectWithValue }) => {
@@ -81,11 +81,12 @@ export const deleteGalleryItem = createAsyncThunk<string, string>(
           Authorization: `Bearer ${user.userInfo?.token}`,
         },
       };
-      await axios.delete(`/api/gallery/${id}`, config);
-      return id; // Devuelve el ID para poderlo eliminar del estado
+      // FIX: Using the full API_URL with the item ID, not a relative path
+      await axios.delete(`${API_URL}/${id}`, config);
+      return id; // Return the ID for removal from the state
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || "Error can not upload image"
+        error.response?.data?.message || "Failed to delete image."
       );
     }
   }
@@ -127,7 +128,7 @@ const gallerySlice = createSlice({
         createGalleryItem.fulfilled,
         (state, action: PayloadAction<GalleryItem>) => {
           state.actionStatus = "succeeded";
-          state.items.unshift(action.payload); // Añade la nueva imagen al principio
+          state.items.unshift(action.payload); // Add the new image to the beginning
         }
       )
       .addCase(createGalleryItem.rejected, (state, action) => {
