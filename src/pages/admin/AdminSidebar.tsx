@@ -1,5 +1,3 @@
-// src/components/admin/AdminSidebar.jsx
-
 import React, { useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -21,7 +19,8 @@ import {
   HelpCircle,
   FileCheck2,
   Gem,
-  PenSquare, // New Icon for Blog
+  PenSquare,
+  Image, // ✨ ICONO AÑADIDO PARA LA GALERÍA
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/features/users/userSlice";
@@ -54,10 +53,15 @@ const productLinks = [
   { name: "Add New Product", path: "/admin/products/add", icon: PlusCircle },
 ];
 
-// ✨ NEW: Blog Links Array ✨
 const blogLinks = [
   { name: "All Posts", path: "/admin/blogs", icon: Box },
   { name: "Add New Post", path: "/admin/blogs/add", icon: PlusCircle },
+];
+
+// ✨ NUEVO: Array de Enlaces para la Galería ✨
+const galleryLinks = [
+  { name: "Manage Gallery", path: "/admin/gallery", icon: Box },
+  { name: "Add Image", path: "/admin/gallery/add", icon: PlusCircle },
 ];
 
 const userLinks = [
@@ -71,7 +75,8 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
     users: false,
     requests: false,
     inquiries: false,
-    blogs: false, // ✨ New state for blogs menu ✨
+    blogs: false,
+    gallery: false, // ✨ Nuevo estado para el menú de la galería ✨
   });
 
   const dispatch = useDispatch();
@@ -117,7 +122,9 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
           <span>{title}</span>
         </div>
         <ChevronDown
-          className={`h-5 w-5 transition-transform ${openMenus[menuKey] ? "rotate-180" : ""}`}
+          className={`h-5 w-5 transition-transform ${
+            openMenus[menuKey] ? "rotate-180" : ""
+          }`}
         />
       </button>
       <AnimatePresence>
@@ -150,7 +157,9 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
       </AnimatePresence>
 
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-slate-800 text-white p-4 shadow-2xl flex flex-col z-40 transition-transform duration-300 ease-in-out lg:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed top-0 left-0 h-full w-64 bg-slate-800 text-white p-4 shadow-2xl flex flex-col z-40 transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         <div className="flex items-center justify-between mb-6 border-b border-slate-700 pb-4">
           <Link to="/admin">
@@ -167,9 +176,10 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
         <nav className="flex-grow overflow-y-auto pr-2">
           {mainLinks.map(renderNavLink)}
           {renderSubMenu("Products", ShoppingBag, "products", productLinks)}
-
-          {/* ✨ NEW BLOG SUBMENU ✨ */}
           {renderSubMenu("Blog", PenSquare, "blogs", blogLinks)}
+
+          {/* ✨ NUEVO SUBMENÚ DE LA GALERÍA ✨ */}
+          {renderSubMenu("Gallery", Image, "gallery", galleryLinks)}
 
           {renderSubMenu("Users", Users, "users", userLinks)}
           {renderSubMenu("Requests", Building, "requests", requestLinks)}

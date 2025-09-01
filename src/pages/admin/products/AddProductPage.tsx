@@ -28,7 +28,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-// FIX: Se corrigió la sintaxis de la importación.
 import MultiSelect from "react-select";
 
 // Lista de países
@@ -233,27 +232,75 @@ const AddProductPage: React.FC = () => {
               </CardHeader>
               <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
+                  <Label htmlFor="productNo">Product Number*</Label>
+                  <Input
+                    id="productNo"
+                    {...register("productNo", {
+                      required: "Product No. is required",
+                    })}
+                  />
+                  {errors.productNo && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {String(errors.productNo.message)}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="city">City*</Label>
+                  <Input
+                    id="city"
+                    {...register("city", { required: "City is required" })}
+                    placeholder="e.g., Mumbai, Delhi"
+                  />
+                  {errors.city && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {String(errors.city.message)}
+                    </p>
+                  )}
+                </div>
+                <div>
                   <Label htmlFor="plotSize">Plot Size*</Label>
                   <Input
                     id="plotSize"
-                    {...register("plotSize", { required: true })}
+                    {...register("plotSize", {
+                      required: "Plot size is required",
+                    })}
                   />
+                  {errors.plotSize && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {String(errors.plotSize.message)}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="plotArea">Plot Area (sqft)*</Label>
                   <Input
                     id="plotArea"
                     type="number"
-                    {...register("plotArea", { required: true })}
+                    {...register("plotArea", {
+                      required: "Plot area is required",
+                    })}
                   />
+                  {errors.plotArea && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {String(errors.plotArea.message)}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="rooms">Rooms (BHK)*</Label>
                   <Input
                     id="rooms"
                     type="number"
-                    {...register("rooms", { required: true })}
+                    {...register("rooms", {
+                      required: "Rooms count is required",
+                    })}
                   />
+                  {errors.rooms && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {String(errors.rooms.message)}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="bathrooms">Bathrooms</Label>
@@ -302,6 +349,41 @@ const AddProductPage: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* ++ TARJETA AÑADIDA CONDICIONALMENTE ++ */}
+            {planType === "Construction Products" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contact Information</CardTitle>
+                  <CardDescription>
+                    Provide contact details for this construction product.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="contactName">Contact Person Name</Label>
+                    <Input id="contactName" {...register("contactName")} />
+                  </div>
+                  <div>
+                    <Label htmlFor="contactEmail">Contact Email</Label>
+                    <Input
+                      id="contactEmail"
+                      type="email"
+                      {...register("contactEmail")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="contactPhone">Contact Phone</Label>
+                    <Input
+                      id="contactPhone"
+                      type="tel"
+                      {...register("contactPhone")}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
               <CardHeader>
                 <CardTitle>Files</CardTitle>
@@ -393,8 +475,13 @@ const AddProductPage: React.FC = () => {
                   <Input
                     id="price"
                     type="number"
-                    {...register("price", { required: true })}
+                    {...register("price", { required: "Price is required" })}
                   />
+                  {errors.price && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {String(errors.price.message)}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="salePrice">Sale Price (₹)</Label>
@@ -443,8 +530,15 @@ const AddProductPage: React.FC = () => {
                   <Label>Category*</Label>
                   <Input
                     id="category"
-                    {...register("category", { required: true })}
+                    {...register("category", {
+                      required: "Category is required",
+                    })}
                   />
+                  {errors.category && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {String(errors.category.message)}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label>Property Type*</Label>

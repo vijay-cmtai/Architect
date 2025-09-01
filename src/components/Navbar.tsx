@@ -97,9 +97,9 @@ const Navbar = () => {
               <div className="relative">
                 <div className="absolute -inset-1 bg-orange-200 rounded-full blur opacity-20"></div>
                 <img
-                  src="/logo.png"
+                  src="/logo1.png"
                   alt="ArchHome Logo"
-                  className="h-14 w-auto relative"
+                  className="h-16 w-auto relative"
                 />
               </div>
             </Link>

@@ -436,6 +436,26 @@ const ProductCard = ({ product, userOrders }) => {
         <p className="text-xs text-gray-500 uppercase">
           {product.category || "House Plan"}
         </p>
+
+        {/* --- INICIO DE LA SECCIÓN AÑADIDA --- */}
+        <div className="mt-2 text-xs text-gray-600 space-y-1">
+          {product.productNo && (
+            <div className="flex justify-between items-center">
+              <span className="font-semibold">Product No:</span>
+              <span>{product.productNo}</span>
+            </div>
+          )}
+          {product.city &&
+            Array.isArray(product.city) &&
+            product.city.length > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">City:</span>
+                <span className="text-right">{product.city.join(", ")}</span>
+              </div>
+            )}
+        </div>
+        {/* --- FIN DE LA SECCIÓN AÑADIDA --- */}
+
         <h3 className="text-lg font-bold text-gray-900 mt-1 truncate">
           {product.name}
         </h3>

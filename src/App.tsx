@@ -74,6 +74,8 @@ import AllInquiriesPage from "./pages/admin/AllInquiriesPage";
 import AllInquiriesSCPage from "./pages/admin/AllInquiriesSCPage";
 import AdminBlogsPage from "./pages/admin/AdminBlogsPage";
 import AdminAddEditBlogPage from "./pages/admin/AdminAddEditBlogPage";
+import AddGalleryImagePage from "./pages/admin/AddGalleryImagePage";
+import ManageGalleryPage from "./pages/admin/ManageGalleryPage";
 
 // --- Professional Dashboard Imports ---
 import ProfessionalLayout from "./pages/professional/ProfessionalLayout";
@@ -205,6 +207,8 @@ const App = () => (
                   <Route path="users" element={<AllUsersPage />} />
                   <Route path="users/add" element={<AddNewUserPage />} />
                   <Route path="profile" element={<AdminProfilePage />} />
+                  <Route path="gallery" element={<ManageGalleryPage />} />
+                  <Route path="gallery/add" element={<AddGalleryImagePage />} />
                   <Route
                     path="standard-requests"
                     element={<StandardRequestsPage />}

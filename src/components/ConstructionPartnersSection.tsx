@@ -45,19 +45,142 @@ type ContractorType = {
   address?: string;
   experience?: string;
   photoUrl?: string;
+  shopImageUrl?: string;
   phone?: string;
   profession?: string;
   status?: string;
 };
 
-// --- Contact Modal Component (Unchanged) ---
-const ContactModal: FC<{
+type ContactModalProps = {
   isOpen: boolean;
   onClose: () => void;
   user: ContractorType | null;
-}> = ({ isOpen, onClose, user }) => {
-  // ... (Modal logic and JSX remains the same)
-  return <></>;
+};
+
+// --- FIX: Restored the complete ContactModal component ---
+const ContactModal: FC<ContactModalProps> = ({ isOpen, onClose, user }) => {
+  const dispatch: AppDispatch = useDispatch();
+  const { actionStatus } = useSelector((state: RootState) => state.inquiries);
+
+  if (!isOpen || !user) return null;
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const inquiryData = {
+      recipient: user._id,
+      recipientInfo: {
+        name: user.name,
+        role: "Contractor",
+        phone: user.phone,
+        city: user.city,
+        address: user.address,
+        detail: `${user.profession} - ${user.experience}`,
+      },
+      senderName: formData.get("name") as string,
+      senderEmail: formData.get("email") as string,
+      senderWhatsapp: formData.get("whatsapp") as string,
+      requirements: formData.get("requirements") as string,
+    };
+    dispatch(createInquiry(inquiryData)).then((result) => {
+      if (createInquiry.fulfilled.match(result)) {
+        toast.success(`Your inquiry has been sent to ${user.name}!`);
+        dispatch(resetActionStatus());
+        onClose();
+      } else {
+        toast.error(String(result.payload) || "An error occurred.");
+        dispatch(resetActionStatus());
+      }
+    });
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/60"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 z-10"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Contact {user.name}
+                </h2>
+                <p className="text-gray-500">
+                  Share your project details to get a quote.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-2 text-gray-500 hover:text-gray-800"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="name">Your Name</Label>
+                <Input id="name" name="name" placeholder="John Doe" required />
+              </div>
+              <div>
+                <Label htmlFor="email">Your Email</Label>
+                <Input
+                  type="email"
+                  id="email"
+                  name="email"
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="whatsapp">WhatsApp Number</Label>
+                <Input
+                  type="tel"
+                  id="whatsapp"
+                  name="whatsapp"
+                  placeholder="+91..."
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="requirements">Project Details</Label>
+                <Textarea
+                  id="requirements"
+                  name="requirements"
+                  placeholder="e.g., I need a contractor for a 2-story building..."
+                  rows={4}
+                  required
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full btn-primary py-3"
+                disabled={actionStatus === "loading"}
+              >
+                {actionStatus === "loading" ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4 mr-2" />
+                )}
+                {actionStatus === "loading" ? "Sending..." : "Send Inquiry"}
+              </Button>
+            </form>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
 };
 
 // --- Main Section Component ---
@@ -108,7 +231,7 @@ const ConstructionPartnersSection: FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-extrabold text-gray-800 tracking-tight">
-              Our Contractor And Interiopr Patners
+              Our Contractor And Interior Partners
             </h2>
             <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
               Connect with our network of trusted and approved contractors for
@@ -176,14 +299,11 @@ const ConstructionPartnersSection: FC = () => {
                         key={contractor._id}
                         className="bg-white rounded-xl p-4 flex flex-col group transition-all duration-300 border-2 border-transparent hover:border-primary hover:shadow-xl hover:-translate-y-2 w-72 flex-shrink-0 snap-start"
                       >
-                        {/* This Avatar component is already correct. It will show the image if photoUrl exists. */}
                         <Avatar className="w-20 h-20 mx-auto mb-3 border-4 border-white shadow-md">
-                          {/* This part tries to show the image. */}
                           <AvatarImage
                             src={contractor.shopImageUrl}
                             alt={contractor.name}
                           />
-                          {/* This is the fallback, which shows only if the image above is missing or fails to load. */}
                           <AvatarFallback className="text-xl font-bold bg-gray-200 text-gray-600">
                             {contractor.name?.charAt(0).toUpperCase()}
                           </AvatarFallback>

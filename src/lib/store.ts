@@ -12,6 +12,7 @@ import wishlistReducer from "./features/wishlist/wishlistSlice";
 import orderReducer from "./features/orders/orderSlice";
 import adminReducer from "./features/admin/adminSlice";
 import blogReducer from "./features/blog/blogSlice";
+import galleryReducer from "./features/gallery/gallerySlice";
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +29,7 @@ export const store = configureStore({
     orders: orderReducer,
     admin: adminReducer,
     blog: blogReducer,
+    gallery: galleryReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
