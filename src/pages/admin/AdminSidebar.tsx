@@ -31,6 +31,7 @@ const mainLinks = [
   { name: "Customers", path: "/admin/customers", icon: Users },
   { name: "Reports", path: "/admin/reports", icon: BarChart2 },
   { name: "Profile", path: "/admin/profile", icon: UserCircle },
+  { name: "Videos", path: "/admin/addvideos", icon: PlusCircle },
 ];
 
 const requestLinks = [

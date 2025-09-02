@@ -13,6 +13,7 @@ import orderReducer from "./features/orders/orderSlice";
 import adminReducer from "./features/admin/adminSlice";
 import blogReducer from "./features/blog/blogSlice";
 import galleryReducer from "./features/gallery/gallerySlice";
+import videoReducer from "./features/videos/videoSlice";
 
 export const store = configureStore({
   reducer: {
@@ -30,6 +31,7 @@ export const store = configureStore({
     admin: adminReducer,
     blog: blogReducer,
     gallery: galleryReducer,
+    videos: videoReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

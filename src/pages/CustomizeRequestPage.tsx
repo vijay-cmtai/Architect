@@ -6,9 +6,22 @@ import {
   submitCustomizationRequest,
   resetStatus,
 } from "@/lib/features/customization/customizationSlice";
-import RequestPageLayout, { formStyles } from "../components/RequestPageLayout";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
+import { Button } from "@/components/ui/button";
+import { Loader2, CheckCircle } from "lucide-react"; // CheckCircle icon import kiya
+
+const formStyles = {
+  label: "block text-sm font-medium text-gray-700 mb-2",
+  input:
+    "w-full px-4 py-3 bg-gray-100 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition",
+  select:
+    "w-full px-4 py-3 bg-gray-100 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition",
+  textarea:
+    "w-full px-4 py-3 bg-gray-100 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 min-h-[120px] resize-y transition",
+  fileInput:
+    "w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-500/10 file:text-orange-600 hover:file:bg-orange-500/20 cursor-pointer",
+};
 
 const CustomizeRequestPage: React.FC = () => {
   const dispatch = useDispatch();
@@ -22,7 +35,6 @@ const CustomizeRequestPage: React.FC = () => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     formData.append("requestType", "Floor Plan Customization");
-
     (dispatch as typeof store.dispatch)(submitCustomizationRequest(formData));
   };
 
@@ -40,137 +52,221 @@ const CustomizeRequestPage: React.FC = () => {
     }
   }, [actionStatus, error, dispatch]);
 
+  const isLoading = actionStatus === "loading";
+
   return (
     <>
       <Navbar />
-      <form key={formKey} onSubmit={handleSubmit}>
-        <RequestPageLayout
-          title="Customize Your Floor Plan"
-          imageUrl="https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-          imageAlt="Beautiful house exterior"
-          isLoading={actionStatus === "loading"}
-        >
-          {/* Los otros campos del formulario se mantienen igual */}
-          <div>
-            <label htmlFor="name" className={formStyles.label}>
-              Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              className={formStyles.input}
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="email" className={formStyles.label}>
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              className={formStyles.input}
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="whatsappNumber" className={formStyles.label}>
-              WhatsApp Number
-            </label>
-            <input
-              type="tel"
-              id="whatsappNumber"
-              name="whatsappNumber"
-              className={formStyles.input}
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="country" className={formStyles.label}>
-              Country
-            </label>
-            <input
-              type="text"
-              id="country"
-              name="country"
-              className={formStyles.input}
-              defaultValue="India"
-              required
-            />
-          </div>
-
-          {/* FIX: Se añadió un div contenedor y un título para "Plot Size" */}
-          <div>
-            <label className={formStyles.label}>Plot Size</label>
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <label htmlFor="width" className={formStyles.label}>
-                  Width (Ft)
-                </label>
-                <input
-                  type="number"
-                  id="width"
-                  name="width"
-                  className={formStyles.input}
-                />
+      <div className="max-w-6xl mx-auto p-4 md:p-8 py-12 md:py-16">
+        <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
+          <form key={formKey} onSubmit={handleSubmit}>
+            <div className="flex flex-col-reverse lg:flex-row">
+              {/* === FORM SECTION (Left Side) === */}
+              <div className="w-full lg:w-1/2 p-8 md:p-10">
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-8">
+                  Customize Your Floor Plan
+                </h2>
+                <div className="space-y-5">
+                  {/* Form fields... */}
+                  <div>
+                    <label htmlFor="name" className={formStyles.label}>
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      className={formStyles.input}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="email" className={formStyles.label}>
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      className={formStyles.input}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="whatsappNumber"
+                      className={formStyles.label}
+                    >
+                      WhatsApp Number
+                    </label>
+                    <input
+                      type="tel"
+                      id="whatsappNumber"
+                      name="whatsappNumber"
+                      className={formStyles.input}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="country" className={formStyles.label}>
+                      Country
+                    </label>
+                    <input
+                      type="text"
+                      id="country"
+                      name="country"
+                      className={formStyles.input}
+                      defaultValue="India"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className={formStyles.label}>Plot Size</label>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <label htmlFor="width" className={formStyles.label}>
+                          Width (Ft)
+                        </label>
+                        <input
+                          type="number"
+                          id="width"
+                          name="width"
+                          className={formStyles.input}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label htmlFor="length" className={formStyles.label}>
+                          Length (Ft)
+                        </label>
+                        <input
+                          type="number"
+                          id="length"
+                          name="length"
+                          className={formStyles.input}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="facingDirection"
+                      className={formStyles.label}
+                    >
+                      Facing Direction
+                    </label>
+                    <select
+                      id="facingDirection"
+                      name="facingDirection"
+                      className={formStyles.select}
+                    >
+                      <option value="North">North</option>{" "}
+                      <option value="South">South</option>{" "}
+                      <option value="East">East</option>{" "}
+                      <option value="West">West</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="description" className={formStyles.label}>
+                      Description
+                    </label>
+                    <textarea
+                      id="description"
+                      name="description"
+                      placeholder="Your message..."
+                      className={formStyles.textarea}
+                    ></textarea>
+                  </div>
+                  <div>
+                    <label htmlFor="referenceFile" className={formStyles.label}>
+                      Upload Reference (Image or PDF)
+                    </label>
+                    <input
+                      id="referenceFile"
+                      type="file"
+                      name="referenceFile"
+                      className={formStyles.fileInput}
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full mt-6 text-lg py-3.5 h-14 bg-orange-500 hover:bg-orange-600 text-white"
+                    disabled={isLoading}
+                  >
+                    {isLoading && (
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    )}
+                    Send Request
+                  </Button>
+                </div>
               </div>
-              <div className="flex-1">
-                <label htmlFor="length" className={formStyles.label}>
-                  Length (Ft)
-                </label>
-                <input
-                  type="number"
-                  id="length"
-                  name="length"
-                  className={formStyles.input}
-                />
+
+              {/* === CARDS SECTION (Right Side) === */}
+              {/* --- CHANGE 1: CARDS KI HEIGHT BADHAI GAYI HAI AUR DETAILS ADD KI GAYI HAIN --- */}
+              <div className="w-full lg:w-1/2 bg-gray-50 p-8 flex items-stretch justify-center">
+                <div className="flex h-full w-full flex-col items-center justify-center gap-y-8">
+                  {/* == STANDARD FLOOR PLAN CARD == */}
+                  <div className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-8 text-center shadow-md flex flex-col h-full">
+                    <h3 className="text-2xl font-bold text-gray-800">
+                      Standard Plan
+                    </h3>
+                    <div className="my-4">
+                      <span className="text-7xl font-bold text-orange-500">
+                        ₹2
+                      </span>
+                      <p className="text-lg text-gray-600">Per sq.ft.</p>
+                    </div>
+                    <div className="border-t pt-6 mt-4 text-left space-y-3 flex-grow">
+                      <p className="flex items-center text-gray-700">
+                        <CheckCircle className="w-5 h-5 mr-3 text-green-500" />{" "}
+                        2D Floor Plan
+                      </p>
+                      <p className="flex items-center text-gray-700">
+                        <CheckCircle className="w-5 h-5 mr-3 text-green-500" />{" "}
+                        Furniture Layout
+                      </p>
+                      <p className="flex items-center text-gray-700">
+                        <CheckCircle className="w-5 h-5 mr-3 text-green-500" />{" "}
+                        Basic Dimensions
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* == PREMIUM FLOOR PLAN CARD == */}
+                  <div className="w-full max-w-sm rounded-xl border-2 border-orange-500 bg-white p-8 text-center shadow-lg flex flex-col h-full">
+                    <h3 className="text-2xl font-bold text-gray-800">
+                      Premium Plan
+                    </h3>
+                    <div className="my-4">
+                      <span className="text-7xl font-bold text-orange-500">
+                        ₹5
+                      </span>
+                      <p className="text-lg text-gray-600">Per sqft</p>
+                    </div>
+                    <div className="border-t pt-6 mt-4 text-left space-y-3 flex-grow">
+                      <p className="flex items-center text-gray-700">
+                        <CheckCircle className="w-5 h-5 mr-3 text-green-500" />{" "}
+                        Everything in Standard
+                      </p>
+                      <p className="flex items-center text-gray-700">
+                        <CheckCircle className="w-5 h-5 mr-3 text-green-500" />{" "}
+                        Detailed Dimensions
+                      </p>
+                      <p className="flex items-center text-gray-700">
+                        <CheckCircle className="w-5 h-5 mr-3 text-green-500" />{" "}
+                        Column Placement
+                      </p>
+                      <p className="flex items-center text-gray-700">
+                        <CheckCircle className="w-5 h-5 mr-3 text-green-500" />{" "}
+                        Vastu Compliance
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          {/* Fin del arreglo */}
-
-          <div>
-            <label htmlFor="facingDirection" className={formStyles.label}>
-              Facing Direction
-            </label>
-            <select
-              id="facingDirection"
-              name="facingDirection"
-              className={formStyles.select}
-            >
-              <option value="North">North</option>
-              <option value="South">South</option>
-              <option value="East">East</option>
-              <option value="West">West</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="description" className={formStyles.label}>
-              Description
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              placeholder="Your message..."
-              className={formStyles.textarea}
-            ></textarea>
-          </div>
-          <div>
-            <label htmlFor="referenceFile" className={formStyles.label}>
-              Upload Reference (Image or PDF)
-            </label>
-            <input
-              id="referenceFile"
-              type="file"
-              name="referenceFile"
-              className={formStyles.fileInput}
-            />
-          </div>
-        </RequestPageLayout>
-      </form>
+          </form>
+        </div>
+      </div>
       <Footer />
     </>
   );

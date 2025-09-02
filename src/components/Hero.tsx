@@ -86,7 +86,7 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative h-[700px] md:h-[650px] flex items-center justify-center text-white overflow-hidden">
+    <section className="relative h-screen min-h-[700px] flex items-center justify-center text-white overflow-hidden">
       <div className="absolute inset-0">
         <AnimatePresence>
           <motion.img
@@ -97,7 +97,7 @@ const Hero = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
             transition={{ duration: 1.5, ease: "easeInOut" }}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-center"
           />
         </AnimatePresence>
         <div className="absolute inset-0 bg-black/60"></div>

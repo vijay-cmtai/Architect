@@ -85,6 +85,7 @@ import AddProductPageProf from "./pages/professional/AddProductPage";
 import ProfilePageProf from "./pages/professional/ProfilePage";
 import ProfessionalOrdersPage from "./pages/professional/OrdersPage";
 import GalleryPage from "./pages/GalleryPage";
+import VideoUploadPage from "./pages/admin/VideoUploadPage";
 
 const queryClient = new QueryClient();
 
@@ -171,11 +172,7 @@ const App = () => (
                   path="/premium-booking-form"
                   element={<PremiumBookingPage />}
                 />
-                  <Route
-                  path="/gallery"
-                  element={<GalleryPage/>}
-                />
-
+                <Route path="/gallery" element={<GalleryPage />} />
 
                 {/* --- User Dashboard Routes --- */}
                 <Route path="/dashboard" element={<DashboardLayout />}>
@@ -235,6 +232,7 @@ const App = () => (
                     path="blogs/edit/:slug"
                     element={<AdminAddEditBlogPage />}
                   />
+                  <Route path="addvideos" element={<VideoUploadPage />} />
                 </Route>
 
                 {/* --- 404 Not Found Route --- */}
