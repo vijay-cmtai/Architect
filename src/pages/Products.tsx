@@ -248,7 +248,7 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
   </aside>
 );
 
-// --- ProductCard Component ---
+// --- ProductCard Component (WITH DOWNLOAD FIX) ---
 const ProductCard = ({ product, userOrders }) => {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -298,19 +298,29 @@ const ProductCard = ({ product, userOrders }) => {
       navigate(linkTo);
       return;
     }
-    if (!product.planFile) {
+
+    const fileToDownload = product.planFile?.[0];
+
+    if (!fileToDownload) {
       toast.error("Download file is not available for this plan.");
       return;
     }
+
+    let downloadUrl = fileToDownload;
+
+    if (downloadUrl.includes("res.cloudinary.com")) {
+      const parts = downloadUrl.split("/upload/");
+      if (parts.length === 2) {
+        downloadUrl = `${parts[0]}/upload/fl_attachment/${parts[1]}`;
+      }
+    }
+
     try {
-      const response = await fetch(product.planFile);
-      if (!response.ok) throw new Error("Network response was not ok.");
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      toast.success("Your download is starting...");
       const link = document.createElement("a");
-      link.href = url;
+      link.href = downloadUrl;
       const fileExtension =
-        product.planFile.split(".").pop()?.split("?")[0] || "pdf";
+        downloadUrl.split(".").pop()?.split("?")[0] || "pdf";
       link.setAttribute(
         "download",
         `ArchHome-${product.name.replace(/\s+/g, "-")}.${fileExtension}`
@@ -318,8 +328,6 @@ const ProductCard = ({ product, userOrders }) => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      toast.success("Your download has started!");
     } catch (error) {
       console.error("Download failed:", error);
       toast.error("Failed to download the file.");
@@ -521,8 +529,6 @@ const CountryCustomizationForm = ({ countryName }) => {
 
   return (
     <div className="bg-gray-50 py-16 mb-12">
-      {" "}
-      {/* Changed mt-12 to mb-12 */}
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl p-8 md:p-12 flex flex-col lg:flex-row items-center gap-12">
           <div className="w-full lg:w-1/2">
@@ -772,7 +778,6 @@ const Products = () => {
         filters.propertyType === "all" ||
         product.propertyType === filters.propertyType;
 
-      // --- THE FIX IS HERE ---
       const matchesCountryQuery =
         !countryQuery ||
         (Array.isArray(product.country) &&
@@ -859,14 +864,13 @@ const Products = () => {
           )}
         </div>
 
-        {/* --- FORM MOVED TO THE TOP --- */}
         {countryQuery && (
           <CountryCustomizationForm countryName={countryQuery} />
         )}
 
-        <div className="flex flex-col lg:flex-row gap-12 pt-0 lg:pt-8">
-          {" "}
-          {/* Adjusted padding */}
+        <div
+          className={`flex flex-col lg:flex-row gap-12 ${countryQuery ? "pt-0 lg:pt-8" : "pt-0"}`}
+        >
           <FilterSidebar
             filters={filters}
             setFilters={setFilters}

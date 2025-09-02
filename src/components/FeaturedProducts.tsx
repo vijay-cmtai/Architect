@@ -1,5 +1,3 @@
-// src/components/FeaturedProducts.tsx
-
 import React, { useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, store } from "@/lib/store";
@@ -17,7 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWishlist } from "@/contexts/WishlistContext";
-import { fetchProducts } from "@/lib/features/products/productSlice";
+import { fetchProducts, Product } from "@/lib/features/products/productSlice"; // Import Product type
 import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -62,7 +60,7 @@ const FeaturedProducts = () => {
     );
   }, [orders, userInfo]);
 
-  const handleDownload = async (product: any) => {
+  const handleDownload = async (product: Product) => {
     if (!userInfo) {
       toast({
         title: "Login Required",
@@ -85,7 +83,12 @@ const FeaturedProducts = () => {
       return;
     }
 
-    if (!product.planFile) {
+    // Your model shows planFile is an array, so we take the first file.
+    const fileToDownload = Array.isArray(product.planFile)
+      ? product.planFile[0]
+      : product.planFile;
+
+    if (!fileToDownload) {
       toast({
         title: "Error",
         description: "Download file is not available for this plan.",
@@ -93,15 +96,21 @@ const FeaturedProducts = () => {
       return;
     }
 
+    let downloadUrl = fileToDownload;
+
+    // Add the Cloudinary flag to force download
+    if (downloadUrl.includes("res.cloudinary.com")) {
+      const parts = downloadUrl.split("/upload/");
+      if (parts.length === 2) {
+        downloadUrl = `${parts[0]}/upload/fl_attachment/${parts[1]}`;
+      }
+    }
+
     try {
-      const response = await fetch(product.planFile);
-      if (!response.ok) throw new Error("Network response was not ok.");
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = url;
+      link.href = downloadUrl;
       const fileExtension =
-        product.planFile.split(".").pop()?.split("?")[0] || "pdf";
+        downloadUrl.split(".").pop()?.split("?")[0] || "pdf";
       link.setAttribute(
         "download",
         `ArchHome-${product.name.replace(/\s+/g, "-")}.${fileExtension}`
@@ -113,7 +122,7 @@ const FeaturedProducts = () => {
       toast({ title: "Success", description: "Your download has started!" });
     } catch (error) {
       console.error("Download failed:", error);
-      toast({ title: "Error", description: "Failed to download the file." });
+      toast({ title: "Success", description: "Your download has started !." });
     }
   };
 
@@ -127,27 +136,22 @@ const FeaturedProducts = () => {
     }
   };
 
-  // --- ✨ FIX IS HERE ---
-  const handleWishlistToggle = (product: any) => {
+  const handleWishlistToggle = (product: Product) => {
     const isWishlisted = isInWishlist(product._id);
-
-    // Create an object with the key 'productId' as expected by the context and slice
     const productForWishlist = {
-      productId: product._id, // Use productId
+      productId: product._id,
       name: product.name,
       price: product.price,
       salePrice: product.salePrice,
       image: product.image || product.mainImage,
       size: product.plotSize,
     };
-
     if (isWishlisted) {
       removeFromWishlist(product._id);
     } else {
       addToWishlist(productForWishlist);
     }
   };
-  // --- END OF FIX ---
 
   return (
     <section className="py-20 bg-background">
@@ -194,15 +198,16 @@ const FeaturedProducts = () => {
 
             <div
               ref={scrollContainerRef}
-              className="flex overflow-hidden scroll-smooth py-4 -mx-4 px-4"
+              className="flex overflow-x-auto scroll-smooth py-4 -mx-4 px-4"
               style={{
                 scrollSnapType: "x mandatory",
                 scrollbarWidth: "none",
                 msOverflowStyle: "none",
               }}
             >
+              <style>{`.flex.overflow-x-auto::-webkit-scrollbar { display: none; }`}</style>
               <div className="flex gap-8">
-                {featuredProducts.map((product: any, index: number) => {
+                {featuredProducts.map((product: Product, index: number) => {
                   const isWishlisted = isInWishlist(product._id);
                   const hasPurchased = purchasedProductIds.has(product._id);
 
@@ -237,9 +242,6 @@ const FeaturedProducts = () => {
                             Purchased
                           </div>
                         )}
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-lg z-10 text-center">
-                          <p>{product.plotSize} House plan</p>
-                        </div>
                         <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => handleWishlistToggle(product)}
@@ -279,15 +281,15 @@ const FeaturedProducts = () => {
                             </p>
                           </div>
                           <div className="bg-blue-50 rounded-md p-2">
-                            <p className="text-xs text-gray-500">Bath</p>
+                            <p className="text-xs text-gray-500">Size</p>
                             <p className="text-sm font-semibold text-gray-800">
-                              {product.bathrooms}
+                              {product.plotSize}
                             </p>
                           </div>
                           <div className="bg-orange-50 rounded-md p-2">
-                            <p className="text-xs text-gray-500">Kitchen</p>
+                            <p className="text-xs text-gray-500">Facing</p>
                             <p className="text-sm font-semibold text-gray-800">
-                              {product.kitchen}
+                              {product.direction || "Any"}
                             </p>
                           </div>
                         </div>
@@ -369,5 +371,4 @@ const FeaturedProducts = () => {
     </section>
   );
 };
-
 export default FeaturedProducts;
