@@ -29,9 +29,10 @@ interface SeoData {
   title?: string;
   description?: string;
   keywords?: string;
+  altText?: string;
 }
 
-// Interface for a Product (Updated with SEO)
+// The complete Product interface with all new fields
 export interface Product {
   _id: string;
   name: string;
@@ -60,7 +61,11 @@ export interface Product {
   reviews?: Review[];
   rating?: number;
   numReviews?: number;
-  seo?: SeoData; // SEO field added
+  seo?: SeoData;
+  taxRate?: number;
+  discountPercentage?: number;
+  crossSellProducts?: Product[];
+  upSellProducts?: Product[];
   [key: string]: any;
 }
 
@@ -222,7 +227,6 @@ export const createReview = createAsyncThunk<
 );
 
 // --- SLICE DEFINITION ---
-
 const productSlice = createSlice({
   name: "products",
   initialState,
@@ -275,46 +279,49 @@ const productSlice = createSlice({
       state.error = action.payload;
     });
 
-    builder.addCase(createProduct.pending, actionPending);
-    builder.addCase(
-      createProduct.fulfilled,
-      (state, action: PayloadAction<Product>) => {
-        state.actionStatus = "succeeded";
-        state.products.unshift(action.payload);
-      }
-    );
-    builder.addCase(createProduct.rejected, actionRejected);
-
-    builder.addCase(updateProduct.pending, actionPending);
-    builder.addCase(
-      updateProduct.fulfilled,
-      (state, action: PayloadAction<Product>) => {
-        state.actionStatus = "succeeded";
-        state.products = state.products.map((p) =>
-          p._id === action.payload._id ? action.payload : p
-        );
-        if (state.product?._id === action.payload._id) {
-          state.product = action.payload;
+    builder
+      .addCase(createProduct.pending, actionPending)
+      .addCase(
+        createProduct.fulfilled,
+        (state, action: PayloadAction<Product>) => {
+          state.actionStatus = "succeeded";
+          state.products.unshift(action.payload);
         }
-      }
-    );
-    builder.addCase(updateProduct.rejected, actionRejected);
-
-    builder.addCase(deleteProduct.pending, actionPending);
-    builder.addCase(
-      deleteProduct.fulfilled,
-      (state, action: PayloadAction<string>) => {
+      )
+      .addCase(createProduct.rejected, actionRejected);
+    builder
+      .addCase(updateProduct.pending, actionPending)
+      .addCase(
+        updateProduct.fulfilled,
+        (state, action: PayloadAction<Product>) => {
+          state.actionStatus = "succeeded";
+          state.products = state.products.map((p) =>
+            p._id === action.payload._id ? action.payload : p
+          );
+          if (state.product?._id === action.payload._id) {
+            state.product = action.payload;
+          }
+        }
+      )
+      .addCase(updateProduct.rejected, actionRejected);
+    builder
+      .addCase(deleteProduct.pending, actionPending)
+      .addCase(
+        deleteProduct.fulfilled,
+        (state, action: PayloadAction<string>) => {
+          state.actionStatus = "succeeded";
+          state.products = state.products.filter(
+            (p) => p._id !== action.payload
+          );
+        }
+      )
+      .addCase(deleteProduct.rejected, actionRejected);
+    builder
+      .addCase(createReview.pending, actionPending)
+      .addCase(createReview.fulfilled, (state) => {
         state.actionStatus = "succeeded";
-        state.products = state.products.filter((p) => p._id !== action.payload);
-      }
-    );
-    builder.addCase(deleteProduct.rejected, actionRejected);
-
-    builder.addCase(createReview.pending, actionPending);
-    builder.addCase(createReview.fulfilled, (state) => {
-      state.actionStatus = "succeeded";
-    });
-    builder.addCase(createReview.rejected, actionRejected);
+      })
+      .addCase(createReview.rejected, actionRejected);
   },
 });
 
