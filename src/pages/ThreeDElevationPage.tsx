@@ -228,10 +228,6 @@ const ThreeDElevationPage: React.FC = () => {
                         <CheckCircle className="w-5 h-5 mr-3 text-green-500" />{" "}
                         Basic Detailing
                       </p>
-                      <p className="flex items-center text-gray-700">
-                        <CheckCircle className="w-5 h-5 mr-3 text-green-500" />{" "}
-                        2 Revisions
-                      </p>
                     </div>
                   </div>
 
@@ -261,10 +257,6 @@ const ThreeDElevationPage: React.FC = () => {
                       <p className="flex items-center text-gray-700">
                         <CheckCircle className="w-5 h-5 mr-3 text-green-500" />{" "}
                         Source File Included
-                      </p>
-                      <p className="flex items-center text-gray-700">
-                        <CheckCircle className="w-5 h-5 mr-3 text-green-500" />{" "}
-                        4 Revisions
                       </p>
                     </div>
                   </div>
