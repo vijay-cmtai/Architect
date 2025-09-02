@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from "react"; // useMemo ko import karein
+import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux"; // Redux hooks import karein
-import { RootState, AppDispatch } from "@/lib/store"; // Types import karein
-import { fetchProducts } from "@/lib/features/products/productSlice"; // fetchProducts action import karein
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/lib/store";
+import { fetchProducts } from "@/lib/features/products/productSlice";
 import { motion, AnimatePresence } from "framer-motion";
 import AnimatedStat from "./AnimatedStat";
 import { Search } from "lucide-react";

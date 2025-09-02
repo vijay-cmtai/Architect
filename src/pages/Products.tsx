@@ -1,5 +1,3 @@
-// src/pages/Products.jsx
-
 import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
@@ -38,12 +36,10 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { useWishlist } from "@/contexts/WishlistContext";
-import house1 from "@/assets/house-1.jpg";
-import house2 from "@/assets/house-2.jpg";
 import house3 from "@/assets/house-3.jpg";
 import { toast } from "sonner";
 
-// --- Enhanced FilterSidebar Component ---
+// --- FilterSidebar Component ---
 const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
   <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-white rounded-xl shadow-lg h-fit border border-gray-200">
     <h3 className="text-xl font-bold mb-4 flex items-center text-gray-800">
@@ -68,7 +64,6 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
           />
         </div>
       </div>
-
       <div>
         <Label htmlFor="category" className="font-semibold text-gray-600">
           Category
@@ -95,7 +90,6 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
           </SelectContent>
         </Select>
       </div>
-
       <div>
         <Label htmlFor="plotSize" className="font-semibold text-gray-600">
           Plot Size
@@ -120,7 +114,6 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
           </SelectContent>
         </Select>
       </div>
-
       <div>
         <Label htmlFor="plotArea" className="font-semibold text-gray-600">
           Plot Area (sqft)
@@ -145,7 +138,6 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
           </SelectContent>
         </Select>
       </div>
-
       <div>
         <Label htmlFor="direction" className="font-semibold text-gray-600">
           Direction
@@ -171,7 +163,6 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
           </SelectContent>
         </Select>
       </div>
-
       <div>
         <Label htmlFor="floors" className="font-semibold text-gray-600">
           Floors
@@ -196,7 +187,6 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
           </SelectContent>
         </Select>
       </div>
-
       <div>
         <Label htmlFor="propertyType" className="font-semibold text-gray-600">
           Property Type
@@ -220,7 +210,6 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
           </SelectContent>
         </Select>
       </div>
-
       <div>
         <Label className="font-semibold text-gray-600">
           Budget: ₹{filters.budget[0].toLocaleString()} - ₹
@@ -229,10 +218,7 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
         <Slider
           value={filters.budget}
           onValueChange={(value) =>
-            setFilters((prev) => ({
-              ...prev,
-              budget: value,
-            }))
+            setFilters((prev) => ({ ...prev, budget: value }))
           }
           max={50000}
           min={0}
@@ -240,7 +226,6 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
           className="mt-3"
         />
       </div>
-
       <Button
         onClick={() =>
           setFilters({
@@ -263,50 +248,38 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
   </aside>
 );
 
-// --- Enhanced ProductCard Component ---
+// --- ProductCard Component ---
 const ProductCard = ({ product, userOrders }) => {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { userInfo } = useSelector((state) => state.user);
 
   const isWishlisted = isInWishlist(product._id);
-  const linkTo =
-    product.source === "admin"
-      ? `/product/${product._id}`
-      : `/product/${product._id}`;
+  const linkTo = `/product/${product._id}`;
 
-  // Check if user has purchased this product
   const hasPurchased = useMemo(() => {
     if (!userInfo || !userOrders || userOrders.length === 0) return false;
     return userOrders.some(
       (order) =>
         order.isPaid &&
-        order.orderItems?.some(
-          (item) =>
-            item.productId === product._id ||
-            item.productId?._id === product._id
-        )
+        order.orderItems?.some((item) => item.productId?._id === product._id)
     );
   }, [userOrders, userInfo, product._id]);
 
-  // Fixed wishlist logic - same as second version
   const handleWishlistToggle = () => {
     if (!userInfo) {
       toast.error("Please log in to add items to your wishlist.");
       navigate("/login");
       return;
     }
-
-    // Create an object with the key 'productId' as expected by the context and slice
     const productForWishlist = {
-      productId: product._id, // Use productId
+      productId: product._id,
       name: product.name,
       price: product.price,
       salePrice: product.salePrice,
       image: product.image || product.mainImage,
       size: product.plotSize,
     };
-
     if (isWishlisted) {
       removeFromWishlist(product._id);
     } else {
@@ -320,40 +293,32 @@ const ProductCard = ({ product, userOrders }) => {
       navigate("/login");
       return;
     }
-
     if (!hasPurchased) {
       toast.error("Please purchase this plan to download it.");
       navigate(linkTo);
       return;
     }
-
     if (!product.planFile) {
       toast.error("Download file is not available for this plan.");
       return;
     }
-
     try {
       const response = await fetch(product.planFile);
       if (!response.ok) throw new Error("Network response was not ok.");
       const blob = await response.blob();
-
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-
       const fileExtension =
         product.planFile.split(".").pop()?.split("?")[0] || "pdf";
       link.setAttribute(
         "download",
         `ArchHome-${product.name.replace(/\s+/g, "-")}.${fileExtension}`
       );
-
       document.body.appendChild(link);
       link.click();
-
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-
       toast.success("Your download has started!");
     } catch (error) {
       console.error("Download failed:", error);
@@ -436,8 +401,6 @@ const ProductCard = ({ product, userOrders }) => {
         <p className="text-xs text-gray-500 uppercase">
           {product.category || "House Plan"}
         </p>
-
-        {/* --- INICIO DE LA SECCIÓN AÑADIDA --- */}
         <div className="mt-2 text-xs text-gray-600 space-y-1">
           {product.productNo && (
             <div className="flex justify-between items-center">
@@ -454,8 +417,6 @@ const ProductCard = ({ product, userOrders }) => {
               </div>
             )}
         </div>
-        {/* --- FIN DE LA SECCIÓN AÑADIDA --- */}
-
         <h3 className="text-lg font-bold text-gray-900 mt-1 truncate">
           {product.name}
         </h3>
@@ -484,11 +445,7 @@ const ProductCard = ({ product, userOrders }) => {
           </Button>
         </Link>
         <Button
-          className={`w-full text-white rounded-md ${
-            hasPurchased
-              ? "bg-teal-500 hover:bg-teal-600"
-              : "bg-gray-400 hover:bg-gray-500"
-          }`}
+          className={`w-full text-white rounded-md ${hasPurchased ? "bg-teal-500 hover:bg-teal-600" : "bg-gray-400 hover:bg-gray-500"}`}
           onClick={handleDownload}
           disabled={!hasPurchased}
         >
@@ -510,13 +467,9 @@ const ProductCard = ({ product, userOrders }) => {
 };
 
 // --- Country Customization Form Component ---
-
-// --- Componente CountryCustomizationForm (CON CORRECCIONES) ---
-// --- Componente CountryCustomizationForm (CON CORRECCIONES) ---
 const CountryCustomizationForm = ({ countryName }) => {
   const dispatch = useDispatch();
   const { actionStatus, error } = useSelector((state) => state.customization);
-
   const [formData, setFormData] = useState({
     country: countryName || "",
     name: "",
@@ -524,44 +477,33 @@ const CountryCustomizationForm = ({ countryName }) => {
     whatsappNumber: "",
     width: "",
     length: "",
-    // FIX 1: Se eliminó el campo 'direction' que no está en el JSON de respuesta.
     description: "",
   });
   const [referenceFile, setReferenceFile] = useState(null);
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-
   const handleFileChange = (e) => {
     if (e.target.files.length > 0) {
       setReferenceFile(e.target.files[0]);
     }
   };
-
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-
     const submitData = new FormData();
     Object.keys(formData).forEach((key) => {
       submitData.append(key, formData[key]);
     });
-
     if (referenceFile) {
       submitData.append("referenceFile", referenceFile);
     }
-
-    // Este campo es requerido por el backend y se añade aquí.
     submitData.append("requestType", "Floor Plan Customization");
-
     try {
       await dispatch(submitCustomizationRequest(submitData)).unwrap();
       toast.success(
         `Customization request for ${countryName || "your location"} sent successfully!`
       );
-
-      // Reiniciar el formulario
       setFormData({
         country: countryName || "",
         name: "",
@@ -569,7 +511,6 @@ const CountryCustomizationForm = ({ countryName }) => {
         whatsappNumber: "",
         width: "",
         length: "",
-        // FIX 2: Se eliminó 'direction' del objeto de reseteo.
         description: "",
       });
       setReferenceFile(null);
@@ -579,16 +520,16 @@ const CountryCustomizationForm = ({ countryName }) => {
   };
 
   return (
-    <div className="bg-gray-50 py-16 mt-12">
+    <div className="bg-gray-50 py-16 mb-12">
+      {" "}
+      {/* Changed mt-12 to mb-12 */}
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl p-8 md:p-12 flex flex-col lg:flex-row items-center gap-12">
-          {/* Lado Izquierdo: Formulario */}
           <div className="w-full lg:w-1/2">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
               Customize a Plan for {countryName || "Your Location"}
             </h2>
             <form onSubmit={handleFormSubmit} className="space-y-5">
-              {/* Campo de País */}
               <div>
                 <Label htmlFor="country">Country</Label>
                 <Input
@@ -600,7 +541,6 @@ const CountryCustomizationForm = ({ countryName }) => {
                   readOnly={!!countryName}
                 />
               </div>
-
               <div>
                 <Label htmlFor="name">Name *</Label>
                 <Input
@@ -612,7 +552,6 @@ const CountryCustomizationForm = ({ countryName }) => {
                   required
                 />
               </div>
-
               <div>
                 <Label htmlFor="email">Email *</Label>
                 <Input
@@ -625,7 +564,6 @@ const CountryCustomizationForm = ({ countryName }) => {
                   required
                 />
               </div>
-
               <div>
                 <Label htmlFor="whatsappNumber">WhatsApp Number *</Label>
                 <Input
@@ -638,7 +576,6 @@ const CountryCustomizationForm = ({ countryName }) => {
                   required
                 />
               </div>
-
               <div className="flex gap-4">
                 <div className="flex-1">
                   <Label htmlFor="width">Width (ft)</Label>
@@ -661,9 +598,6 @@ const CountryCustomizationForm = ({ countryName }) => {
                   />
                 </div>
               </div>
-
-              {/* FIX 3: Se eliminó por completo el bloque del campo 'Facing Direction'. */}
-
               <div>
                 <Label htmlFor="description">Description</Label>
                 <Textarea
@@ -676,7 +610,6 @@ const CountryCustomizationForm = ({ countryName }) => {
                   rows={3}
                 />
               </div>
-
               <div>
                 <Label htmlFor="referenceFile">
                   Upload Reference (Image or PDF)
@@ -690,7 +623,6 @@ const CountryCustomizationForm = ({ countryName }) => {
                   className="mt-1"
                 />
               </div>
-
               <Button
                 type="submit"
                 disabled={actionStatus === "loading"}
@@ -707,8 +639,6 @@ const CountryCustomizationForm = ({ countryName }) => {
               </Button>
             </form>
           </div>
-
-          {/* Lado Derecho: Imagen */}
           <div className="w-full lg:w-1/2 hidden lg:block">
             <img
               src="https://images.pexels.com/photos/276724/pexels-photo-276724.jpeg?auto=compress&cs=tinysrgb&w=600"
@@ -722,6 +652,7 @@ const CountryCustomizationForm = ({ countryName }) => {
   );
 };
 
+// --- Main Products Page Component ---
 const Products = () => {
   const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
@@ -741,8 +672,6 @@ const Products = () => {
     listStatus: profListStatus,
     error: profError,
   } = useSelector((state) => state.professionalPlans);
-
-  // Get user orders
   const { orders: userOrders } = useSelector((state) => state.orders);
 
   const [viewMode, setViewMode] = useState("grid");
@@ -761,7 +690,6 @@ const Products = () => {
   const CARDS_PER_PAGE = 6;
 
   useEffect(() => {
-    // Only send filters that are not "all" or default
     const apiParams = {};
     Object.entries(filters).forEach(([key, value]) => {
       if (key === "budget") {
@@ -772,11 +700,8 @@ const Products = () => {
         apiParams[key] = value;
       }
     });
-
     dispatch(fetchProducts(apiParams));
     dispatch(fetchAllApprovedPlans(apiParams));
-
-    // Fetch user orders if logged in
     if (userInfo) {
       dispatch(fetchMyOrders());
     }
@@ -793,19 +718,15 @@ const Products = () => {
   const combinedProducts = useMemo(() => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
     const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
-    const normalizedAdmin = adminArray.map((p) => ({
-      ...p,
-      name: p.name || "Unnamed",
-      image: p.image || p.mainImage || "",
-      source: "admin",
-    }));
-    const normalizedProf = profArray.map((p) => ({
-      ...p,
-      name: p.planName || "Unnamed",
-      image: p.mainImage || "",
-      source: "professional",
-    }));
-    return [...normalizedAdmin, ...normalizedProf];
+    return [
+      ...adminArray.map((p) => ({ ...p, source: "admin" })),
+      ...profArray.map((p) => ({
+        ...p,
+        name: p.planName,
+        image: p.mainImage,
+        source: "professional",
+      })),
+    ];
   }, [adminProducts, professionalPlans]);
 
   const uniqueCategories = useMemo(() => {
@@ -816,21 +737,17 @@ const Products = () => {
     return Array.from(categoriesSet).sort();
   }, [combinedProducts]);
 
-  // Enhanced filtering logic matching ConstructionProductsPage
   const filteredAndSortedProducts = useMemo(() => {
     let products = combinedProducts.filter((product) => {
       if (!product || typeof product.price === "undefined") return false;
-
       const productPrice = product.isSale ? product.salePrice : product.price;
       const productName = product.name || "";
       const productCategory = product.category || "";
-
       const matchesSearch =
         productName.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
         productCategory
           .toLowerCase()
           .includes(filters.searchTerm.toLowerCase());
-
       const matchesBudget =
         productPrice >= filters.budget[0] && productPrice <= filters.budget[1];
       const matchesCategory =
@@ -855,9 +772,11 @@ const Products = () => {
         filters.propertyType === "all" ||
         product.propertyType === filters.propertyType;
 
-      // Also check against URL parameters
+      // --- THE FIX IS HERE ---
       const matchesCountryQuery =
-        !countryQuery || product.country === countryQuery;
+        !countryQuery ||
+        (Array.isArray(product.country) &&
+          product.country.includes(countryQuery));
 
       return (
         matchesSearch &&
@@ -891,7 +810,6 @@ const Products = () => {
         return dateB - dateA;
       });
     }
-
     return products;
   }, [combinedProducts, filters, countryQuery, sortBy]);
 
@@ -940,7 +858,15 @@ const Products = () => {
             </div>
           )}
         </div>
-        <div className="flex flex-col lg:flex-row gap-12">
+
+        {/* --- FORM MOVED TO THE TOP --- */}
+        {countryQuery && (
+          <CountryCustomizationForm countryName={countryQuery} />
+        )}
+
+        <div className="flex flex-col lg:flex-row gap-12 pt-0 lg:pt-8">
+          {" "}
+          {/* Adjusted padding */}
           <FilterSidebar
             filters={filters}
             setFilters={setFilters}
@@ -994,7 +920,6 @@ const Products = () => {
                 <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
               </div>
             )}
-
             {isError && (
               <div className="text-center py-20">
                 <ServerCrash className="mx-auto h-12 w-12 text-red-500" />
@@ -1004,7 +929,6 @@ const Products = () => {
                 <p className="mt-2 text-gray-500">{errorMessage}</p>
               </div>
             )}
-
             {!isLoading &&
               !isError &&
               filteredAndSortedProducts.length === 0 && (
@@ -1066,10 +990,6 @@ const Products = () => {
           </div>
         </div>
       </div>
-
-      {/* Country Customization Form - Only show when country query is present */}
-      {countryQuery && <CountryCustomizationForm countryName={countryQuery} />}
-
       <Footer />
     </div>
   );
