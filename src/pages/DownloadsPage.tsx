@@ -1,21 +1,15 @@
-// src/pages/Products.jsx
-
 import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Heart,
   Download,
   Loader2,
-  ServerCrash,
-  X,
-  Youtube,
+  Lock,
   ChevronLeft,
   ChevronRight,
-  Grid,
-  List,
-  Lock,
+  Youtube,
 } from "lucide-react";
 import { fetchProducts } from "@/lib/features/products/productSlice";
 import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice";
@@ -31,12 +25,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useWishlist } from "@/contexts/WishlistContext";
-import house1 from "@/assets/house-1.jpg";
-import house2 from "@/assets/house-2.jpg";
 import house3 from "@/assets/house-3.jpg";
 import { toast } from "sonner";
 
-// --- ProductCard Component ---
+// --- ProductCard Component (WITH THE FIX) ---
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -64,32 +56,28 @@ const ProductCard = ({ product }) => {
     );
   }, [userOrders, userInfo, product._id]);
 
-  // --- ✨ FIXED WISHLIST LOGIC - Same as FeaturedProducts ---
   const handleWishlistToggle = () => {
     if (!userInfo) {
       toast.error("Please log in to add items to your wishlist.");
       navigate("/login");
       return;
     }
-
-    // Create an object with the key 'productId' as expected by the context and slice
     const productForWishlist = {
-      productId: product._id, // Use productId
+      productId: product._id,
       name: product.name,
       price: product.price,
       salePrice: product.salePrice,
       image: product.image || product.mainImage,
       size: product.plotSize,
     };
-
     if (isWishlisted) {
       removeFromWishlist(product._id);
     } else {
       addToWishlist(productForWishlist);
     }
   };
-  // --- END OF FIX ---
 
+  // --- START OF THE FIX ---
   const handleDownload = async () => {
     if (!userInfo) {
       toast.error("Please log in to download.");
@@ -101,19 +89,32 @@ const ProductCard = ({ product }) => {
       navigate(linkTo);
       return;
     }
-    if (!product.planFile) {
+
+    const fileToDownload = Array.isArray(product.planFile)
+      ? product.planFile[0]
+      : product.planFile;
+
+    if (!fileToDownload) {
       toast.error("Download file is not available for this plan.");
       return;
     }
+
+    let downloadUrl = fileToDownload;
+
+    // Add the Cloudinary flag to force download
+    if (downloadUrl.includes("res.cloudinary.com")) {
+      const parts = downloadUrl.split("/upload/");
+      if (parts.length === 2) {
+        downloadUrl = `${parts[0]}/upload/fl_attachment/${parts[1]}`;
+      }
+    }
+
     try {
-      const response = await fetch(product.planFile);
-      if (!response.ok) throw new Error("Network response was not ok.");
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      toast.success("Your download is starting...");
       const link = document.createElement("a");
-      link.href = url;
+      link.href = downloadUrl;
       const fileExtension =
-        product.planFile.split(".").pop()?.split("?")[0] || "pdf";
+        downloadUrl.split(".").pop()?.split("?")[0] || "pdf";
       link.setAttribute(
         "download",
         `ArchHome-${product.name.replace(/\s+/g, "-")}.${fileExtension}`
@@ -121,13 +122,12 @@ const ProductCard = ({ product }) => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      toast.success("Your download has started!");
     } catch (error) {
       console.error("Download failed:", error);
       toast.error("Failed to download the file.");
     }
   };
+  // --- END OF THE FIX ---
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
@@ -260,9 +260,6 @@ const Products = () => {
   const { plans: professionalPlans, listStatus: profListStatus } = useSelector(
     (state: RootState) => state.professionalPlans
   );
-  const { orders: userOrders } = useSelector(
-    (state: RootState) => state.orders
-  );
 
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
@@ -377,7 +374,6 @@ const Products = () => {
                 </div>
               )}
             </div>
-
             {totalPages > 1 && (
               <div className="mt-12 flex justify-center items-center gap-4">
                 <Button
