@@ -18,7 +18,7 @@ const getToken = (state: RootState) => {
   return token;
 };
 
-// ++ CHANGE HERE: Added an interface for a single review
+// Interfaces to match the productSlice
 interface Review {
   _id: string;
   name: string;
@@ -28,26 +28,44 @@ interface Review {
   createdAt: string;
 }
 
-interface Plan {
+interface SeoData {
+  title?: string;
+  description?: string;
+  keywords?: string;
+}
+
+// The main Plan interface, now identical to the Product interface
+export interface Plan {
   _id: string;
-  planName: string;
-  mainImage: string;
-  price: number;
-  salePrice?: number;
-  isSale?: boolean;
+  name: string;
+  description: string;
+  productNo: string;
   plotSize: string;
   plotArea: number;
   rooms: number;
-  bathrooms: number;
-  kitchen: number;
+  bathrooms?: number;
+  kitchen?: number;
+  floors?: number;
+  direction?: string;
+  city: string[];
+  country: string[];
+  planType: string;
+  price: number;
+  salePrice?: number;
+  isSale?: boolean;
   category: string;
-  direction: string;
-  floors: number;
-  propertyType: string;
-  // ++ CHANGE HERE: Added the reviews array, rating, and numReviews to the Plan interface
-  reviews?: Review[];
+  propertyType?: string;
+  status?: string;
+  mainImage: string;
+  galleryImages?: string[];
+  planFile: string[];
+  headerImage?: string;
   rating?: number;
   numReviews?: number;
+  youtubeLink?: string;
+  reviews?: Review[];
+  contactDetails?: { name?: string; email?: string; phone?: string };
+  seo?: SeoData;
   [key: string]: any;
 }
 
@@ -205,9 +223,6 @@ export const deletePlan = createAsyncThunk<
   }
 });
 
-// ==========================================================
-// ✨ NEW ASYNC THUNK FOR CREATING A PLAN REVIEW ✨
-// ==========================================================
 export const createPlanReview = createAsyncThunk<
   { message: string },
   { planId: string; reviewData: { rating: number; comment: string } },
@@ -272,61 +287,57 @@ const professionalPlanSlice = createSlice({
       state.error = action.payload;
     };
 
-    // Fetch All Approved Plans
-    builder
-      .addCase(fetchAllApprovedPlans.pending, (state) => {
-        state.listStatus = "loading";
-        state.error = null;
-      })
-      .addCase(
-        fetchAllApprovedPlans.fulfilled,
-        (state, action: PayloadAction<Plan[]>) => {
-          state.listStatus = "succeeded";
-          state.plans = action.payload;
-        }
-      )
-      .addCase(fetchAllApprovedPlans.rejected, (state, action: AnyAction) => {
+    builder.addCase(fetchAllApprovedPlans.pending, (state) => {
+      state.listStatus = "loading";
+      state.error = null;
+    });
+    builder.addCase(
+      fetchAllApprovedPlans.fulfilled,
+      (state, action: PayloadAction<Plan[]>) => {
+        state.listStatus = "succeeded";
+        state.plans = action.payload;
+      }
+    );
+    builder.addCase(
+      fetchAllApprovedPlans.rejected,
+      (state, action: AnyAction) => {
         state.listStatus = "failed";
         state.error = action.payload;
-      });
+      }
+    );
 
-    // Fetch My Plans
-    builder
-      .addCase(fetchMyPlans.pending, (state) => {
-        state.listStatus = "loading";
-        state.error = null;
-      })
-      .addCase(
-        fetchMyPlans.fulfilled,
-        (state, action: PayloadAction<Plan[]>) => {
-          state.listStatus = "succeeded";
-          state.plans = action.payload;
-        }
-      )
-      .addCase(fetchMyPlans.rejected, (state, action: AnyAction) => {
-        state.listStatus = "failed";
-        state.error = action.payload;
-      });
+    builder.addCase(fetchMyPlans.pending, (state) => {
+      state.listStatus = "loading";
+      state.error = null;
+    });
+    builder.addCase(
+      fetchMyPlans.fulfilled,
+      (state, action: PayloadAction<Plan[]>) => {
+        state.listStatus = "succeeded";
+        state.plans = action.payload;
+      }
+    );
+    builder.addCase(fetchMyPlans.rejected, (state, action: AnyAction) => {
+      state.listStatus = "failed";
+      state.error = action.payload;
+    });
 
-    // Fetch Plan By ID
-    builder
-      .addCase(fetchPlanById.pending, (state) => {
-        state.listStatus = "loading";
-        state.error = null;
-      })
-      .addCase(
-        fetchPlanById.fulfilled,
-        (state, action: PayloadAction<Plan>) => {
-          state.listStatus = "succeeded";
-          state.plan = action.payload;
-        }
-      )
-      .addCase(fetchPlanById.rejected, (state, action: AnyAction) => {
-        state.listStatus = "failed";
-        state.error = action.payload;
-      });
+    builder.addCase(fetchPlanById.pending, (state) => {
+      state.listStatus = "loading";
+      state.error = null;
+    });
+    builder.addCase(
+      fetchPlanById.fulfilled,
+      (state, action: PayloadAction<Plan>) => {
+        state.listStatus = "succeeded";
+        state.plan = action.payload;
+      }
+    );
+    builder.addCase(fetchPlanById.rejected, (state, action: AnyAction) => {
+      state.listStatus = "failed";
+      state.error = action.payload;
+    });
 
-    // Create, Update, Delete Plan
     builder
       .addCase(createPlan.pending, actionPending)
       .addCase(createPlan.fulfilled, (state, action: PayloadAction<Plan>) => {
@@ -334,7 +345,6 @@ const professionalPlanSlice = createSlice({
         state.plans.unshift(action.payload);
       })
       .addCase(createPlan.rejected, actionRejected);
-
     builder
       .addCase(updatePlan.pending, actionPending)
       .addCase(updatePlan.fulfilled, (state, action: PayloadAction<Plan>) => {
@@ -347,7 +357,6 @@ const professionalPlanSlice = createSlice({
         }
       })
       .addCase(updatePlan.rejected, actionRejected);
-
     builder
       .addCase(deletePlan.pending, actionPending)
       .addCase(deletePlan.fulfilled, (state, action: PayloadAction<string>) => {
@@ -358,16 +367,10 @@ const professionalPlanSlice = createSlice({
         }
       })
       .addCase(deletePlan.rejected, actionRejected);
-
-    // ==========================================================
-    // ✨ NEW EXTRA REDUCER FOR HANDLING PLAN REVIEW CREATION ✨
-    // ==========================================================
     builder
       .addCase(createPlanReview.pending, actionPending)
       .addCase(createPlanReview.fulfilled, (state) => {
         state.actionStatus = "succeeded";
-        // We don't need to manually update the state here.
-        // It's better to refetch the plan data after a successful review to get the latest list.
       })
       .addCase(createPlanReview.rejected, actionRejected);
   },

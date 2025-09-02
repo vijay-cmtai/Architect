@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -30,7 +30,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import MultiSelect from "react-select";
 
-// Lista de países
+// Country list
 const countries = [
   { value: "India", label: "India" },
   { value: "Mauritius", label: "Mauritius" },
@@ -73,7 +73,6 @@ const AddProductPage: React.FC = () => {
     handleSubmit,
     formState: { errors },
     reset,
-    control,
   } = useForm();
 
   const [mainImage, setMainImage] = useState<File | null>(null);
@@ -350,7 +349,52 @@ const AddProductPage: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* ++ TARJETA AÑADIDA CONDICIONALMENTE ++ */}
+            <Card>
+              <CardHeader>
+                <CardTitle>SEO Optimization</CardTitle>
+                <CardDescription>
+                  Improve search engine visibility for this product.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="seoTitle">SEO Title</Label>
+                  <Input
+                    id="seoTitle"
+                    {...register("seoTitle")}
+                    placeholder="e.g., Modern 30x40 House Plan with 3BHK"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    If empty, the product title will be used.
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="seoDescription">Meta Description</Label>
+                  <Textarea
+                    id="seoDescription"
+                    rows={4}
+                    {...register("seoDescription")}
+                    placeholder="A brief summary of the product for search engines (max 160 characters)."
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    If empty, the first part of the product description will be
+                    used.
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="seoKeywords">Keywords</Label>
+                  <Input
+                    id="seoKeywords"
+                    {...register("seoKeywords")}
+                    placeholder="e.g., house plan, 3bhk, modern architecture"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Comma-separated keywords.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
             {planType === "Construction Products" && (
               <Card>
                 <CardHeader>

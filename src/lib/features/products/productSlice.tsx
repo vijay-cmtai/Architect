@@ -24,8 +24,15 @@ interface Review {
   createdAt: string;
 }
 
-// Interface for a Product
-interface Product {
+// SEO Interface
+interface SeoData {
+  title?: string;
+  description?: string;
+  keywords?: string;
+}
+
+// Interface for a Product (Updated with SEO)
+export interface Product {
   _id: string;
   name: string;
   description: string;
@@ -41,10 +48,10 @@ interface Product {
   kitchen?: number;
   floors?: number;
   direction?: string;
-  country?: string;
+  country?: string[];
   propertyType?: string;
   mainImage?: string;
-  planFile?: string;
+  planFile?: string | string[];
   galleryImages?: string[];
   youtubeLink?: string;
   user?: string;
@@ -53,6 +60,7 @@ interface Product {
   reviews?: Review[];
   rating?: number;
   numReviews?: number;
+  seo?: SeoData; // SEO field added
   [key: string]: any;
 }
 
@@ -185,7 +193,7 @@ export const deleteProduct = createAsyncThunk<
 });
 
 export const createReview = createAsyncThunk<
-  { message: string }, // Expect a success message from the server
+  { message: string },
   { productId: string; reviewData: { rating: number; comment: string } },
   { state: RootState; rejectValue: string }
 >(
@@ -235,95 +243,78 @@ const productSlice = createSlice({
       state.error = action.payload;
     };
 
-    // Fetch All Products
-    builder
-      .addCase(fetchProducts.pending, (state) => {
-        state.listStatus = "loading";
-        state.error = null;
-      })
-      .addCase(
-        fetchProducts.fulfilled,
-        (state, action: PayloadAction<FetchProductsResponse>) => {
-          state.listStatus = "succeeded";
-          state.products = action.payload.products;
-          state.pagination = action.payload.pagination;
-        }
-      )
-      .addCase(fetchProducts.rejected, (state, action: AnyAction) => {
-        state.listStatus = "failed";
-        state.error = action.payload;
-      });
+    builder.addCase(fetchProducts.pending, (state) => {
+      state.listStatus = "loading";
+      state.error = null;
+    });
+    builder.addCase(
+      fetchProducts.fulfilled,
+      (state, action: PayloadAction<FetchProductsResponse>) => {
+        state.listStatus = "succeeded";
+        state.products = action.payload.products;
+        state.pagination = action.payload.pagination;
+      }
+    );
+    builder.addCase(fetchProducts.rejected, (state, action: AnyAction) => {
+      state.listStatus = "failed";
+      state.error = action.payload;
+    });
 
-    // Fetch Single Product
-    builder
-      .addCase(fetchProductById.pending, (state) => {
-        state.listStatus = "loading";
-      })
-      .addCase(
-        fetchProductById.fulfilled,
-        (state, action: PayloadAction<Product>) => {
-          state.listStatus = "succeeded";
+    builder.addCase(fetchProductById.pending, (state) => {
+      state.listStatus = "loading";
+    });
+    builder.addCase(
+      fetchProductById.fulfilled,
+      (state, action: PayloadAction<Product>) => {
+        state.listStatus = "succeeded";
+        state.product = action.payload;
+      }
+    );
+    builder.addCase(fetchProductById.rejected, (state, action: AnyAction) => {
+      state.listStatus = "failed";
+      state.error = action.payload;
+    });
+
+    builder.addCase(createProduct.pending, actionPending);
+    builder.addCase(
+      createProduct.fulfilled,
+      (state, action: PayloadAction<Product>) => {
+        state.actionStatus = "succeeded";
+        state.products.unshift(action.payload);
+      }
+    );
+    builder.addCase(createProduct.rejected, actionRejected);
+
+    builder.addCase(updateProduct.pending, actionPending);
+    builder.addCase(
+      updateProduct.fulfilled,
+      (state, action: PayloadAction<Product>) => {
+        state.actionStatus = "succeeded";
+        state.products = state.products.map((p) =>
+          p._id === action.payload._id ? action.payload : p
+        );
+        if (state.product?._id === action.payload._id) {
           state.product = action.payload;
         }
-      )
-      .addCase(fetchProductById.rejected, (state, action: AnyAction) => {
-        state.listStatus = "failed";
-        state.error = action.payload;
-      });
+      }
+    );
+    builder.addCase(updateProduct.rejected, actionRejected);
 
-    // Create Product
-    builder
-      .addCase(createProduct.pending, actionPending)
-      .addCase(
-        createProduct.fulfilled,
-        (state, action: PayloadAction<Product>) => {
-          state.actionStatus = "succeeded";
-          state.products.unshift(action.payload);
-        }
-      )
-      .addCase(createProduct.rejected, actionRejected);
-
-    // Update Product
-    builder
-      .addCase(updateProduct.pending, actionPending)
-      .addCase(
-        updateProduct.fulfilled,
-        (state, action: PayloadAction<Product>) => {
-          state.actionStatus = "succeeded";
-          state.products = state.products.map((p) =>
-            p._id === action.payload._id ? action.payload : p
-          );
-          if (state.product?._id === action.payload._id) {
-            state.product = action.payload;
-          }
-        }
-      )
-      .addCase(updateProduct.rejected, actionRejected);
-
-    // Delete Product
-    builder
-      .addCase(deleteProduct.pending, actionPending)
-      .addCase(
-        deleteProduct.fulfilled,
-        (state, action: PayloadAction<string>) => {
-          state.actionStatus = "succeeded";
-          state.products = state.products.filter(
-            (p) => p._id !== action.payload
-          );
-        }
-      )
-      .addCase(deleteProduct.rejected, actionRejected);
-
-    // Create Review
-    builder
-      .addCase(createReview.pending, actionPending)
-      .addCase(createReview.fulfilled, (state) => {
+    builder.addCase(deleteProduct.pending, actionPending);
+    builder.addCase(
+      deleteProduct.fulfilled,
+      (state, action: PayloadAction<string>) => {
         state.actionStatus = "succeeded";
-        // We don't need to manually update the reviews here.
-        // We can simply refetch the product data after a successful review
-        // to get the latest list, which is a safer pattern.
-      })
-      .addCase(createReview.rejected, actionRejected);
+        state.products = state.products.filter((p) => p._id !== action.payload);
+      }
+    );
+    builder.addCase(deleteProduct.rejected, actionRejected);
+
+    builder.addCase(createReview.pending, actionPending);
+    builder.addCase(createReview.fulfilled, (state) => {
+      state.actionStatus = "succeeded";
+    });
+    builder.addCase(createReview.rejected, actionRejected);
   },
 });
 
