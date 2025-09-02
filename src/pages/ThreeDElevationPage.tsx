@@ -211,7 +211,7 @@ const ThreeDElevationPage: React.FC = () => {
                     </h3>
                     <div className="my-4">
                       <span className="text-7xl font-bold text-orange-500">
-                        ₹8
+                        ₹5
                       </span>
                       <p className="text-lg text-gray-600">Per sq.ft.</p>
                     </div>
