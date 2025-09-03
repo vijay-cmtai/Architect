@@ -16,10 +16,10 @@ const customServices = [
     href: "/customize/floor-plans",
   },
   {
-    name: "Customize 3D Elevation",
+    name: "Customize Floor Plan + 3D Elevation",
     description:
       "Modify the exterior look of your home with custom 3D renders.",
-    image: "/customize3d.jpg",
+    image: "/floor+3d.jpg",
     icon: Building2,
     bgColor: "bg-purple-100",
     iconColor: "text-purple-500",
@@ -36,10 +36,10 @@ const customServices = [
     href: "/customize/interior-designs",
   },
   {
-    name: "3D Video WalkThrough",
+    name: "3D Elevation and Video WalkThrough",
     description:
       "Experience your future home with immersive 3D video walkthroughs.",
-    image: "c4.jpg",
+    image: "/elevation3d.jpg",
     icon: Video,
     bgColor: "bg-red-100",
     iconColor: "text-red-500",

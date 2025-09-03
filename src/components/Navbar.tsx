@@ -70,9 +70,24 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Close menu on route change
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location.pathname]);
+
+  // *** YEH NEW CODE ADD KIYA GAYA HAI ***
+  // Prevent body from scrolling when menu or wishlist is open
+  useEffect(() => {
+    if (isMenuOpen || isWishlistOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    // Cleanup function to restore scroll on component unmount
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [isMenuOpen, isWishlistOpen]);
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -192,7 +207,7 @@ const Navbar = () => {
                       </Link>
                       <DropdownMenuItem
                         onClick={handleLogout}
-                        className="cursor-pointer text-red-600"
+                        className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
                       >
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Sign Out</span>
@@ -246,13 +261,6 @@ const Navbar = () => {
                     </Link>
                   </>
                 )}
-                {/* Profile/Login icon for mobile */}
-                <Link
-                  to={isUserAllowed ? getDashboardPath() : "/login"}
-                  className="text-gray-600"
-                >
-                  <User className="w-6 h-6" />
-                </Link>
                 {/* Hamburger Menu Icon */}
                 <button
                   onClick={() => setIsMenuOpen(true)}
@@ -273,7 +281,7 @@ const Navbar = () => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="fixed inset-0 z-50 bg-white p-6 lg:hidden"
+              className="fixed inset-0 z-[100] bg-white p-6 lg:hidden flex flex-col"
             >
               <div className="flex justify-between items-center mb-8">
                 <Link to="/" className="text-2xl font-bold text-gray-800">
@@ -294,7 +302,52 @@ const Navbar = () => {
                   </Link>
                 ))}
               </nav>
-              {/* User/Auth section is no longer needed here as it's in the header */}
+
+              {/* User/Auth section for Mobile Menu */}
+              <div className="mt-auto border-t pt-6">
+                {isUserAllowed ? (
+                  <div className="flex items-center justify-between">
+                    <Link
+                      to={getDashboardPath()}
+                      className="flex items-center gap-3"
+                    >
+                      <Avatar className="w-10 h-10 border-2 border-orange-500">
+                        <AvatarFallback className="bg-orange-500 text-white font-bold">
+                          {userInfo.name
+                            ? userInfo.name.charAt(0).toUpperCase()
+                            : "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-semibold text-gray-800">
+                        {userInfo.name}
+                      </span>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      onClick={handleLogout}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2"
+                    >
+                      <LogOut className="w-6 h-6" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <Link to="/login">
+                      <Button className="w-full bg-orange-500 hover:bg-orange-600">
+                        Login
+                      </Button>
+                    </Link>
+                    <Link to="/register">
+                      <Button
+                        variant="outline"
+                        className="w-full border-orange-500 text-orange-500 hover:bg-orange-50"
+                      >
+                        Register
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

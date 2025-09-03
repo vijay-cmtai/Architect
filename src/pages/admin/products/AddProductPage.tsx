@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   createProduct,
   resetProductState,
+  fetchProducts,
 } from "@/lib/features/products/productSlice";
 import { RootState, AppDispatch } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -65,7 +66,7 @@ const countries = [
 const AddProductPage: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
-  const { actionStatus, error } = useSelector(
+  const { actionStatus, error, products } = useSelector(
     (state: RootState) => state.products
   );
   const {
@@ -84,6 +85,16 @@ const AddProductPage: React.FC = () => {
   const [planType, setPlanType] = useState<string>("");
   const [selectedCountries, setSelectedCountries] = useState<any[]>([]);
   const [isSale, setIsSale] = useState<boolean>(false);
+  const [crossSell, setCrossSell] = useState<any[]>([]);
+  const [upSell, setUpSell] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!products || products.length === 0) {
+      dispatch(fetchProducts({}));
+    }
+  }, [dispatch, products]);
+
+  const productOptions = products.map((p) => ({ value: p._id, label: p.name }));
 
   const handleGalleryImagesChange = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -125,12 +136,16 @@ const AddProductPage: React.FC = () => {
     const formData = new FormData();
     Object.keys(data).forEach((key) => formData.append(key, data[key]));
 
-    const countryValues = selectedCountries.map((c) => c.value);
-    formData.append("country", countryValues.join(","));
+    formData.append("country", selectedCountries.map((c) => c.value).join(","));
     formData.append("propertyType", propertyType);
     formData.append("direction", direction);
     formData.append("planType", planType);
     formData.append("isSale", isSale ? "true" : "false");
+    formData.append(
+      "crossSellProducts",
+      crossSell.map((p) => p.value).join(",")
+    );
+    formData.append("upSellProducts", upSell.map((p) => p.value).join(","));
 
     if (mainImage) formData.append("mainImage", mainImage);
     if (headerImage) formData.append("headerImage", headerImage);
@@ -154,6 +169,8 @@ const AddProductPage: React.FC = () => {
       setPlanType("");
       setSelectedCountries([]);
       setIsSale(false);
+      setCrossSell([]);
+      setUpSell([]);
       navigate("/admin/products");
     }
     if (actionStatus === "failed") {
@@ -348,12 +365,11 @@ const AddProductPage: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
-                <CardTitle>SEO Optimization</CardTitle>
+                <CardTitle>SEO & Marketing</CardTitle>
                 <CardDescription>
-                  Improve search engine visibility for this product.
+                  Optimize visibility and relationships.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -362,50 +378,72 @@ const AddProductPage: React.FC = () => {
                   <Input
                     id="seoTitle"
                     {...register("seoTitle")}
-                    placeholder="e.g., Modern 30x40 House Plan with 3BHK"
+                    placeholder="A catchy title for search engines"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    If empty, the product title will be used.
-                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="seoAltText">Main Image Alt Text</Label>
+                  <Input
+                    id="seoAltText"
+                    {...register("seoAltText")}
+                    placeholder="Describe the main image for SEO"
+                  />
                 </div>
                 <div>
                   <Label htmlFor="seoDescription">Meta Description</Label>
                   <Textarea
                     id="seoDescription"
-                    rows={4}
+                    rows={3}
                     {...register("seoDescription")}
-                    placeholder="A brief summary of the product for search engines (max 160 characters)."
+                    placeholder="A brief summary for search engines"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    If empty, the first part of the product description will be
-                    used.
-                  </p>
                 </div>
                 <div>
                   <Label htmlFor="seoKeywords">Keywords</Label>
                   <Input
                     id="seoKeywords"
                     {...register("seoKeywords")}
-                    placeholder="e.g., house plan, 3bhk, modern architecture"
+                    placeholder="Comma-separated, e.g., house plan, 3bhk"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Comma-separated keywords.
-                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div>
+                    <Label htmlFor="crossSellProducts">
+                      Cross-Sell Products
+                    </Label>
+                    <MultiSelect
+                      isMulti
+                      options={productOptions}
+                      value={crossSell}
+                      onChange={setCrossSell}
+                      className="mt-1"
+                      classNamePrefix="select"
+                      placeholder="Select related products..."
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="upSellProducts">Up-Sell Products</Label>
+                    <MultiSelect
+                      isMulti
+                      options={productOptions}
+                      value={upSell}
+                      onChange={setUpSell}
+                      className="mt-1"
+                      classNamePrefix="select"
+                      placeholder="Select premium alternatives..."
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
-
             {planType === "Construction Products" && (
               <Card>
                 <CardHeader>
                   <CardTitle>Contact Information</CardTitle>
-                  <CardDescription>
-                    Provide contact details for this construction product.
-                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="contactName">Contact Person Name</Label>
+                    <Label htmlFor="contactName">Contact Name</Label>
                     <Input id="contactName" {...register("contactName")} />
                   </div>
                   <div>
@@ -427,7 +465,6 @@ const AddProductPage: React.FC = () => {
                 </CardContent>
               </Card>
             )}
-
             <Card>
               <CardHeader>
                 <CardTitle>Files</CardTitle>
@@ -511,7 +548,7 @@ const AddProductPage: React.FC = () => {
           <div className="lg:col-span-1 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Pricing</CardTitle>
+                <CardTitle>Pricing & Tax</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -534,6 +571,24 @@ const AddProductPage: React.FC = () => {
                     type="number"
                     {...register("salePrice")}
                   />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="discountPercentage">Discount (%)</Label>
+                    <Input
+                      id="discountPercentage"
+                      type="number"
+                      {...register("discountPercentage")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="taxRate">Tax Rate (%)</Label>
+                    <Input
+                      id="taxRate"
+                      type="number"
+                      {...register("taxRate")}
+                    />
+                  </div>
                 </div>
                 <div className="flex items-center space-x-2 pt-2">
                   <Checkbox
