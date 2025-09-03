@@ -19,7 +19,7 @@ const packages = [
   },
   {
     title: "Floor Plan + 3D Elevation",
-    price: "8",
+    price: "5",
     unit: "Per sq.ft.",
     areaType: "Built-up Area",
     isPopular: true,
