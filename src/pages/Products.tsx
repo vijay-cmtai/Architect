@@ -248,7 +248,7 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
   </aside>
 );
 
-// --- ProductCard Component (WITH DOWNLOAD FIX) ---
+// --- ProductCard Component (UPDATED) ---
 const ProductCard = ({ product, userOrders }) => {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -364,7 +364,11 @@ const ProductCard = ({ product, userOrders }) => {
         <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={handleWishlistToggle}
-            className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-gray-600 hover:text-red-500 hover:scale-110"}`}
+            className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${
+              isWishlisted
+                ? "text-red-500 scale-110"
+                : "text-gray-600 hover:text-red-500 hover:scale-110"
+            }`}
             aria-label="Toggle Wishlist"
           >
             <Heart
@@ -385,7 +389,8 @@ const ProductCard = ({ product, userOrders }) => {
           )}
         </div>
       </div>
-      <div className="p-4 grid grid-cols-2 gap-4 border-t text-center text-sm">
+
+      <div className="p-4 grid grid-cols-3 gap-2 border-t text-center text-sm">
         <div>
           <p className="text-xs text-gray-500">Plot Area</p>
           <p className="font-bold">{product.plotArea || "N/A"} sqft</p>
@@ -404,7 +409,16 @@ const ProductCard = ({ product, userOrders }) => {
           <p className="text-xs text-gray-500">Kitchen</p>
           <p className="font-bold">{product.kitchen || "N/A"}</p>
         </div>
+        <div>
+          <p className="text-xs text-gray-500">Floors</p>
+          <p className="font-bold">{product.floors || "N/A"}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500">Direction</p>
+          <p className="font-bold">{product.direction || "N/A"}</p>
+        </div>
       </div>
+
       <div className="p-4 border-t">
         <p className="text-xs text-gray-500 uppercase">
           {product.category || "House Plan"}
@@ -421,11 +435,13 @@ const ProductCard = ({ product, userOrders }) => {
             product.city.length > 0 && (
               <div className="flex justify-between items-center">
                 <span className="font-semibold">City:</span>
-                <span className="text-right">{product.city.join(", ")}</span>
+                <span className="text-right font-bold text-teal-700">
+                  {product.city.join(", ")}
+                </span>
               </div>
             )}
         </div>
-        <h3 className="text-lg font-bold text-gray-900 mt-1 truncate">
+        <h3 className="text-lg font-bold text-teal-800 mt-1 truncate">
           {product.name}
         </h3>
         <div className="flex items-baseline gap-2 mt-1">
@@ -453,7 +469,11 @@ const ProductCard = ({ product, userOrders }) => {
           </Button>
         </Link>
         <Button
-          className={`w-full text-white rounded-md ${hasPurchased ? "bg-teal-500 hover:bg-teal-600" : "bg-gray-400 hover:bg-gray-500"}`}
+          className={`w-full text-white rounded-md ${
+            hasPurchased
+              ? "bg-teal-500 hover:bg-teal-600"
+              : "bg-gray-400 cursor-not-allowed"
+          }`}
           onClick={handleDownload}
           disabled={!hasPurchased}
         >
@@ -869,7 +889,9 @@ const Products = () => {
         )}
 
         <div
-          className={`flex flex-col lg:flex-row gap-12 ${countryQuery ? "pt-0 lg:pt-8" : "pt-0"}`}
+          className={`flex flex-col lg:flex-row gap-12 ${
+            countryQuery ? "pt-0 lg:pt-8" : "pt-0"
+          }`}
         >
           <FilterSidebar
             filters={filters}
@@ -946,7 +968,11 @@ const Products = () => {
 
             {!isLoading && !isError && (
               <div
-                className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3" : "grid-cols-1"}`}
+                className={`grid gap-6 ${
+                  viewMode === "grid"
+                    ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
+                    : "grid-cols-1"
+                }`}
               >
                 {paginatedProducts.length > 0 ? (
                   paginatedProducts.map((product) => (

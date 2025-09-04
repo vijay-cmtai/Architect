@@ -28,7 +28,7 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import house3 from "@/assets/house-3.jpg";
 import { toast } from "sonner";
 
-// --- ProductCard Component (WITH THE FIX) ---
+// --- ProductCard Component (UPDATED CODE) ---
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -77,7 +77,6 @@ const ProductCard = ({ product }) => {
     }
   };
 
-  // --- START OF THE FIX ---
   const handleDownload = async () => {
     if (!userInfo) {
       toast.error("Please log in to download.");
@@ -101,7 +100,6 @@ const ProductCard = ({ product }) => {
 
     let downloadUrl = fileToDownload;
 
-    // Add the Cloudinary flag to force download
     if (downloadUrl.includes("res.cloudinary.com")) {
       const parts = downloadUrl.split("/upload/");
       if (parts.length === 2) {
@@ -127,7 +125,6 @@ const ProductCard = ({ product }) => {
       toast.error("Failed to download the file.");
     }
   };
-  // --- END OF THE FIX ---
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
@@ -156,7 +153,11 @@ const ProductCard = ({ product }) => {
         <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={handleWishlistToggle}
-            className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-gray-600 hover:text-red-500 hover:scale-110"}`}
+            className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${
+              isWishlisted
+                ? "text-red-500 scale-110"
+                : "text-gray-600 hover:text-red-500 hover:scale-110"
+            }`}
             aria-label="Toggle Wishlist"
           >
             <Heart
@@ -177,31 +178,60 @@ const ProductCard = ({ product }) => {
           )}
         </div>
       </div>
-      <div className="p-4 grid grid-cols-2 gap-4 border-t text-center text-sm">
+
+      {/* ✅✅ SECTION UPDATED: 3-column layout for compact details ✅✅ */}
+      <div className="p-4 grid grid-cols-3 gap-2 border-t text-center text-sm">
         <div>
           <p className="text-xs text-gray-500">Plot Area</p>
           <p className="font-bold">{product.plotArea || "N/A"} sqft</p>
         </div>
-        <div className="bg-teal-500/10 text-teal-800 p-2 rounded-md">
-          <p className="text-xs">Rooms</p>
+        <div className="bg-teal-50 p-2 rounded-md">
+          <p className="text-xs text-gray-500">Rooms</p>
           <p className="font-bold">
             {product.rooms || product.bhk || "N/A"} BHK
           </p>
         </div>
-        <div className="bg-teal-500/10 text-teal-800 p-2 rounded-md">
-          <p className="text-xs">Bathrooms</p>
+        <div className="bg-teal-50 p-2 rounded-md">
+          <p className="text-xs text-gray-500">Bathrooms</p>
           <p className="font-bold">{product.bathrooms || "N/A"}</p>
         </div>
         <div>
           <p className="text-xs text-gray-500">Kitchen</p>
           <p className="font-bold">{product.kitchen || "N/A"}</p>
         </div>
+        <div>
+          <p className="text-xs text-gray-500">Floors</p>
+          <p className="font-bold">{product.floors || "N/A"}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500">Direction</p>
+          <p className="font-bold">{product.direction || "N/A"}</p>
+        </div>
       </div>
+
       <div className="p-4 border-t">
         <p className="text-xs text-gray-500 uppercase">
           {product.category || "House Plan"}
         </p>
-        <h3 className="text-lg font-bold text-gray-900 mt-1 truncate">
+        <div className="mt-2 text-xs text-gray-600 space-y-1">
+          {product.productNo && (
+            <div className="flex justify-between items-center">
+              <span className="font-semibold">Product No:</span>
+              <span>{product.productNo}</span>
+            </div>
+          )}
+          {product.city &&
+            Array.isArray(product.city) &&
+            product.city.length > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">City:</span>
+                <span className="text-right font-bold text-teal-700">
+                  {product.city.join(", ")}
+                </span>
+              </div>
+            )}
+        </div>
+        <h3 className="text-lg font-bold text-teal-800 mt-1 truncate">
           {product.name}
         </h3>
         <div className="flex items-baseline gap-2 mt-1">
@@ -229,7 +259,11 @@ const ProductCard = ({ product }) => {
           </Button>
         </Link>
         <Button
-          className={`w-full text-white rounded-md ${hasPurchased ? "bg-teal-500 hover:bg-teal-600" : "bg-gray-400 hover:bg-gray-500"}`}
+          className={`w-full text-white rounded-md ${
+            hasPurchased
+              ? "bg-teal-500 hover:bg-teal-600"
+              : "bg-gray-400 cursor-not-allowed"
+          }`}
           onClick={handleDownload}
           disabled={!hasPurchased}
         >
