@@ -1,8 +1,5 @@
-// src/pages/admin/blogs/AdminBlogsPage.jsx
-
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -28,22 +25,26 @@ import {
   fetchAllPostsAdmin,
   deletePost,
   resetBlogActionStatus,
-} from "@/lib/features/blog/blogSlice"; // आपके blogSlice से
+  BlogPost,
+} from "@/lib/features/blog/blogSlice";
 import { RootState, AppDispatch } from "@/lib/store";
 import { toast } from "sonner";
+import { BlogFormModal } from "@/components/BlogFormModal";
 
 const AdminBlogsPage = () => {
   const dispatch: AppDispatch = useDispatch();
-  // अब हम blog स्लाइस से डेटा लेंगे
+
+  // ✅ SAHI SYNTAX YAHAN HAI: `from` ki jagah `=` ka istemal karein
   const { posts, status, actionStatus, error } = useSelector(
     (state: RootState) => state.blog
   );
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   useEffect(() => {
-    // एडमिन के लिए सभी पोस्ट्स (ड्राफ्ट सहित) fetch करें
     dispatch(fetchAllPostsAdmin());
   }, [dispatch]);
 
@@ -51,14 +52,29 @@ const AdminBlogsPage = () => {
     if (actionStatus === "succeeded") {
       toast.success("Action completed successfully!");
       dispatch(resetBlogActionStatus());
-      setIsAlertOpen(false);
-      setSelectedPostId(null);
+      if (isModalOpen) setIsModalOpen(false);
+      if (isAlertOpen) setIsAlertOpen(false);
     }
     if (actionStatus === "failed") {
       toast.error(String(error) || "Action failed.");
       dispatch(resetBlogActionStatus());
     }
-  }, [actionStatus, error, dispatch]);
+  }, [actionStatus, error, dispatch, isModalOpen, isAlertOpen]);
+
+  const handleEditClick = (post: BlogPost) => {
+    setSelectedPost(post);
+    setIsModalOpen(true);
+  };
+
+  const handleCreateClick = () => {
+    setSelectedPost(null);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedPost(null);
+  };
 
   const handleDeleteClick = (postId: string) => {
     setSelectedPostId(postId);
@@ -90,12 +106,10 @@ const AdminBlogsPage = () => {
             Create, edit, and delete blog articles.
           </p>
         </div>
-        <Link to="/admin/blogs/add">
-          <Button className="bg-orange-500 hover:bg-orange-600">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add New Post
-          </Button>
-        </Link>
+        <Button onClick={handleCreateClick}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Add New Post
+        </Button>
       </div>
 
       <div className="bg-white p-4 rounded-lg shadow-md border">
@@ -120,7 +134,7 @@ const AdminBlogsPage = () => {
                   <TableCell>
                     <Badge
                       variant={
-                        post.status === "Published" ? "success" : "secondary"
+                        post.status === "Published" ? "default" : "secondary"
                       }
                     >
                       {post.status}
@@ -130,11 +144,14 @@ const AdminBlogsPage = () => {
                     {new Date(post.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Link to={`/admin/blogs/edit/${post.slug}`}>
-                      <Button variant="ghost" size="icon" className="mr-2">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="mr-2"
+                      onClick={() => handleEditClick(post)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -182,6 +199,12 @@ const AdminBlogsPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BlogFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        post={selectedPost}
+      />
     </div>
   );
 };

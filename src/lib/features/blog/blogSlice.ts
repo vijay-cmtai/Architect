@@ -1,21 +1,36 @@
-// lib/features/blog/blogSlice.js
-
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
-import { RootState } from "@/lib/store";
+import { RootState } from "@/lib/store"; // <-- Aapke store ka path
 
 const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/blogs`;
 
 // Helper to get token
 const getToken = (getState: () => RootState) => {
   const state = getState();
+  // ✅ IMPORTANT: Apne auth slice ke structure ke anusaar is path ko check karein
+  // Agar aapka user slice 'auth' hai, to 'state.auth.userInfo.token' ho sakta hai
   return state.user.userInfo?.token;
 };
 
-// Interfaces
-interface BlogPost {
+// =================================================================
+// ✅✅ INTERFACE KO NAYE MODEL KE ANUSAAR UPDATE KIYA GAYA HAI ✅✅
+// =================================================================
+export interface BlogPost {
   _id: string;
-  [key: string]: any;
+  title: string;
+  slug: string;
+  description: string;
+  content: string;
+  author: string;
+  mainImage: string;
+  status: "Published" | "Draft";
+  tags: string[];
+  metaDescription?: string;
+  metaKeywords?: string[];
+  imageAltText: string;
+  imageTitleText?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface BlogState {
@@ -37,17 +52,27 @@ const initialState: BlogState = {
 // --- Public Thunks ---
 export const fetchAllPosts = createAsyncThunk(
   "blog/fetchAllPublic",
-  async () => {
-    const { data } = await axios.get(API_URL);
-    return data;
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get(API_URL);
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch posts"
+      );
+    }
   }
 );
 
 export const fetchPostBySlug = createAsyncThunk(
   "blog/fetchBySlug",
-  async (slug: string) => {
-    const { data } = await axios.get(`${API_URL}/slug/${slug}`);
-    return data;
+  async (slug: string, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get(`${API_URL}/slug/${slug}`);
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || "Post not found");
+    }
   }
 );
 
@@ -69,9 +94,9 @@ export const fetchAllPostsAdmin = createAsyncThunk<
 
 export const createPost = createAsyncThunk<
   BlogPost,
-  { postData: FormData },
+  FormData,
   { state: RootState }
->("blog/create", async ({ postData }, { getState, rejectWithValue }) => {
+>("blog/create", async (postData, { getState, rejectWithValue }) => {
   try {
     const token = getToken(getState);
     const config = {
@@ -143,11 +168,12 @@ const blogSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    // Is logic mein koi badlav ki zaroorat nahi hai
     const listPending = (state: BlogState) => {
       state.status = "loading";
       state.error = null;
     };
-    const listRejected = (state: BlogState, action) => {
+    const listRejected = (state: BlogState, action: any) => {
       state.status = "failed";
       state.error = action.payload || action.error.message;
     };
@@ -155,12 +181,11 @@ const blogSlice = createSlice({
       state.actionStatus = "loading";
       state.error = null;
     };
-    const actionRejected = (state: BlogState, action) => {
+    const actionRejected = (state: BlogState, action: any) => {
       state.actionStatus = "failed";
       state.error = action.payload || action.error.message;
     };
 
-    // Public fetch
     builder
       .addCase(fetchAllPosts.pending, listPending)
       .addCase(
@@ -170,8 +195,8 @@ const blogSlice = createSlice({
           state.posts = action.payload;
         }
       )
-      .addCase(fetchAllPosts.rejected, listRejected);
-    builder
+      .addCase(fetchAllPosts.rejected, listRejected)
+
       .addCase(fetchPostBySlug.pending, listPending)
       .addCase(
         fetchPostBySlug.fulfilled,
@@ -180,10 +205,8 @@ const blogSlice = createSlice({
           state.post = action.payload;
         }
       )
-      .addCase(fetchPostBySlug.rejected, listRejected);
+      .addCase(fetchPostBySlug.rejected, listRejected)
 
-    // Admin fetch
-    builder
       .addCase(fetchAllPostsAdmin.pending, listPending)
       .addCase(
         fetchAllPostsAdmin.fulfilled,
@@ -192,10 +215,8 @@ const blogSlice = createSlice({
           state.posts = action.payload;
         }
       )
-      .addCase(fetchAllPostsAdmin.rejected, listRejected);
+      .addCase(fetchAllPostsAdmin.rejected, listRejected)
 
-    // Admin CUD actions
-    builder
       .addCase(createPost.pending, actionPending)
       .addCase(
         createPost.fulfilled,
@@ -204,20 +225,26 @@ const blogSlice = createSlice({
           state.posts.unshift(action.payload);
         }
       )
-      .addCase(createPost.rejected, actionRejected);
-    builder
+      .addCase(createPost.rejected, actionRejected)
+
       .addCase(updatePost.pending, actionPending)
       .addCase(
         updatePost.fulfilled,
         (state, action: PayloadAction<BlogPost>) => {
           state.actionStatus = "succeeded";
-          state.posts = state.posts.map((p) =>
-            p._id === action.payload._id ? action.payload : p
+          const index = state.posts.findIndex(
+            (p) => p._id === action.payload._id
           );
+          if (index !== -1) {
+            state.posts[index] = action.payload;
+          } else {
+            // Agar post list mein nahi tha to use add kar dein
+            state.posts.unshift(action.payload);
+          }
         }
       )
-      .addCase(updatePost.rejected, actionRejected);
-    builder
+      .addCase(updatePost.rejected, actionRejected)
+
       .addCase(deletePost.pending, actionPending)
       .addCase(deletePost.fulfilled, (state, action: PayloadAction<string>) => {
         state.actionStatus = "succeeded";

@@ -120,7 +120,7 @@ const App = () => (
                 <Route path="/login" element={<Login />} />
                 <Route path="/apply" element={<ApplicationPage />} />
                 <Route path="/terms" element={<TermsAndConditions />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/payment-policy" element={<PaymentPolicy />} />
                 <Route path="/refund-policy" element={<RefundPolicy />} />
                 <Route path="/blogs" element={<BlogsPage />} />

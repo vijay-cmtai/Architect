@@ -1,11 +1,10 @@
-// src/pages/SingleBlogPostPage.tsx
-
 import React, { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { Helmet } from "react-helmet-async"; 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import BlogSidebar from "@/components/BlogSidebar";
+import BlogSidebar from "@/components/BlogSidebar"; 
 import { Loader2, ServerCrash, Calendar, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,12 +22,12 @@ const SingleBlogPostPage: React.FC = () => {
     if (slug) {
       dispatch(fetchPostBySlug(slug));
     }
-    // Cleanup function: clear the post from state when the component unmounts
     return () => {
       dispatch(clearCurrentPost());
     };
   }, [dispatch, slug]);
 
+  // --- LOADING STATE ---
   if (status === "loading") {
     return (
       <>
@@ -44,16 +43,23 @@ const SingleBlogPostPage: React.FC = () => {
   if (status === "failed" || !post) {
     return (
       <>
+        <Helmet>
+          <title>Post Not Found | Your Company Name</title>
+          <meta
+            name="description"
+            content="The blog post you are looking for could not be found."
+          />
+        </Helmet>
         <Navbar />
         <div className="bg-soft-teal min-h-screen flex flex-col items-center justify-center text-center p-4">
           <ServerCrash className="h-16 w-16 text-destructive mb-4" />
           <h1 className="text-4xl font-bold text-foreground">Post Not Found</h1>
           <p className="mt-2 text-muted-foreground">
             {String(error) ||
-              "The blog post you are looking for does not exist."}
+              "The blog post you are looking for does not exist or may have been moved."}
           </p>
           <Button asChild className="mt-6">
-            <Link to="/blogs">Back to Blog</Link>
+            <Link to="/blogs">Back to All Blogs</Link>
           </Button>
         </div>
         <Footer />
@@ -61,8 +67,45 @@ const SingleBlogPostPage: React.FC = () => {
     );
   }
 
+  const siteUrl = "https://houseplanfiles.com"; 
+  const canonicalUrl = `${siteUrl}/blog/${post.slug}`;
   return (
     <>
+      <Helmet>
+        <title>{`${post.title} | Your Company Name`}</title>
+        <meta
+          name="description"
+          content={post.metaDescription || post.description}
+        />
+        <meta
+          name="keywords"
+          content={post.metaKeywords?.join(", ") || post.tags?.join(", ")}
+        />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:title" content={post.title} />
+        <meta
+          property="og:description"
+          content={post.metaDescription || post.description}
+        />
+        <meta property="og:image" content={post.mainImage} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:type" content="article" />
+        <meta property="article:published_time" content={post.createdAt} />
+        <meta property="article:author" content={post.author} />
+        {post.tags?.map((tag) => (
+          <meta property="article:tag" content={tag} key={tag} />
+        ))}
+
+        {/* Twitter Card Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={post.title} />
+        <meta
+          name="twitter:description"
+          content={post.metaDescription || post.description}
+        />
+        <meta name="twitter:image" content={post.mainImage} />
+      </Helmet>
+
       <Navbar />
       <div className="bg-soft-teal py-16 md:py-20">
         <div className="container mx-auto px-4">
@@ -88,13 +131,16 @@ const SingleBlogPostPage: React.FC = () => {
                     </div>
                   </div>
                 </header>
+
                 <div className="mb-8 rounded-lg overflow-hidden">
                   <img
                     src={post.mainImage}
-                    alt={post.title}
+                    alt={post.imageAltText}
+                    title={post.imageTitleText || post.title}
                     className="w-full h-auto object-cover"
                   />
                 </div>
+
                 <div
                   className="prose lg:prose-lg max-w-none text-foreground space-y-4"
                   dangerouslySetInnerHTML={{ __html: post.content }}
@@ -143,6 +189,7 @@ const SingleBlogPostPage: React.FC = () => {
                 </form>
               </section>
             </main>
+
             {/* Sidebar */}
             <BlogSidebar />
           </div>

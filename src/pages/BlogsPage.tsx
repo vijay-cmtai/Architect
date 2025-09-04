@@ -1,13 +1,12 @@
-// src/pages/BlogsPage.jsx
-
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { BookOpen, Calendar, User, Loader2, ServerCrash } from "lucide-react";
+import { Helmet } from "react-helmet-async"; // ✅ STEP 1: HELMET IMPORT KAREIN
+import { Calendar, User, Loader2, ServerCrash } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { fetchAllPosts } from "@/lib/features/blog/blogSlice";
+import { fetchAllPosts, BlogPost } from "@/lib/features/blog/blogSlice";
 import { RootState, AppDispatch } from "@/lib/store";
 
 const BlogsPage = () => {
@@ -17,11 +16,43 @@ const BlogsPage = () => {
   );
 
   useEffect(() => {
-    dispatch(fetchAllPosts());
-  }, [dispatch]);
+    if (status === "idle") {
+      dispatch(fetchAllPosts());
+    }
+  }, [dispatch, status]);
+
+  const siteUrl = "https://www.yourwebsite.com"; 
+
+  // ✅ DYNAMIC META TAGS KE LIYE DATA TAIYAAR KAREIN
+  const latestPost: BlogPost | undefined = posts?.[0];
+  const pageTitle =
+    "Our Blog - Latest Articles and Insights | Your Company Name";
+  const pageDescription =
+    latestPost?.metaDescription ||
+    latestPost?.description ||
+    "Explore our latest articles, insights, and updates. Stay informed with expert advice and industry news from Your Company Name.";
+  const ogImage = latestPost?.mainImage || `${siteUrl}/default-blog-image.jpg`; // Default image ka path daalein
 
   return (
     <>
+      {/* ✅ DYNAMIC HELMET TAGS */}
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <link rel="canonical" href={`${siteUrl}/blogs`} />
+
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:image" content={ogImage} />
+        <meta property="og:url" content={`${siteUrl}/blogs`} />
+        <meta property="og:type" content="website" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content={ogImage} />
+      </Helmet>
+
       <Navbar />
       <div className="bg-soft-teal min-h-screen">
         <section className="py-16 md:py-20">
@@ -43,11 +74,10 @@ const BlogsPage = () => {
             </motion.div>
 
             {status === "loading" && (
-              <div className="flex justify-center items-center py-20">
+              <div className="flex justify-center py-20">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
               </div>
             )}
-
             {status === "failed" && (
               <div className="text-center py-20">
                 <ServerCrash className="mx-auto h-12 w-12 text-destructive" />
@@ -74,7 +104,7 @@ const BlogsPage = () => {
                         <div className="overflow-hidden">
                           <img
                             src={post.mainImage}
-                            alt={post.title}
+                            alt={post.imageAltText} // ✅ ALT TEXT KA ISTEMAL KAREIN
                             className="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-105"
                           />
                         </div>

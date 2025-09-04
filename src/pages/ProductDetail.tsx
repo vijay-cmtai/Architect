@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
+import { Helmet } from "react-helmet-async";
 import { RootState, AppDispatch } from "@/lib/store";
 import {
   fetchProducts,
   createReview as createProductReview,
+  fetchProductById,
 } from "@/lib/features/products/productSlice";
 import {
   fetchAllApprovedPlans,
@@ -52,9 +54,7 @@ const StarRating = ({ rating, text }: { rating: number; text?: string }) => (
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
-          className={`h-5 w-5 ${
-            rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
-          }`}
+          className={`h-5 w-5 ${rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
         />
       ))}
     </div>
@@ -73,6 +73,7 @@ const DetailPage = () => {
 
   const {
     products: adminProducts,
+    product: singleProduct, // Using single product state
     listStatus: adminListStatus,
     actionStatus: adminActionStatus,
   } = useSelector((state: RootState) => state.products);
@@ -90,28 +91,19 @@ const DetailPage = () => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
 
-  const { item: displayData, source: itemSource } = useMemo(() => {
-    const allAdminProducts = Array.isArray(adminProducts)
-      ? adminProducts.map((p) => ({ ...p, name: p.name, source: "product" }))
-      : [];
-    const allProfPlans = Array.isArray(professionalPlans)
-      ? professionalPlans.map((p) => ({
-          ...p,
-          name: p.planName,
-          source: "professional",
-        }))
-      : [];
-    const combinedList = [...allAdminProducts, ...allProfPlans];
-    const foundItem = combinedList.find((p) => p._id === id) || null;
-    return { item: foundItem, source: foundItem?.source };
-  }, [adminProducts, professionalPlans, id]);
+  const displayData = isProfessionalPlan
+    ? professionalPlans.find((p) => p._id === id)
+    : singleProduct;
 
   useEffect(() => {
-    if (!displayData) {
-      if (adminListStatus === "idle") dispatch(fetchProducts({}));
-      if (profListStatus === "idle") dispatch(fetchAllApprovedPlans());
+    if (id) {
+      if (isProfessionalPlan) {
+        // Professional plan fetch logic would be here
+      } else {
+        dispatch(fetchProductById(id));
+      }
     }
-  }, [displayData, adminListStatus, profListStatus, dispatch]);
+  }, [id, dispatch, isProfessionalPlan]);
 
   const productImages = useMemo(() => {
     if (!displayData) return [house1];
@@ -217,13 +209,12 @@ const DetailPage = () => {
       });
       return;
     }
-    const reviewAction =
-      itemSource === "professional"
-        ? createPlanReview({ planId: id!, reviewData: { rating, comment } })
-        : createProductReview({
-            productId: id!,
-            reviewData: { rating, comment },
-          });
+    const reviewAction = isProfessionalPlan
+      ? createPlanReview({ planId: id!, reviewData: { rating, comment } })
+      : createProductReview({
+          productId: id!,
+          reviewData: { rating, comment },
+        });
     dispatch(reviewAction)
       .unwrap()
       .then(() => {
@@ -233,8 +224,11 @@ const DetailPage = () => {
         });
         setRating(0);
         setComment("");
-        dispatch(fetchProducts({}));
-        dispatch(fetchAllApprovedPlans());
+        if (isProfessionalPlan) {
+          dispatch(fetchAllApprovedPlans());
+        } else {
+          dispatch(fetchProductById(id!)); // Refetch the product to show the new review
+        }
       })
       .catch((err) => {
         toast({
@@ -271,8 +265,8 @@ const DetailPage = () => {
   }, [adminProducts, professionalPlans, displayData, id]);
 
   const isLoading =
-    (adminListStatus === "loading" || profListStatus === "loading") &&
-    !displayData;
+    (adminListStatus === "loading" && !singleProduct) ||
+    (profListStatus === "loading" && !isProfessionalPlan);
 
   if (isLoading) {
     return (
@@ -285,6 +279,9 @@ const DetailPage = () => {
   if (!displayData) {
     return (
       <div className="min-h-screen bg-background">
+        <Helmet>
+          <title>Product Not Found</title>
+        </Helmet>
         <Navbar />
         <div className="text-center py-20">
           <ServerCrash className="mx-auto h-16 w-16 text-destructive" />
@@ -305,11 +302,62 @@ const DetailPage = () => {
     ? displayData.salePrice
     : displayData.price;
   const originalPrice = displayData.price;
-  const actionStatus =
-    itemSource === "professional" ? profActionStatus : adminActionStatus;
+  const actionStatus = isProfessionalPlan
+    ? profActionStatus
+    : adminActionStatus;
+  const canonicalUrl = `${window.location.origin}${location.pathname}`;
 
   return (
     <div className="min-h-screen bg-background">
+      {/* =============================================== */}
+      {/* ✅✅ DYNAMIC SEO META TAGS ✅✅ */}
+      {/* =============================================== */}
+      <Helmet>
+        <title>
+          {displayData.seo?.title || `${displayData.name} | House Plan Files`}
+        </title>
+        <meta
+          name="description"
+          content={
+            displayData.seo?.description ||
+            displayData.description.substring(0, 160)
+          }
+        />
+        <meta name="keywords" content={displayData.seo?.keywords} />
+        <link rel="canonical" href={canonicalUrl} />
+
+        <meta
+          property="og:title"
+          content={displayData.seo?.title || displayData.name}
+        />
+        <meta
+          property="og:description"
+          content={
+            displayData.seo?.description ||
+            displayData.description.substring(0, 160)
+          }
+        />
+        <meta property="og:image" content={displayData.mainImage} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:type" content="product" />
+        <meta property="product:price:amount" content={String(currentPrice)} />
+        <meta property="product:price:currency" content="INR" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content={displayData.seo?.title || displayData.name}
+        />
+        <meta
+          name="twitter:description"
+          content={
+            displayData.seo?.description ||
+            displayData.description.substring(0, 160)
+          }
+        />
+        <meta name="twitter:image" content={displayData.mainImage} />
+      </Helmet>
+
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-8">
@@ -331,7 +379,7 @@ const DetailPage = () => {
             <div className="relative overflow-hidden rounded-2xl shadow-lg group">
               <img
                 src={productImages[selectedImageIndex]}
-                alt={displayData.name}
+                alt={displayData.seo?.altText || displayData.name}
                 className="w-full h-96 lg:h-[500px] object-cover transform scale-125 transition-transform duration-500 group-hover:scale-110"
               />
             </div>
@@ -340,9 +388,7 @@ const DetailPage = () => {
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
-                  className={`relative overflow-hidden rounded-lg ${
-                    selectedImageIndex === index ? "ring-2 ring-primary" : ""
-                  }`}
+                  className={`relative overflow-hidden rounded-lg ${selectedImageIndex === index ? "ring-2 ring-primary" : ""}`}
                   type="button"
                 >
                   <img
@@ -477,9 +523,7 @@ const DetailPage = () => {
                     onClick={() => setIsLiked(!isLiked)}
                   >
                     <Heart
-                      className={`w-6 h-6 ${
-                        isLiked ? "fill-current text-red-500" : ""
-                      }`}
+                      className={`w-6 h-6 ${isLiked ? "fill-current text-red-500" : ""}`}
                     />
                   </Button>
                 </div>
@@ -501,7 +545,6 @@ const DetailPage = () => {
             </div>
           </div>
         </div>
-
         <div className="border-t pt-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div>
@@ -551,11 +594,7 @@ const DetailPage = () => {
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
-                          className={`h-6 w-6 cursor-pointer ${
-                            rating >= star
-                              ? "text-yellow-400 fill-yellow-400"
-                              : "text-gray-300"
-                          }`}
+                          className={`h-6 w-6 cursor-pointer ${rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
                           onClick={() => setRating(star)}
                         />
                       ))}
@@ -601,7 +640,6 @@ const DetailPage = () => {
             </div>
           </div>
         </div>
-
         {relatedProducts.length > 0 && (
           <div className="border-t pt-16 mt-16">
             <h2 className="text-2xl font-bold text-gray-800 mb-8">

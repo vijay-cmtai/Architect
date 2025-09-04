@@ -1,6 +1,4 @@
-// src/pages/admin/blogs/AdminAddEditBlogPage.jsx
-
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -10,7 +8,7 @@ import "react-quill/dist/quill.snow.css";
 
 import {
   createPost,
-  updatePost, // ✨ updatePost को import करें
+  updatePost,
   fetchPostBySlug,
   clearCurrentPost,
 } from "@/lib/features/blog/blogSlice";
@@ -33,10 +31,11 @@ const AdminAddEditBlogPage = () => {
   const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
 
-  const { post, status: postStatus } = useSelector(
-    (state: RootState) => state.blog
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    post,
+    actionStatus,
+    status: postStatus,
+  } = useSelector((state: RootState) => state.blog);
   const isEditing = Boolean(slug);
 
   const {
@@ -48,19 +47,29 @@ const AdminAddEditBlogPage = () => {
     setValue,
     formState: { errors },
   } = useForm({
+    // Form ke liye default values
     defaultValues: {
       title: "",
       slug: "",
       description: "",
+      content: "",
       author: "Admin",
       status: "Draft",
-      content: "",
       mainImage: null,
+      tags: "",
+      metaDescription: "",
+      metaKeywords: "",
+      imageAltText: "",
+      imageTitleText: "",
     },
   });
 
   const titleValue = watch("title");
+  const mainImageValue = watch("mainImage");
 
+  // --- HOOKS FOR LOGIC ---
+
+  // Title se slug automatically generate karein (sirf naye post ke liye)
   useEffect(() => {
     if (titleValue && !isEditing) {
       const generatedSlug = titleValue
@@ -72,66 +81,67 @@ const AdminAddEditBlogPage = () => {
     }
   }, [titleValue, setValue, isEditing]);
 
+  // Edit mode mein post ka data fetch karein
   useEffect(() => {
     if (isEditing && slug) {
       dispatch(fetchPostBySlug(slug));
     }
+    // Component se jaate waqt current post ko clear karein
     return () => {
       dispatch(clearCurrentPost());
     };
   }, [dispatch, slug, isEditing]);
 
+  // Jab post ka data aa jaye to form ko populate karein
   useEffect(() => {
     if (isEditing && post) {
       reset({
-        title: post.title,
-        slug: post.slug,
-        description: post.description,
-        author: post.author,
-        status: post.status,
-        content: post.content,
+        ...post,
+        tags: post.tags?.join(", ") || "",
+        metaKeywords: post.metaKeywords?.join(", ") || "",
       });
     }
   }, [post, isEditing, reset]);
 
-  // --- ✨ FIX IS HERE: Updated onSubmit function ---
+  // --- FORM SUBMISSION ---
+
   const onSubmit = (data) => {
-    setIsSubmitting(true);
     const formData = new FormData();
+
+    // Sabhi text data ko FormData mein add karein
     Object.keys(data).forEach((key) => {
       if (key !== "mainImage") {
         formData.append(key, data[key]);
       }
     });
+
+    // Agar nayi image select ki hai to use add karein
     if (data.mainImage && data.mainImage[0]) {
       formData.append("mainImage", data.mainImage[0]);
     }
 
-    if (isEditing && post) {
-      dispatch(updatePost({ postId: post._id, postData: formData })).then(
-        (result) => {
-          if (updatePost.fulfilled.match(result)) {
-            toast.success("Blog post updated successfully!");
-            navigate("/admin/blogs");
-          } else {
-            toast.error(String(result.payload) || "Failed to update post.");
-          }
-          setIsSubmitting(false);
-        }
-      );
-    } else {
-      dispatch(createPost({ postData: formData })).then((result) => {
-        if (createPost.fulfilled.match(result)) {
-          toast.success("Blog post created successfully!");
-          navigate("/admin/blogs");
-        } else {
-          toast.error(String(result.payload) || "Failed to create post.");
-        }
-        setIsSubmitting(false);
-      });
-    }
+    const action =
+      isEditing && post
+        ? dispatch(updatePost({ postId: post._id, postData: formData }))
+        : dispatch(createPost(formData));
+
+    action.then((result) => {
+      if (
+        updatePost.fulfilled.match(result) ||
+        createPost.fulfilled.match(result)
+      ) {
+        toast.success(
+          `Blog post ${isEditing ? "updated" : "created"} successfully!`
+        );
+        navigate("/admin/blogs");
+      } else {
+        toast.error(
+          String(result.payload) ||
+            `Failed to ${isEditing ? "update" : "create"} post.`
+        );
+      }
+    });
   };
-  // --- END OF FIX ---
 
   if (isEditing && postStatus === "loading") {
     return (
@@ -150,6 +160,7 @@ const AdminAddEditBlogPage = () => {
         onSubmit={handleSubmit(onSubmit)}
         className="space-y-8 bg-white p-8 rounded-lg shadow-md"
       >
+        {/* === CORE FIELDS === */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <Label htmlFor="title" className="font-semibold">
@@ -206,7 +217,7 @@ const AdminAddEditBlogPage = () => {
             render={({ field }) => (
               <ReactQuill
                 theme="snow"
-                value={field.value}
+                value={field.value || ""}
                 onChange={field.onChange}
                 className="mt-2 bg-white"
               />
@@ -218,7 +229,7 @@ const AdminAddEditBlogPage = () => {
             </p>
           )}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <Label htmlFor="author" className="font-semibold">
               Author
@@ -254,31 +265,118 @@ const AdminAddEditBlogPage = () => {
               )}
             />
           </div>
-          <div>
-            <Label htmlFor="mainImage" className="font-semibold">
-              Main Image
-            </Label>
-            <Input
-              id="mainImage"
-              type="file"
-              {...register("mainImage", { required: !isEditing })}
-              accept="image/*"
-              className="mt-2"
-            />
-            {errors.mainImage && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.mainImage.message}
-              </p>
-            )}
+        </div>
+
+        {/* === IMAGE & IMAGE ATTRIBUTES === */}
+        <div className="border-t pt-6 space-y-4">
+          <h2 className="text-xl font-semibold">Image & Attributes</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Label htmlFor="mainImage" className="font-semibold">
+                Main Image
+              </Label>
+              <Input
+                id="mainImage"
+                type="file"
+                {...register("mainImage", { required: !isEditing })}
+                accept="image/*"
+                className="mt-2"
+              />
+              {errors.mainImage && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.mainImage.message}
+                </p>
+              )}
+              {(post?.mainImage || mainImageValue?.[0]) && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium">Preview:</p>
+                  <img
+                    src={
+                      mainImageValue?.[0]
+                        ? URL.createObjectURL(mainImageValue[0])
+                        : post.mainImage
+                    }
+                    alt="Image Preview"
+                    width="200"
+                    className="rounded-md object-cover mt-2 border"
+                  />
+                </div>
+              )}
+            </div>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="imageAltText" className="font-semibold">
+                  Image Alt Text (Required)
+                </Label>
+                <Input
+                  id="imageAltText"
+                  {...register("imageAltText", {
+                    required: "Alt text is required.",
+                  })}
+                  className="mt-2"
+                />
+                {errors.imageAltText && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.imageAltText.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="imageTitleText" className="font-semibold">
+                  Image Title Text
+                </Label>
+                <Input
+                  id="imageTitleText"
+                  {...register("imageTitleText")}
+                  className="mt-2"
+                />
+              </div>
+            </div>
           </div>
         </div>
-        <div className="flex justify-end">
-          <Button
-            type="submit"
-            className="bg-orange-500 hover:bg-orange-600"
-            disabled={isSubmitting}
-          >
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+
+        {/* === TAGS & SEO FIELDS === */}
+        <div className="border-t pt-6 space-y-4">
+          <h2 className="text-xl font-semibold">Tags & SEO Meta</h2>
+          <div>
+            <Label htmlFor="tags" className="font-semibold">
+              Tags (comma-separated)
+            </Label>
+            <Input
+              id="tags"
+              {...register("tags")}
+              placeholder="e.g., health, insurance, policy"
+              className="mt-2"
+            />
+          </div>
+          <div>
+            <Label htmlFor="metaKeywords" className="font-semibold">
+              Meta Keywords (comma-separated)
+            </Label>
+            <Input
+              id="metaKeywords"
+              {...register("metaKeywords")}
+              placeholder="e.g., jeevan suraksha, health guard"
+              className="mt-2"
+            />
+          </div>
+          <div>
+            <Label htmlFor="metaDescription" className="font-semibold">
+              Meta Description (for search engines)
+            </Label>
+            <Textarea
+              id="metaDescription"
+              {...register("metaDescription")}
+              className="mt-2"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-4">
+          <Button type="submit" disabled={actionStatus === "loading"}>
+            {actionStatus === "loading" && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
             {isEditing ? "Update Post" : "Create Post"}
           </Button>
         </div>

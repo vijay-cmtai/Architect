@@ -20,7 +20,13 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Loader2, Youtube, PlusCircle, XCircle } from "lucide-react";
+import {
+  Loader2,
+  Youtube,
+  PlusCircle,
+  XCircle,
+  ChevronsUpDown,
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -29,39 +35,142 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import MultiSelect from "react-select";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MultiSelect as MultiSelectForProducts } from "@/components/ui/MultiSelectDropdown"; // Yeh cross/up-sell ke liye hai
 
-// Country list
+// =================================================================
+// ✅✅ AAPKI IMAGE SE LI GAYI POORI COUNTRY LIST ✅✅
+// =================================================================
 const countries = [
   { value: "India", label: "India" },
-  { value: "Mauritius", label: "Mauritius" },
-  { value: "South Africa", label: "South Africa" },
-  { value: "Canada", label: "Canada" },
-  { value: "Kenya", label: "Kenya" },
-  { value: "Uganda", label: "Uganda" },
-  { value: "Sudan", label: "Sudan" },
-  { value: "Nigeria", label: "Nigeria" },
-  { value: "Libya", label: "Libya" },
-  { value: "Liberia", label: "Liberia" },
-  { value: "Egypt", label: "Egypt" },
-  { value: "Germany", label: "Germany" },
-  { value: "France", label: "France" },
-  { value: "United Kingdom", label: "United Kingdom" },
-  { value: "Iraq", label: "Iraq" },
-  { value: "Oman", label: "Oman" },
-  { value: "Iran", label: "Iran" },
-  { value: "Botswana", label: "Botswana" },
-  { value: "Zambia", label: "Zambia" },
+  { value: "Pakistan", label: "Pakistan" },
+  { value: "Sri Lanka", label: "Sri Lanka" },
+  { value: "Bangladesh", label: "Bangladesh" },
   { value: "Nepal", label: "Nepal" },
-  { value: "China", label: "China" },
-  { value: "Singapore", label: "Singapore" },
-  { value: "Indonesia", label: "Indonesia" },
-  { value: "Australia", label: "Australia" },
-  { value: "Vietnam", label: "Vietnam" },
-  { value: "Thailand", label: "Thailand" },
+  { value: "Myanmar", label: "Myanmar" },
+  { value: "Afghanistan", label: "Afghanistan" },
+  { value: "Iran", label: "Iran" },
+  { value: "Oman", label: "Oman" },
+  { value: "Tajikistan", label: "Tajikistan" },
+  { value: "Turkmenistan", label: "Turkmenistan" },
+  { value: "Kuwait", label: "Kuwait" },
+  { value: "Bahrain", label: "Bahrain" },
+  { value: "Qatar", label: "Qatar" },
+  { value: "UAE", label: "UAE" },
+  { value: "Yemen", label: "Yemen" },
+  { value: "Saudi Arabia", label: "Saudi Arabia" },
+  { value: "Austria", label: "Austria" },
+  { value: "Hungary", label: "Hungary" },
+  { value: "Romania", label: "Romania" },
+  { value: "France", label: "France" },
+  { value: "Germany", label: "Germany" },
+  { value: "Netherlands", label: "Netherlands" },
+  { value: "United Kingdom", label: "United Kingdom" },
+  { value: "Ireland", label: "Ireland" },
+  { value: "Norway", label: "Norway" },
+  { value: "Sweden", label: "Sweden" },
+  { value: "Finland", label: "Finland" },
+  { value: "Spain", label: "Spain" },
   { value: "Italy", label: "Italy" },
+  { value: "Greece", label: "Greece" },
+  { value: "Turkey", label: "Turkey" },
+  { value: "Portugal", label: "Portugal" },
+  { value: "Algeria", label: "Algeria" },
+  { value: "Libya", label: "Libya" },
+  { value: "Niger", label: "Niger" },
+  { value: "Mali", label: "Mali" },
+  { value: "Chad", label: "Chad" },
+  { value: "Sudan", label: "Sudan" },
+  { value: "Ethiopia", label: "Ethiopia" },
+  { value: "Somalia", label: "Somalia" },
+  { value: "Kenya", label: "Kenya" },
+  { value: "Tanzania", label: "Tanzania" },
+  { value: "Zambia", label: "Zambia" },
+  { value: "Zimbabwe", label: "Zimbabwe" },
+  { value: "Botswana", label: "Botswana" },
+  { value: "South Africa", label: "South Africa" },
+  { value: "Namibia", label: "Namibia" },
+  { value: "Angola", label: "Angola" },
+  { value: "Nigeria", label: "Nigeria" },
+  { value: "Egypt", label: "Egypt" },
+  { value: "DRC", label: "DRC" },
+  { value: "Mexico", label: "Mexico" },
   { value: "Brazil", label: "Brazil" },
+  { value: "Chile", label: "Chile" },
+  { value: "Argentina", label: "Argentina" },
+  { value: "Peru", label: "Peru" },
+  { value: "Colombia", label: "Colombia" },
+  { value: "Ecuador", label: "Ecuador" },
+  { value: "Venezuela", label: "Venezuela" },
+  { value: "United States", label: "United States" },
+  { value: "Canada", label: "Canada" },
+  { value: "Iceland", label: "Iceland" },
+  { value: "Kazakhstan", label: "Kazakhstan" },
+  { value: "China", label: "China" },
+  { value: "Japan", label: "Japan" },
+  { value: "Mongolia", label: "Mongolia" },
+  { value: "Russia", label: "Russia" },
+  { value: "Thailand", label: "Thailand" },
+  { value: "Vietnam", label: "Vietnam" },
+  { value: "Indonesia", label: "Indonesia" },
+  { value: "Malaysia", label: "Malaysia" },
+  { value: "Philippines", label: "Philippines" },
+  { value: "Papua New Guinea", label: "Papua New Guinea" },
+  { value: "Australia", label: "Australia" },
+  { value: "New Zealand", label: "New Zealand" },
+  { value: "Israel", label: "Israel" },
+  { value: "Mauritius", label: "Mauritius" },
 ].sort((a, b) => a.label.localeCompare(b.label));
+
+// =================================================================
+// ✅✅ NAYA MULTI-SELECT DROPDOWN COMPONENT ISI FILE MEIN ✅✅
+// =================================================================
+const MultiSelectCountry = ({
+  selected,
+  setSelected,
+  options,
+  placeholder,
+}) => {
+  const handleSelect = (value) => {
+    setSelected((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+  };
+
+  const displayText =
+    selected.length > 0 ? `${selected.length} countries selected` : placeholder;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          className="w-full justify-between font-normal"
+        >
+          {displayText}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-60 overflow-y-auto">
+        {options.map((option) => (
+          <DropdownMenuCheckboxItem
+            key={option.value}
+            checked={selected.includes(option.value)}
+            onCheckedChange={() => handleSelect(option.value)}
+            onSelect={(e) => e.preventDefault()}
+          >
+            {option.label}
+          </DropdownMenuCheckboxItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
 const AddProductPage: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -83,10 +192,10 @@ const AddProductPage: React.FC = () => {
   const [propertyType, setPropertyType] = useState<string>("");
   const [direction, setDirection] = useState<string>("");
   const [planType, setPlanType] = useState<string>("");
-  const [selectedCountries, setSelectedCountries] = useState<any[]>([]);
+  const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [isSale, setIsSale] = useState<boolean>(false);
-  const [crossSell, setCrossSell] = useState<any[]>([]);
-  const [upSell, setUpSell] = useState<any[]>([]);
+  const [crossSell, setCrossSell] = useState<string[]>([]);
+  const [upSell, setUpSell] = useState<string[]>([]);
 
   useEffect(() => {
     if (!products || products.length === 0) {
@@ -132,20 +241,15 @@ const AddProductPage: React.FC = () => {
       toast.error("Please upload a main image and at least one plan file.");
       return;
     }
-
     const formData = new FormData();
     Object.keys(data).forEach((key) => formData.append(key, data[key]));
-
-    formData.append("country", selectedCountries.map((c) => c.value).join(","));
+    formData.append("country", selectedCountries.join(","));
     formData.append("propertyType", propertyType);
     formData.append("direction", direction);
     formData.append("planType", planType);
     formData.append("isSale", isSale ? "true" : "false");
-    formData.append(
-      "crossSellProducts",
-      crossSell.map((p) => p.value).join(",")
-    );
-    formData.append("upSellProducts", upSell.map((p) => p.value).join(","));
+    formData.append("crossSellProducts", crossSell.join(","));
+    formData.append("upSellProducts", upSell.join(","));
 
     if (mainImage) formData.append("mainImage", mainImage);
     if (headerImage) formData.append("headerImage", headerImage);
@@ -354,13 +458,11 @@ const AddProductPage: React.FC = () => {
                 </div>
                 <div className="md:col-span-3">
                   <Label htmlFor="country">Country*</Label>
-                  <MultiSelect
-                    isMulti
+                  <MultiSelectCountry
+                    selected={selectedCountries}
+                    setSelected={setSelectedCountries}
                     options={countries}
-                    value={selectedCountries}
-                    onChange={setSelectedCountries}
-                    className="mt-1"
-                    classNamePrefix="select"
+                    placeholder="Select countries..."
                   />
                 </div>
               </CardContent>
@@ -411,25 +513,21 @@ const AddProductPage: React.FC = () => {
                     <Label htmlFor="crossSellProducts">
                       Cross-Sell Products
                     </Label>
-                    <MultiSelect
-                      isMulti
+                    <MultiSelectForProducts
                       options={productOptions}
-                      value={crossSell}
+                      selected={crossSell}
                       onChange={setCrossSell}
                       className="mt-1"
-                      classNamePrefix="select"
                       placeholder="Select related products..."
                     />
                   </div>
                   <div>
                     <Label htmlFor="upSellProducts">Up-Sell Products</Label>
-                    <MultiSelect
-                      isMulti
+                    <MultiSelectForProducts
                       options={productOptions}
-                      value={upSell}
+                      selected={upSell}
                       onChange={setUpSell}
                       className="mt-1"
-                      classNamePrefix="select"
                       placeholder="Select premium alternatives..."
                     />
                   </div>
