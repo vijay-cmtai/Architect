@@ -1,148 +1,196 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset 
-  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
   <url>
     <loc>https://houseplanfiles.com/</loc>
-    <lastmod>2024-05-21</lastmod>
+    <lastmod>2025-09-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://houseplanfiles.com/products</loc>
-    <lastmod>2024-05-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://houseplanfiles.com/services</loc>
-    <lastmod>2024-05-21</lastmod>
+    <lastmod>2025-09-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://houseplanfiles.com/blogs</loc>
-    <lastmod>2024-05-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <loc>https://houseplanfiles.com/cart</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://houseplanfiles.com/checkout</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://houseplanfiles.com/thank-you</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://houseplanfiles.com/services</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://houseplanfiles.com/about</loc>
-    <lastmod>2024-05-21</lastmod>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://houseplanfiles.com/download</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://houseplanfiles.com/careers</loc>
+    <lastmod>2025-09-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://houseplanfiles.com/contact</loc>
-    <lastmod>2024-05-21</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://houseplanfiles.com/gallery</loc>
-    <lastmod>2024-05-21</lastmod>
+    <lastmod>2025-09-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://houseplanfiles.com/floor-plans</loc>
-    <lastmod>2024-05-21</lastmod>
-    <changefreq>weekly</changefreq>
+    <loc>https://houseplanfiles.com/register</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://houseplanfiles.com/login</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://houseplanfiles.com/apply</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://houseplanfiles.com/terms</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://houseplanfiles.com/privacy</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://houseplanfiles.com/payment-policy</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://houseplanfiles.com/refund-policy</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://houseplanfiles.com/blogs</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://houseplanfiles.com/floor-plans</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://houseplanfiles.com/3D-plans</loc>
-    <lastmod>2024-05-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://houseplanfiles.com/interior-designs</loc>
-    <lastmod>2024-05-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://houseplanfiles.com/construction-products</loc>
-    <lastmod>2024-05-21</lastmod>
-    <changefreq>weekly</changefreq>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://houseplanfiles.com/customize/floor-plans</loc>
-    <lastmod>2024-05-21</lastmod>
+    <lastmod>2025-09-04</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://houseplanfiles.com/customize/interior-designs</loc>
-    <lastmod>2024-05-21</lastmod>
+    <lastmod>2025-09-04</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://houseplanfiles.com/customize/3d-elevation</loc>
-    <lastmod>2024-05-21</lastmod>
+    <lastmod>2025-09-04</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://houseplanfiles.com/customize/3d-video-walkthrough</loc>
-    <lastmod>2024-05-21</lastmod>
+    <lastmod>2025-09-04</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://houseplanfiles.com/booking-form</loc>
-    <lastmod>2024-05-21</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.6</priority>
+    <loc>https://houseplanfiles.com/corporate-inquiry/standard</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://houseplanfiles.com/premium-booking-form</loc>
-    <lastmod>2024-05-21</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://houseplanfiles.com/careers</loc>
-    <lastmod>2024-05-21</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.6</priority>
+    <loc>https://houseplanfiles.com/corporate-inquiry/premium</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://houseplanfiles.com/brand-partners</loc>
-    <lastmod>2024-05-21</lastmod>
+    <lastmod>2025-09-04</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://houseplanfiles.com/download</loc>
-    <lastmod>2024-05-21</lastmod>
+    <loc>https://houseplanfiles.com/booking-form</loc>
+    <lastmod>2025-09-04</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://houseplanfiles.com/terms</loc>
-    <lastmod>2024-05-21</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
+    <loc>https://houseplanfiles.com/premium-booking-form</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://houseplanfiles.com/privacy</loc>
-    <lastmod>2024-05-21</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
+    <loc>https://houseplanfiles.com/gallery</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
-  <url>
-    <loc>https://houseplanfiles.com/payment-policy</loc>
-    <lastmod>2024-05-21</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://houseplanfiles.com/refund-policy</loc>
-    <lastmod>2024-05-21</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
-  </url>  
 </urlset>
