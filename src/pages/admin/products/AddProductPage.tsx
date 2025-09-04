@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css"; // Import Quill styles
+
 import {
   createProduct,
   resetProductState,
@@ -12,7 +15,7 @@ import { RootState, AppDispatch } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/textarea"; // Used for Meta Description
 import {
   Card,
   CardContent,
@@ -35,17 +38,52 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { type CheckedState } from "@radix-ui/react-checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MultiSelect as MultiSelectForProducts } from "@/components/ui/MultiSelectDropdown"; // Yeh cross/up-sell ke liye hai
+import { MultiSelect as MultiSelectForProducts } from "@/components/ui/MultiSelectDropdown";
 
-// =================================================================
-// ✅✅ AAPKI IMAGE SE LI GAYI POORI COUNTRY LIST ✅✅
-// =================================================================
+// --- TYPE DEFINITIONS for improved safety and error prevention ---
+
+interface IProductFormData {
+  name: string;
+  description: string;
+  youtubeLink?: string;
+  productNo: string;
+  city: string;
+  plotSize: string;
+  plotArea: number;
+  rooms: number;
+  bathrooms?: number;
+  kitchen?: number;
+  floors?: number;
+  seoTitle?: string;
+  seoAltText?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  price: number;
+  salePrice?: number;
+  discountPercentage?: number;
+  taxRate?: number;
+  category: string;
+}
+
+interface MultiSelectCountryProps {
+  selected: string[];
+  setSelected: React.Dispatch<React.SetStateAction<string[]>>;
+  options: { value: string; label: string }[];
+  placeholder: string;
+}
+
+// --- STATIC DATA ---
+
 const countries = [
   { value: "India", label: "India" },
   { value: "Pakistan", label: "Pakistan" },
@@ -127,24 +165,21 @@ const countries = [
   { value: "Mauritius", label: "Mauritius" },
 ].sort((a, b) => a.label.localeCompare(b.label));
 
-// =================================================================
-// ✅✅ NAYA MULTI-SELECT DROPDOWN COMPONENT ISI FILE MEIN ✅✅
-// =================================================================
-const MultiSelectCountry = ({
+// --- HELPER COMPONENTS ---
+
+const MultiSelectCountry: React.FC<MultiSelectCountryProps> = ({
   selected,
   setSelected,
   options,
   placeholder,
 }) => {
-  const handleSelect = (value) => {
+  const handleSelect = (value: string) => {
     setSelected((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
   };
-
   const displayText =
     selected.length > 0 ? `${selected.length} countries selected` : placeholder;
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -172,19 +207,35 @@ const MultiSelectCountry = ({
   );
 };
 
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, 4, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    [{ indent: "-1" }, { indent: "+1" }],
+    ["link"],
+    ["clean"],
+  ],
+};
+
+// --- MAIN COMPONENT ---
+
 const AddProductPage: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
   const { actionStatus, error, products } = useSelector(
     (state: RootState) => state.products
   );
+
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
     reset,
-  } = useForm();
+  } = useForm<IProductFormData>();
 
+  // State Management
   const [mainImage, setMainImage] = useState<File | null>(null);
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
   const [planFiles, setPlanFiles] = useState<File[]>([]);
@@ -197,14 +248,42 @@ const AddProductPage: React.FC = () => {
   const [crossSell, setCrossSell] = useState<string[]>([]);
   const [upSell, setUpSell] = useState<string[]>([]);
 
+  // Effects
   useEffect(() => {
     if (!products || products.length === 0) {
       dispatch(fetchProducts({}));
     }
   }, [dispatch, products]);
 
+  useEffect(() => {
+    if (actionStatus === "succeeded") {
+      toast.success("Product created successfully!");
+      dispatch(resetProductState());
+      reset();
+      // Reset all local state
+      setMainImage(null);
+      setGalleryImages([]);
+      setPlanFiles([]);
+      setHeaderImage(null);
+      setPropertyType("");
+      setDirection("");
+      setPlanType("");
+      setSelectedCountries([]);
+      setIsSale(false);
+      setCrossSell([]);
+      setUpSell([]);
+      navigate("/admin/products");
+    }
+    if (actionStatus === "failed") {
+      toast.error(String(error) || "Failed to create product.");
+      dispatch(resetProductState());
+    }
+  }, [actionStatus, error, dispatch, navigate, reset]);
+
+  // Data processing
   const productOptions = products.map((p) => ({ value: p._id, label: p.name }));
 
+  // Event Handlers
   const handleGalleryImagesChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -230,7 +309,7 @@ const AddProductPage: React.FC = () => {
     setPlanFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: IProductFormData) => {
     if (selectedCountries.length === 0 || !propertyType || !planType) {
       toast.error(
         "Please select at least one Country, a Property Type, and a Plan Type."
@@ -242,15 +321,24 @@ const AddProductPage: React.FC = () => {
       return;
     }
     const formData = new FormData();
-    Object.keys(data).forEach((key) => formData.append(key, data[key]));
+    // Append all form data
+    Object.keys(data).forEach((key) => {
+      const value = data[key as keyof IProductFormData];
+      if (value !== undefined && value !== null) {
+        formData.append(key, String(value));
+      }
+    });
+
+    // Append state-managed data
     formData.append("country", selectedCountries.join(","));
     formData.append("propertyType", propertyType);
     formData.append("direction", direction);
     formData.append("planType", planType);
-    formData.append("isSale", isSale ? "true" : "false");
+    formData.append("isSale", String(isSale));
     formData.append("crossSellProducts", crossSell.join(","));
     formData.append("upSellProducts", upSell.join(","));
 
+    // Append files
     if (mainImage) formData.append("mainImage", mainImage);
     if (headerImage) formData.append("headerImage", headerImage);
     galleryImages.forEach((file) => formData.append("galleryImages", file));
@@ -258,30 +346,6 @@ const AddProductPage: React.FC = () => {
 
     dispatch(createProduct(formData));
   };
-
-  useEffect(() => {
-    if (actionStatus === "succeeded") {
-      toast.success("Product created successfully!");
-      dispatch(resetProductState());
-      reset();
-      setMainImage(null);
-      setGalleryImages([]);
-      setPlanFiles([]);
-      setHeaderImage(null);
-      setPropertyType("");
-      setDirection("");
-      setPlanType("");
-      setSelectedCountries([]);
-      setIsSale(false);
-      setCrossSell([]);
-      setUpSell([]);
-      navigate("/admin/products");
-    }
-    if (actionStatus === "failed") {
-      toast.error(String(error) || "Failed to create product.");
-      dispatch(resetProductState());
-    }
-  }, [actionStatus, error, dispatch, navigate, reset]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -314,22 +378,31 @@ const AddProductPage: React.FC = () => {
                   />
                   {errors.name && (
                     <p className="text-red-500 text-xs mt-1">
-                      {String(errors.name.message)}
+                      {errors.name.message}
                     </p>
                   )}
                 </div>
                 <div>
-                  <Label htmlFor="description">Description*</Label>
-                  <Textarea
-                    id="description"
-                    rows={8}
-                    {...register("description", {
-                      required: "Description is required",
-                    })}
+                  <Label htmlFor="description">
+                    Description (For H2, H3 tags)*
+                  </Label>
+                  <Controller
+                    name="description"
+                    control={control}
+                    rules={{ required: "Description is required" }}
+                    render={({ field }) => (
+                      <ReactQuill
+                        theme="snow"
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        modules={quillModules}
+                        className="mt-1 bg-white"
+                      />
+                    )}
                   />
                   {errors.description && (
                     <p className="text-red-500 text-xs mt-1">
-                      {String(errors.description.message)}
+                      {errors.description.message}
                     </p>
                   )}
                 </div>
@@ -361,7 +434,7 @@ const AddProductPage: React.FC = () => {
                   />
                   {errors.productNo && (
                     <p className="text-red-500 text-xs mt-1">
-                      {String(errors.productNo.message)}
+                      {errors.productNo.message}
                     </p>
                   )}
                 </div>
@@ -374,7 +447,7 @@ const AddProductPage: React.FC = () => {
                   />
                   {errors.city && (
                     <p className="text-red-500 text-xs mt-1">
-                      {String(errors.city.message)}
+                      {errors.city.message}
                     </p>
                   )}
                 </div>
@@ -388,7 +461,7 @@ const AddProductPage: React.FC = () => {
                   />
                   {errors.plotSize && (
                     <p className="text-red-500 text-xs mt-1">
-                      {String(errors.plotSize.message)}
+                      {errors.plotSize.message}
                     </p>
                   )}
                 </div>
@@ -399,11 +472,12 @@ const AddProductPage: React.FC = () => {
                     type="number"
                     {...register("plotArea", {
                       required: "Plot area is required",
+                      valueAsNumber: true,
                     })}
                   />
                   {errors.plotArea && (
                     <p className="text-red-500 text-xs mt-1">
-                      {String(errors.plotArea.message)}
+                      {errors.plotArea.message}
                     </p>
                   )}
                 </div>
@@ -414,11 +488,12 @@ const AddProductPage: React.FC = () => {
                     type="number"
                     {...register("rooms", {
                       required: "Rooms count is required",
+                      valueAsNumber: true,
                     })}
                   />
                   {errors.rooms && (
                     <p className="text-red-500 text-xs mt-1">
-                      {String(errors.rooms.message)}
+                      {errors.rooms.message}
                     </p>
                   )}
                 </div>
@@ -427,20 +502,28 @@ const AddProductPage: React.FC = () => {
                   <Input
                     id="bathrooms"
                     type="number"
-                    {...register("bathrooms")}
+                    {...register("bathrooms", { valueAsNumber: true })}
                   />
                 </div>
                 <div>
                   <Label htmlFor="kitchen">Kitchen</Label>
-                  <Input id="kitchen" type="number" {...register("kitchen")} />
+                  <Input
+                    id="kitchen"
+                    type="number"
+                    {...register("kitchen", { valueAsNumber: true })}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="floors">Floors</Label>
-                  <Input id="floors" type="number" {...register("floors")} />
+                  <Input
+                    id="floors"
+                    type="number"
+                    {...register("floors", { valueAsNumber: true })}
+                  />
                 </div>
                 <div>
                   <Label>Facing Direction</Label>
-                  <Select onValueChange={setDirection}>
+                  <Select onValueChange={setDirection} value={direction}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
@@ -654,11 +737,14 @@ const AddProductPage: React.FC = () => {
                   <Input
                     id="price"
                     type="number"
-                    {...register("price", { required: "Price is required" })}
+                    {...register("price", {
+                      required: "Price is required",
+                      valueAsNumber: true,
+                    })}
                   />
                   {errors.price && (
                     <p className="text-red-500 text-xs mt-1">
-                      {String(errors.price.message)}
+                      {errors.price.message}
                     </p>
                   )}
                 </div>
@@ -667,7 +753,7 @@ const AddProductPage: React.FC = () => {
                   <Input
                     id="salePrice"
                     type="number"
-                    {...register("salePrice")}
+                    {...register("salePrice", { valueAsNumber: true })}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -676,7 +762,9 @@ const AddProductPage: React.FC = () => {
                     <Input
                       id="discountPercentage"
                       type="number"
-                      {...register("discountPercentage")}
+                      {...register("discountPercentage", {
+                        valueAsNumber: true,
+                      })}
                     />
                   </div>
                   <div>
@@ -684,7 +772,7 @@ const AddProductPage: React.FC = () => {
                     <Input
                       id="taxRate"
                       type="number"
-                      {...register("taxRate")}
+                      {...register("taxRate", { valueAsNumber: true })}
                     />
                   </div>
                 </div>
@@ -692,7 +780,9 @@ const AddProductPage: React.FC = () => {
                   <Checkbox
                     id="isSale"
                     checked={isSale}
-                    onCheckedChange={(checked) => setIsSale(checked === true)}
+                    onCheckedChange={(checked: CheckedState) =>
+                      setIsSale(checked === true)
+                    }
                   />
                   <Label htmlFor="isSale">This product is on sale</Label>
                 </div>
@@ -705,7 +795,7 @@ const AddProductPage: React.FC = () => {
               <CardContent className="space-y-4">
                 <div>
                   <Label>Plan Type*</Label>
-                  <Select onValueChange={setPlanType} required>
+                  <Select onValueChange={setPlanType} value={planType} required>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Plan Type" />
                     </SelectTrigger>
@@ -733,13 +823,17 @@ const AddProductPage: React.FC = () => {
                   />
                   {errors.category && (
                     <p className="text-red-500 text-xs mt-1">
-                      {String(errors.category.message)}
+                      {errors.category.message}
                     </p>
                   )}
                 </div>
                 <div>
                   <Label>Property Type*</Label>
-                  <Select onValueChange={setPropertyType} required>
+                  <Select
+                    onValueChange={setPropertyType}
+                    value={propertyType}
+                    required
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Type" />
                     </SelectTrigger>

@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import "react-quill/dist/quill.snow.css"; // ReactQuill CSS
 
 import {
   createPost,
@@ -25,6 +25,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+
+// ReactQuill editor ke toolbar options
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, 4, 5, 6, false] }], // Heading options for H2, H3 etc.
+    ["bold", "italic", "underline", "strike"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    [{ indent: "-1" }, { indent: "+1" }],
+    ["link", "image"],
+    ["clean"],
+  ],
+};
 
 const AdminAddEditBlogPage = () => {
   const { slug } = useParams();
@@ -47,7 +59,6 @@ const AdminAddEditBlogPage = () => {
     setValue,
     formState: { errors },
   } = useForm({
-    // Form ke liye default values
     defaultValues: {
       title: "",
       slug: "",
@@ -57,6 +68,7 @@ const AdminAddEditBlogPage = () => {
       status: "Draft",
       mainImage: null,
       tags: "",
+      h1Text: "", // SEO H1 tag
       metaDescription: "",
       metaKeywords: "",
       imageAltText: "",
@@ -67,9 +79,7 @@ const AdminAddEditBlogPage = () => {
   const titleValue = watch("title");
   const mainImageValue = watch("mainImage");
 
-  // --- HOOKS FOR LOGIC ---
-
-  // Title se slug automatically generate karein (sirf naye post ke liye)
+  // Title se slug generate karein
   useEffect(() => {
     if (titleValue && !isEditing) {
       const generatedSlug = titleValue
@@ -81,18 +91,17 @@ const AdminAddEditBlogPage = () => {
     }
   }, [titleValue, setValue, isEditing]);
 
-  // Edit mode mein post ka data fetch karein
+  // Edit mode mein data fetch karein
   useEffect(() => {
     if (isEditing && slug) {
       dispatch(fetchPostBySlug(slug));
     }
-    // Component se jaate waqt current post ko clear karein
     return () => {
       dispatch(clearCurrentPost());
     };
   }, [dispatch, slug, isEditing]);
 
-  // Jab post ka data aa jaye to form ko populate karein
+  // Form ko data se populate karein
   useEffect(() => {
     if (isEditing && post) {
       reset({
@@ -103,19 +112,16 @@ const AdminAddEditBlogPage = () => {
     }
   }, [post, isEditing, reset]);
 
-  // --- FORM SUBMISSION ---
-
+  // Form submit logic
   const onSubmit = (data) => {
     const formData = new FormData();
 
-    // Sabhi text data ko FormData mein add karein
     Object.keys(data).forEach((key) => {
-      if (key !== "mainImage") {
+      if (key !== "mainImage" && data[key] !== null) {
         formData.append(key, data[key]);
       }
     });
 
-    // Agar nayi image select ki hai to use add karein
     if (data.mainImage && data.mainImage[0]) {
       formData.append("mainImage", data.mainImage[0]);
     }
@@ -164,7 +170,7 @@ const AdminAddEditBlogPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <Label htmlFor="title" className="font-semibold">
-              Post Title
+              Post Title (Default H1)
             </Label>
             <Input
               id="title"
@@ -209,7 +215,9 @@ const AdminAddEditBlogPage = () => {
           )}
         </div>
         <div>
-          <Label className="font-semibold">Main Content</Label>
+          <Label className="font-semibold">
+            Main Content (For H2, H3 tags)
+          </Label>
           <Controller
             name="content"
             control={control}
@@ -220,6 +228,7 @@ const AdminAddEditBlogPage = () => {
                 value={field.value || ""}
                 onChange={field.onChange}
                 className="mt-2 bg-white"
+                modules={quillModules}
               />
             )}
           />
@@ -338,6 +347,20 @@ const AdminAddEditBlogPage = () => {
         {/* === TAGS & SEO FIELDS === */}
         <div className="border-t pt-6 space-y-4">
           <h2 className="text-xl font-semibold">Tags & SEO Meta</h2>
+          <div>
+            <Label htmlFor="h1Text" className="font-semibold">
+              SEO H1 Tag (Optional)
+            </Label>
+            <Input
+              id="h1Text"
+              {...register("h1Text")}
+              placeholder="Optional: Custom H1 for SEO"
+              className="mt-2"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              If left empty, the 'Post Title' will be used as the H1 tag.
+            </p>
+          </div>
           <div>
             <Label htmlFor="tags" className="font-semibold">
               Tags (comma-separated)

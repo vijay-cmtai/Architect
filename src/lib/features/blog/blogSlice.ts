@@ -1,19 +1,17 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
-import { RootState } from "@/lib/store"; // <-- Aapke store ka path
+import { RootState } from "@/lib/store";
 
 const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/blogs`;
 
 // Helper to get token
 const getToken = (getState: () => RootState) => {
   const state = getState();
-  // ✅ IMPORTANT: Apne auth slice ke structure ke anusaar is path ko check karein
-  // Agar aapka user slice 'auth' hai, to 'state.auth.userInfo.token' ho sakta hai
   return state.user.userInfo?.token;
 };
 
 // =================================================================
-// ✅✅ INTERFACE KO NAYE MODEL KE ANUSAAR UPDATE KIYA GAYA HAI ✅✅
+// ✅✅ INTERFACE KO NAYE h1Text FIELD KE SAATH UPDATE KIYA GAYA HAI ✅✅
 // =================================================================
 export interface BlogPost {
   _id: string;
@@ -25,6 +23,7 @@ export interface BlogPost {
   mainImage: string;
   status: "Published" | "Draft";
   tags: string[];
+  h1Text?: string; // Optional H1 tag
   metaDescription?: string;
   metaKeywords?: string[];
   imageAltText: string;
@@ -168,7 +167,6 @@ const blogSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Is logic mein koi badlav ki zaroorat nahi hai
     const listPending = (state: BlogState) => {
       state.status = "loading";
       state.error = null;
@@ -196,7 +194,6 @@ const blogSlice = createSlice({
         }
       )
       .addCase(fetchAllPosts.rejected, listRejected)
-
       .addCase(fetchPostBySlug.pending, listPending)
       .addCase(
         fetchPostBySlug.fulfilled,
@@ -206,7 +203,6 @@ const blogSlice = createSlice({
         }
       )
       .addCase(fetchPostBySlug.rejected, listRejected)
-
       .addCase(fetchAllPostsAdmin.pending, listPending)
       .addCase(
         fetchAllPostsAdmin.fulfilled,
@@ -216,7 +212,6 @@ const blogSlice = createSlice({
         }
       )
       .addCase(fetchAllPostsAdmin.rejected, listRejected)
-
       .addCase(createPost.pending, actionPending)
       .addCase(
         createPost.fulfilled,
@@ -226,7 +221,6 @@ const blogSlice = createSlice({
         }
       )
       .addCase(createPost.rejected, actionRejected)
-
       .addCase(updatePost.pending, actionPending)
       .addCase(
         updatePost.fulfilled,
@@ -238,13 +232,11 @@ const blogSlice = createSlice({
           if (index !== -1) {
             state.posts[index] = action.payload;
           } else {
-            // Agar post list mein nahi tha to use add kar dein
             state.posts.unshift(action.payload);
           }
         }
       )
       .addCase(updatePost.rejected, actionRejected)
-
       .addCase(deletePost.pending, actionPending)
       .addCase(deletePost.fulfilled, (state, action: PayloadAction<string>) => {
         state.actionStatus = "succeeded";
