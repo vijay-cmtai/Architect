@@ -162,7 +162,7 @@ const Footer = () => {
         <div className="border-t border-white/10 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-muted-foreground text-sm mb-4 md:mb-0">
-              © {new Date().getFullYear()} ArchHome. All rights reserved.
+              © {new Date().getFullYear()} HousePlanFiles. All rights reserved.
             </p>
             <div className="flex space-x-6">
               <Link
