@@ -1,5 +1,3 @@
-// src/App.jsx
-
 import { Provider } from "react-redux";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -10,6 +8,9 @@ import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { store } from "./lib/store";
 import ScrollToTop from "@/components/ScrollToTop";
+
+// --- Route Protection Component ---
+import ProtectedRoute from "./components/ProtectedRoute"; // YEH IMPORT KAREIN
 
 // --- Public Page Imports ---
 import Index from "./pages/Index";
@@ -46,6 +47,7 @@ import PaymentPolicy from "./pages/PaymentPolicy";
 import RefundPolicy from "./pages/RefundPolicy";
 import ThreeDWalkthroughPage from "./pages/ThreeDVideoWalkthorugh";
 import ProfessionalProductDetail from "./pages/ProfessionalProduct";
+import GalleryPage from "./pages/GalleryPage";
 
 // --- User Dashboard Imports ---
 import DashboardLayout from "./pages/Userdashboard/DashboardLayout";
@@ -76,6 +78,7 @@ import AdminBlogsPage from "./pages/admin/AdminBlogsPage";
 import AdminAddEditBlogPage from "./pages/admin/AdminAddEditBlogPage";
 import AddGalleryImagePage from "./pages/admin/AddGalleryImagePage";
 import ManageGalleryPage from "./pages/admin/ManageGalleryPage";
+import VideoUploadPage from "./pages/admin/VideoUploadPage";
 
 // --- Professional Dashboard Imports ---
 import ProfessionalLayout from "./pages/professional/ProfessionalLayout";
@@ -84,8 +87,6 @@ import MyProductsPage from "./pages/professional/MyProductsPage";
 import AddProductPageProf from "./pages/professional/AddProductPage";
 import ProfilePageProf from "./pages/professional/ProfilePage";
 import ProfessionalOrdersPage from "./pages/professional/OrdersPage";
-import GalleryPage from "./pages/GalleryPage";
-import VideoUploadPage from "./pages/admin/VideoUploadPage";
 
 const queryClient = new QueryClient();
 
@@ -100,7 +101,9 @@ const App = () => (
               <Sonner />
               <ScrollToTop />
               <Routes>
-                {/* --- Public Routes --- */}
+                {/* ====================================================== */}
+                {/*               1. PUBLIC ROUTES                       */}
+                {/* ====================================================== */}
                 <Route path="/" element={<Index />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
@@ -174,65 +177,95 @@ const App = () => (
                 />
                 <Route path="/gallery" element={<GalleryPage />} />
 
-                {/* --- User Dashboard Routes --- */}
-                <Route path="/dashboard" element={<DashboardLayout />}>
-                  <Route index element={<DashboardPage />} />
-                  <Route path="orders" element={<OrdersPage />} />
-                  <Route path="downloads" element={<DownloadsPage />} />
-                  <Route path="addresses" element={<AddressesPage />} />
-                  <Route
-                    path="account-details"
-                    element={<AccountDetailsPage />}
-                  />
+                {/* ====================================================== */}
+                {/*             2. PROTECTED USER DASHBOARD ROUTES         */}
+                {/* ====================================================== */}
+                <Route
+                  element={<ProtectedRoute allowedRoles={["user", "admin"]} />}
+                >
+                  <Route path="/dashboard" element={<DashboardLayout />}>
+                    <Route index element={<DashboardPage />} />
+                    <Route path="orders" element={<OrdersPage />} />
+                    <Route path="downloads" element={<DownloadsPage />} />
+                    <Route path="addresses" element={<AddressesPage />} />
+                    <Route
+                      path="account-details"
+                      element={<AccountDetailsPage />}
+                    />
+                  </Route>
                 </Route>
 
-                {/* --- Professional Dashboard Routes --- */}
-                <Route path="/professional" element={<ProfessionalLayout />}>
-                  <Route index element={<ProfessionalDashboardPage />} />
-                  <Route path="my-products" element={<MyProductsPage />} />
-                  <Route
-                    path="my-orders"
-                    element={<ProfessionalOrdersPage />}
-                  />
-                  <Route path="add-product" element={<AddProductPageProf />} />
-                  <Route path="profile" element={<ProfilePageProf />} />
+                {/* ====================================================== */}
+                {/*        3. PROTECTED PROFESSIONAL DASHBOARD ROUTES      */}
+                {/* ====================================================== */}
+                <Route
+                  element={
+                    <ProtectedRoute allowedRoles={["professional", "admin"]} />
+                  }
+                >
+                  <Route path="/professional" element={<ProfessionalLayout />}>
+                    <Route index element={<ProfessionalDashboardPage />} />
+                    <Route path="my-products" element={<MyProductsPage />} />
+                    <Route
+                      path="my-orders"
+                      element={<ProfessionalOrdersPage />}
+                    />
+                    <Route
+                      path="add-product"
+                      element={<AddProductPageProf />}
+                    />
+                    <Route path="profile" element={<ProfilePageProf />} />
+                  </Route>
                 </Route>
 
-                {/* --- Admin Dashboard Routes --- */}
-                <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<AdminDashboardPage />} />
-                  <Route path="products" element={<AllProductsPage />} />
-                  <Route path="products/add" element={<AddProductPage />} />
-                  <Route path="orders" element={<AdminOrdersPage />} />
-                  <Route path="customers" element={<CustomersPage />} />
-                  <Route path="reports" element={<ReportsPage />} />
-                  <Route path="settings" element={<SettingsPage />} />
-                  <Route path="users" element={<AllUsersPage />} />
-                  <Route path="users/add" element={<AddNewUserPage />} />
-                  <Route path="profile" element={<AdminProfilePage />} />
-                  <Route path="gallery" element={<ManageGalleryPage />} />
-                  <Route path="gallery/add" element={<AddGalleryImagePage />} />
-                  <Route
-                    path="standard-requests"
-                    element={<StandardRequestsPage />}
-                  />
-                  <Route
-                    path="premium-requests"
-                    element={<PremiumRequestsPage />}
-                  />
-                  <Route
-                    path="customization-requests"
-                    element={<AdminCustomizationRequestsPage />}
-                  />
-                  <Route path="inquiries" element={<AllInquiriesPage />} />
-                  <Route path="inquiries-sc" element={<AllInquiriesSCPage />} />
-                  <Route path="blogs" element={<AdminBlogsPage />} />
-                  <Route path="blogs/add" element={<AdminAddEditBlogPage />} />
-                  <Route
-                    path="blogs/edit/:slug"
-                    element={<AdminAddEditBlogPage />}
-                  />
-                  <Route path="addvideos" element={<VideoUploadPage />} />
+                {/* ====================================================== */}
+                {/*           4. PROTECTED ADMIN DASHBOARD ROUTES          */}
+                {/* ====================================================== */}
+                <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+                  <Route path="/admin" element={<AdminLayout />}>
+                    <Route index element={<AdminDashboardPage />} />
+                    <Route path="products" element={<AllProductsPage />} />
+                    <Route path="products/add" element={<AddProductPage />} />
+                    <Route path="orders" element={<AdminOrdersPage />} />
+                    <Route path="customers" element={<CustomersPage />} />
+                    <Route path="reports" element={<ReportsPage />} />
+                    <Route path="settings" element={<SettingsPage />} />
+                    <Route path="users" element={<AllUsersPage />} />
+                    <Route path="users/add" element={<AddNewUserPage />} />
+                    <Route path="profile" element={<AdminProfilePage />} />
+                    <Route path="gallery" element={<ManageGalleryPage />} />
+                    <Route
+                      path="gallery/add"
+                      element={<AddGalleryImagePage />}
+                    />
+                    <Route
+                      path="standard-requests"
+                      element={<StandardRequestsPage />}
+                    />
+                    <Route
+                      path="premium-requests"
+                      element={<PremiumRequestsPage />}
+                    />
+                    <Route
+                      path="customization-requests"
+                      element={<AdminCustomizationRequestsPage />}
+                    />
+                    <Route path="inquiries" element={<AllInquiriesPage />} />
+                    <Route
+                      path="inquiries-sc"
+                      element={<AllInquiriesSCPage />}
+                    />
+                    <Route path="blogs" element={<AdminBlogsPage />} />
+                    <Route
+                      path="blogs/add"
+                      element={<AdminAddEditBlogPage />}
+                    />
+                    <Route
+                      path="blogs/edit/:slug"
+                      element={<AdminAddEditBlogPage />}
+                    />
+                    <Route path="addvideos" element={<VideoUploadPage />} />
+                  </Route>
                 </Route>
 
                 {/* --- 404 Not Found Route --- */}

@@ -14,6 +14,19 @@ import { PlusCircle, Edit, Trash2, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import EditProductModal from "./EditProductModal";
 
+// It's good practice to define a type for your data
+interface Product {
+  _id: string;
+  name: string;
+  mainImage: string;
+  price: number;
+  status: "Published" | "Draft";
+  user?: {
+    name: string;
+  };
+  // Add other product properties here
+}
+
 const AllProductsPage: React.FC = () => {
   const dispatch = useDispatch();
   const { products, listStatus, actionStatus, error } = useSelector(
@@ -21,23 +34,25 @@ const AllProductsPage: React.FC = () => {
   );
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
+    // Fetch products when the component mounts
     (dispatch as typeof store.dispatch)(fetchProducts({}));
   }, [dispatch]);
 
   useEffect(() => {
-    if (actionStatus === "succeeded" && error) {
+    // Handle feedback for actions like delete, create, update
+    if (actionStatus === "failed" && error) {
       toast.error(String(error));
       dispatch(resetProductState());
     } else if (actionStatus === "succeeded") {
+      // You can add a success toast here if you want, e.g., toast.success("Action successful!")
       dispatch(resetProductState());
     }
   }, [actionStatus, error, dispatch]);
 
-  
-  const handleEdit = (product: any) => {
+  const handleEdit = (product: Product) => {
     setSelectedProduct(product);
     setIsEditModalOpen(true);
   };
@@ -45,6 +60,13 @@ const AllProductsPage: React.FC = () => {
   const handleCloseModal = () => {
     setIsEditModalOpen(false);
     setSelectedProduct(null);
+  };
+
+  // --- FIX 1: Added the missing handleDelete function ---
+  const handleDelete = (productId: string) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      (dispatch as typeof store.dispatch)(deleteProduct(productId));
+    }
   };
 
   return (
@@ -103,7 +125,7 @@ const AllProductsPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map((product: any) => (
+                  {(products as Product[]).map((product) => (
                     <tr key={product._id} className="border-t hover:bg-gray-50">
                       <td className="p-4">
                         <Avatar className="rounded-md">
@@ -113,25 +135,32 @@ const AllProductsPage: React.FC = () => {
                             className="object-cover"
                           />
                           <AvatarFallback>
-                            {product.name.charAt(0)}
+                            {/* --- FIX 2: Made this robust to prevent crashes --- */}
+                            {/* Use optional chaining (?.) in case `name` is undefined */}
+                            {/* Use logical OR (||) to provide a default fallback character */}
+                            {product.name?.charAt(0) || "P"}
                           </AvatarFallback>
                         </Avatar>
                       </td>
                       <td className="p-4 font-medium text-gray-800">
-                        {product.name}
+                        {product.name || "Untitled Product"}
                       </td>
                       <td className="p-4 text-gray-600">
                         {product.user?.name || "N/A"}
                       </td>
                       <td className="p-4">
                         <span
-                          className={`px-2 py-1 text-xs font-semibold rounded-full ${product.status === "Published" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}
+                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            product.status === "Published"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-yellow-100 text-yellow-700"
+                          }`}
                         >
-                          {product.status}
+                          {product.status || "Draft"}
                         </span>
                       </td>
                       <td className="p-4 text-gray-800">
-                        ₹{product.price.toLocaleString()}
+                        ₹{product.price?.toLocaleString() || 0}
                       </td>
                       <td className="p-4 text-center">
                         <div className="flex justify-center gap-2">

@@ -1,5 +1,4 @@
 // lib/features/admin/adminSlice.js
-
 import axios from "axios";
 import {
   createSlice,
@@ -60,7 +59,6 @@ interface AdminState {
   actionStatus: "idle" | "loading" | "succeeded" | "failed";
   error: any;
 }
-
 const initialState: AdminState = {
   summary: null,
   users: [],
@@ -73,9 +71,6 @@ const initialState: AdminState = {
   actionStatus: "idle",
   error: null,
 };
-
-// --- Async Thunks for Admin API Calls ---
-
 export const fetchDashboardSummary = createAsyncThunk<
   SummaryData,
   void,
@@ -109,7 +104,6 @@ export const fetchAllUsersAdmin = createAsyncThunk<
     );
   }
 });
-
 export const updateUserAdmin = createAsyncThunk<
   User,
   { userId: string; userData: any },
@@ -133,7 +127,6 @@ export const updateUserAdmin = createAsyncThunk<
     }
   }
 );
-
 export const deleteUserAdmin = createAsyncThunk<
   string,
   string,
@@ -150,7 +143,6 @@ export const deleteUserAdmin = createAsyncThunk<
     );
   }
 });
-
 export const fetchAllProfessionalPlansAdmin = createAsyncThunk<
   ProfessionalPlan[],
   void,
@@ -167,7 +159,6 @@ export const fetchAllProfessionalPlansAdmin = createAsyncThunk<
     );
   }
 });
-
 export const updatePlanStatusAdmin = createAsyncThunk<
   ProfessionalPlan,
   { planId: string; status: string },
@@ -191,7 +182,6 @@ export const updatePlanStatusAdmin = createAsyncThunk<
     }
   }
 );
-
 export const fetchReportsData = createAsyncThunk<
   ReportData,
   void,
@@ -208,7 +198,6 @@ export const fetchReportsData = createAsyncThunk<
     );
   }
 });
-
 const adminSlice = createSlice({
   name: "admin",
   initialState,
@@ -247,7 +236,6 @@ const adminSlice = createSlice({
         }
       )
       .addCase(fetchDashboardSummary.rejected, listFailed);
-
     // Users
     builder
       .addCase(fetchAllUsersAdmin.pending, listPending)
@@ -279,8 +267,6 @@ const adminSlice = createSlice({
         }
       )
       .addCase(deleteUserAdmin.rejected, actionFailed);
-
-    // Professional Plans
     builder
       .addCase(fetchAllProfessionalPlansAdmin.pending, listPending)
       .addCase(
@@ -302,7 +288,6 @@ const adminSlice = createSlice({
         }
       )
       .addCase(updatePlanStatusAdmin.rejected, actionFailed);
-
     // Reports Data
     builder
       .addCase(fetchReportsData.pending, listPending)
@@ -316,6 +301,5 @@ const adminSlice = createSlice({
       .addCase(fetchReportsData.rejected, listFailed);
   },
 });
-
 export const { resetAdminActionStatus } = adminSlice.actions;
 export default adminSlice.reducer;
