@@ -1,7 +1,8 @@
 import React from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { motion, AnimatePresence } from "framer-motion"; // Animation ke liye
+// --- CHANGE 1: Import `useDispatch` from react-redux ---
+import { useSelector, useDispatch } from "react-redux";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutGrid,
   Package,
@@ -9,9 +10,12 @@ import {
   User,
   LogOut,
   ClipboardList,
-  X, // Close icon
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+// --- CHANGE 2: Import the `logout` action from your userSlice ---
+import { logout } from "@/lib/features/users/userSlice";
 
 const navLinks = [
   { name: "Dashboard", path: "/professional", icon: LayoutGrid },
@@ -21,13 +25,16 @@ const navLinks = [
   { name: "My Profile", path: "profile", icon: User },
 ];
 
-// BADLAV: Props (isOpen, setIsOpen) ko accept karein
 const ProfessionalSidebar = ({ isOpen, setIsOpen }) => {
   const navigate = useNavigate();
+  // --- CHANGE 3: Initialize the dispatch function ---
+  const dispatch = useDispatch();
+
   const { userInfo } = useSelector((state: { user: any }) => state.user);
 
   const handleLogout = () => {
-    // Apni logout logic yahan daalein
+    // --- CHANGE 4: Dispatch the logout action and then navigate ---
+    dispatch(logout());
     navigate("/login");
   };
 
@@ -38,7 +45,6 @@ const ProfessionalSidebar = ({ isOpen, setIsOpen }) => {
 
   return (
     <>
-      {/* NAYA CODE: Mobile par overlay, jo click par sidebar band kar dega */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -51,7 +57,6 @@ const ProfessionalSidebar = ({ isOpen, setIsOpen }) => {
         )}
       </AnimatePresence>
 
-      {/* BADLAV: Responsive classes jodi gayi hain */}
       <aside
         className={`fixed top-0 left-0 h-full bg-slate-900 text-white p-4 flex flex-col z-40
                    w-64 transition-transform duration-300 ease-in-out
@@ -62,7 +67,6 @@ const ProfessionalSidebar = ({ isOpen, setIsOpen }) => {
           <Link to="/professional">
             <h1 className="text-2xl font-bold text-white">Professional</h1>
           </Link>
-          {/* NAYA CODE: Mobile par dikhne wala Close button */}
           <button
             onClick={() => setIsOpen(false)}
             className="md:hidden text-gray-400 hover:text-white"
@@ -81,7 +85,6 @@ const ProfessionalSidebar = ({ isOpen, setIsOpen }) => {
               className={({ isActive }) =>
                 `${baseClasses} ${isActive ? activeClasses : inactiveClasses}`
               }
-              // NAYA CODE: Link par click karne par sidebar band ho jayega
               onClick={() => setIsOpen(false)}
             >
               <link.icon className="mr-3 h-5 w-5 shrink-0" />
