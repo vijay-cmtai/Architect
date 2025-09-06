@@ -57,7 +57,9 @@ const Footer = () => {
                 alt="ArchHome Logo"
                 className="h-12 w-auto object-contain"
               />
-              <span className="text-xl font-bold text-white">ArchHome</span>
+              <span className="text-xl font-bold text-white">
+                HousePlanFiles
+              </span>
             </Link>
             <p className="text-muted-foreground mb-6 leading-relaxed">
               Creating exceptional architectural designs for over 15 years. Your
