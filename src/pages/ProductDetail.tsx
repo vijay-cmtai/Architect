@@ -73,7 +73,7 @@ const DetailPage = () => {
 
   const {
     products: adminProducts,
-    product: singleProduct, // Using single product state
+    product: singleProduct,
     listStatus: adminListStatus,
     actionStatus: adminActionStatus,
   } = useSelector((state: RootState) => state.products);
@@ -98,7 +98,7 @@ const DetailPage = () => {
   useEffect(() => {
     if (id) {
       if (isProfessionalPlan) {
-        // Professional plan fetch logic would be here
+        // Professional plan fetch logic would be here if needed
       } else {
         dispatch(fetchProductById(id));
       }
@@ -227,7 +227,7 @@ const DetailPage = () => {
         if (isProfessionalPlan) {
           dispatch(fetchAllApprovedPlans());
         } else {
-          dispatch(fetchProductById(id!)); // Refetch the product to show the new review
+          dispatch(fetchProductById(id!));
         }
       })
       .catch((err) => {
@@ -309,9 +309,6 @@ const DetailPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* =============================================== */}
-      {/* ✅✅ DYNAMIC SEO META TAGS ✅✅ */}
-      {/* =============================================== */}
       <Helmet>
         <title>
           {displayData.seo?.title || `${displayData.name} | House Plan Files`}
@@ -325,7 +322,6 @@ const DetailPage = () => {
         />
         <meta name="keywords" content={displayData.seo?.keywords} />
         <link rel="canonical" href={canonicalUrl} />
-
         <meta
           property="og:title"
           content={displayData.seo?.title || displayData.name}
@@ -342,7 +338,6 @@ const DetailPage = () => {
         <meta property="og:type" content="product" />
         <meta property="product:price:amount" content={String(currentPrice)} />
         <meta property="product:price:currency" content="INR" />
-
         <meta name="twitter:card" content="summary_large_image" />
         <meta
           name="twitter:title"
@@ -376,11 +371,11 @@ const DetailPage = () => {
         </nav>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
           <div className="space-y-4">
-            <div className="relative overflow-hidden rounded-2xl shadow-lg group">
+            <div className="relative overflow-hidden rounded-2xl shadow-lg group bg-gray-100">
               <img
                 src={productImages[selectedImageIndex]}
                 alt={displayData.seo?.altText || displayData.name}
-                className="w-full h-96 lg:h-[500px] object-cover transform scale-125 transition-transform duration-500 group-hover:scale-110"
+                className="w-full h-96 lg:h-[500px] object-contain transition-transform duration-500 group-hover:scale-105"
               />
             </div>
             <div className="grid grid-cols-3 gap-4">
@@ -421,9 +416,13 @@ const DetailPage = () => {
                   </div>
                 )}
               </div>
-              <p className="text-gray-600 text-lg leading-relaxed mb-6">
-                {displayData.description || "No description available."}
-              </p>
+              <div
+                className="text-gray-600 text-lg leading-relaxed mb-6 prose max-w-none"
+                dangerouslySetInnerHTML={{
+                  __html:
+                    displayData.description || "No description available.",
+                }}
+              />
             </div>
             <div className="bg-gray-50 rounded-2xl p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
