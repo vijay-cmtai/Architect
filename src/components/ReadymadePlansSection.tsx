@@ -21,7 +21,7 @@ const planTypes = [
   {
     name: "Floor Plan + 3D Elevations",
     icon: Building2,
-    image: "/3d.jpg",
+    image: "/threeDfloor.jpg",
     href: "/3d-plans",
     bgColor: "bg-purple-100",
     iconColor: "text-purple-500",

@@ -165,6 +165,31 @@ const countries = [
   { value: "Mauritius", label: "Mauritius" },
 ].sort((a, b) => a.label.localeCompare(b.label));
 
+const categories = [
+  "Residential House",
+  "Commercial House Plan",
+  "Modern Home Design",
+  "Duplex House Plans",
+  "Single Storey House Plan",
+  "Bungalow / Villa House Plans",
+  "Apartment / Flat Plans",
+  "Farmhouse",
+  "Cottage Plans",
+  "Row House / Twin House Plans",
+  "Village House Plans",
+  "Contemporary / Modern House Plans",
+  "Colonial / Heritage House Plans",
+  "Classic House Plan",
+  "Kerala House Plans",
+  "Kashmiri House Plan",
+  "Marriage Garden",
+  "Hospitals",
+  "Shops and Showrooms",
+  "Highway Resorts and Hotels",
+  "Schools and Colleges Plans",
+  "Temple & Mosque",
+];
+
 // --- HELPER COMPONENTS ---
 
 const MultiSelectCountry: React.FC<MultiSelectCountryProps> = ({
@@ -815,11 +840,27 @@ const AddProductPage: React.FC = () => {
                 </div>
                 <div>
                   <Label>Category*</Label>
-                  <Input
-                    id="category"
-                    {...register("category", {
-                      required: "Category is required",
-                    })}
+                  <Controller
+                    name="category"
+                    control={control}
+                    rules={{ required: "Category is required" }}
+                    render={({ field }) => (
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60 overflow-y-auto">
+                          {categories.map((cat, index) => (
+                            <SelectItem key={index} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   />
                   {errors.category && (
                     <p className="text-red-500 text-xs mt-1">
