@@ -667,7 +667,7 @@ const CountryCustomizationForm = ({ countryName }) => {
           </div>
           <div className="w-full lg:w-1/2 hidden lg:block">
             <img
-              src="https://images.pexels.com/photos/276724/pexels-photo-276724.jpeg?auto=compress&cs=tinysrgb&w=600"
+              src="/threeDfloor.jpg"
               alt="Beautiful modern house"
               className="w-full h-full object-cover rounded-xl"
             />
