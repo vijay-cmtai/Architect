@@ -34,6 +34,8 @@ const AddGalleryImagePage: React.FC = () => {
   );
 
   const [title, setTitle] = useState("");
+  // ADDED: State for the alt text
+  const [altText, setAltText] = useState("");
   const [category, setCategory] = useState("General");
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -42,7 +44,6 @@ const AddGalleryImagePage: React.FC = () => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setImage(file);
-      // Create a URL for the selected file for preview
       setPreview(URL.createObjectURL(file));
     }
   };
@@ -56,6 +57,8 @@ const AddGalleryImagePage: React.FC = () => {
 
     const formData = new FormData();
     formData.append("title", title);
+    // ADDED: Appending the alt text to the form data
+    formData.append("altText", altText);
     formData.append("category", category);
     formData.append("image", image);
 
@@ -74,10 +77,7 @@ const AddGalleryImagePage: React.FC = () => {
     }
   }, [actionStatus, error, dispatch, navigate]);
 
-  // Effect to clean up the object URL and prevent memory leaks
   useEffect(() => {
-    // This is a cleanup function that runs when the component unmounts
-    // or before the effect runs again if 'preview' changes.
     return () => {
       if (preview) {
         URL.revokeObjectURL(preview);
@@ -123,7 +123,17 @@ const AddGalleryImagePage: React.FC = () => {
                   required
                 />
               </div>
+              {/* ADDED: New input field for SEO Alt Text */}
               <div className="space-y-2">
+                <Label htmlFor="altText">SEO Alt Text</Label>
+                <Input
+                  id="altText"
+                  value={altText}
+                  onChange={(e) => setAltText(e.target.value)}
+                  placeholder="Describe the image for SEO"
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="category">Category</Label>
                 <Select value={category} onValueChange={setCategory}>
                   <SelectTrigger>

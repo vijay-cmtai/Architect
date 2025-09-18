@@ -1,3 +1,5 @@
+// src/pages/Cart.tsx (Updated)
+
 import { Link } from "react-router-dom";
 import {
   Plus,
@@ -30,7 +32,10 @@ const Cart = () => {
 
   // Calculate order summary with the new, simplified logic
   const calculateOrderSummary = () => {
-    if (!state.items || state.items.length === 0) {
+    // Filter out any null/undefined items before calculation
+    const validItems = state.items.filter((item) => item && item.productId);
+
+    if (validItems.length === 0) {
       return {
         subtotalBeforeDiscount: 0,
         totalDiscount: 0,
@@ -42,35 +47,29 @@ const Cart = () => {
     }
 
     const shipping = 0;
-    let subtotalBeforeDiscount = 0; // Based on original MRP
-    let totalDiscount = 0; // Total savings from original MRP
-    let subtotalAfterDiscount = 0; // Final total before tax
+    let subtotalBeforeDiscount = 0;
+    let totalDiscount = 0;
+    let subtotalAfterDiscount = 0;
     let totalTax = 0;
 
-    state.items.forEach((item) => {
+    validItems.forEach((item) => {
       // --- NEW SIMPLIFIED LOGIC ---
-
-      // 1. Get base values
       const originalPrice = item.productId?.price ?? item.price;
       const salePrice = item.productId?.salePrice ?? 0;
       const isSale = item.productId?.isSale ?? false;
       const quantity = item.quantity ?? 1;
       const taxRate = (item.productId?.taxRate ?? 0) / 100;
 
-      // 2. Determine the final price. No more percentage calculation.
       const finalEffectivePrice =
         isSale && salePrice > 0 ? salePrice : originalPrice;
 
       // --- CALCULATE TOTALS ---
       subtotalBeforeDiscount += originalPrice * quantity;
-
       const itemSubtotalAfterDiscount = finalEffectivePrice * quantity;
       subtotalAfterDiscount += itemSubtotalAfterDiscount;
-
       const totalDiscountForItem =
         (originalPrice - finalEffectivePrice) * quantity;
       totalDiscount += totalDiscountForItem;
-
       const itemTax = itemSubtotalAfterDiscount * taxRate;
       totalTax += itemTax;
     });
@@ -89,8 +88,13 @@ const Cart = () => {
 
   const orderSummary = calculateOrderSummary();
 
+  // Filter valid items for rendering
+  const validItemsToRender = state.items.filter(
+    (item) => item && item.productId
+  );
+
   // Empty cart display
-  if (!state.items || state.items.length === 0) {
+  if (validItemsToRender.length === 0) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -127,14 +131,20 @@ const Cart = () => {
             </Link>
           </Button>
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
-            Shopping Cart ({state.items.length}{" "}
-            {state.items.length === 1 ? "item" : "items"})
+            Shopping Cart ({validItemsToRender.length}{" "}
+            {validItemsToRender.length === 1 ? "item" : "items"})
           </h1>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-soft overflow-hidden">
-              {state.items.map((item) => {
+              {validItemsToRender.map((item) => {
+                // Safely get the product ID for the key
+                const itemKey =
+                  typeof item.productId === "object" && item.productId !== null
+                    ? item.productId._id
+                    : item.productId;
+
                 // --- Replicate the same simplified logic for display ---
                 const originalPrice = item.productId?.price ?? item.price;
                 const salePrice = item.productId?.salePrice ?? 0;
@@ -146,14 +156,10 @@ const Cart = () => {
                 const totalDiscountAmount =
                   (originalPrice - finalEffectivePrice) * item.quantity;
                 const hasDiscount = finalEffectivePrice < originalPrice;
-                const itemKey =
-                  typeof item.productId === "object"
-                    ? item.productId._id
-                    : item.productId;
 
                 return (
                   <div
-                    key={itemKey}
+                    key={itemKey} // Safely using itemKey
                     className="flex flex-col sm:flex-row items-start sm:items-center p-6 border-b border-gray-100 last:border-b-0"
                   >
                     <div className="w-full sm:w-32 h-32 rounded-xl overflow-hidden flex-shrink-0 mb-4 sm:mb-0 sm:mr-6">
@@ -169,7 +175,6 @@ const Cart = () => {
                       </h3>
                       <p className="text-gray-600 mb-2">{item.size}</p>
 
-                      {/* Cleaned up details: We only show "On Sale!" if it is */}
                       {isSale && (
                         <p className="text-xs text-red-600 font-semibold mb-4">
                           On Sale!

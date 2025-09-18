@@ -149,7 +149,7 @@ const Hero = () => {
                     placeholder={
                       listStatus === "loading"
                         ? "Loading..."
-                        : "Select Category"
+                        : "Type or Category"
                     }
                   />
                 </SelectTrigger>
