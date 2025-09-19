@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+
 import {
   createPlan,
   resetPlanActionStatus,
 } from "@/lib/features/professional/professionalPlanSlice";
+import { fetchProducts } from "@/lib/features/products/productSlice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,10 +25,11 @@ import {
 } from "@/components/ui/card";
 import {
   Loader2,
-  ShieldAlert,
   Youtube,
   PlusCircle,
   XCircle,
+  ChevronsUpDown,
+  ShieldAlert,
 } from "lucide-react";
 import {
   Select,
@@ -34,18 +39,125 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import MultiSelect from "react-select";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MultiSelect as MultiSelectForProducts } from "@/components/ui/MultiSelectDropdown";
 
-// Country list
+// Interface for form data
+interface IPlanFormData {
+  name: string;
+  description: string;
+  productNo: string;
+  price: number;
+  category: string;
+  youtubeLink?: string;
+  city?: string;
+  plotSize?: string;
+  plotArea?: number;
+  rooms?: number;
+  bathrooms?: number;
+  kitchen?: number;
+  floors?: number;
+  seoTitle?: string;
+  seoAltText?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  salePrice?: number;
+  taxRate?: number;
+}
+
+// Static Data
 const countries = [
   { value: "India", label: "India" },
-  { value: "Mauritius", label: "Mauritius" },
-  { value: "South Africa", label: "South Africa" },
+  { value: "Pakistan", label: "Pakistan" },
+  { value: "Sri Lanka", label: "Sri Lanka" },
+  { value: "Bangladesh", label: "Bangladesh" },
+  { value: "Nepal", label: "Nepal" },
+  { value: "United States", label: "United States" },
   { value: "Canada", label: "Canada" },
-  { value: "Kenya", label: "Kenya" },
-  { value: "Uganda", label: "Uganda" },
-  // ... (add all other countries here)
+  { value: "United Kingdom", label: "United Kingdom" },
+  { value: "Australia", label: "Australia" },
 ].sort((a, b) => a.label.localeCompare(b.label));
+
+const categories = [
+  "Residential House",
+  "Commercial House Plan",
+  "Modern Home Design",
+  "Duplex House Plans",
+  "Single Storey House Plan",
+  "Bungalow / Villa House Plans",
+  "Apartment / Flat Plans",
+  "Farmhouse",
+  "Cottage Plans",
+  "Row House / Twin House Plans",
+  "Village House Plans",
+  "Contemporary / Modern House Plans",
+  "Colonial / Heritage House Plans",
+  "Classic House Plan",
+  "Kerala House Plans",
+  "Kashmiri House Plan",
+  "Marriage Garden",
+  "Hospitals",
+  "Shops and Showrooms",
+  "Highway Resorts and Hotels",
+  "Schools and Colleges Plans",
+  "Temple & Mosque",
+];
+
+// Helper component for multi-select country dropdown
+const MultiSelectCountry = ({
+  selected,
+  setSelected,
+  options,
+  placeholder,
+}) => (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button variant="outline" className="w-full justify-between font-normal">
+        {selected.length > 0
+          ? `${selected.length} countries selected`
+          : placeholder}
+        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-60 overflow-y-auto">
+      {options.map((option) => (
+        <DropdownMenuCheckboxItem
+          key={option.value}
+          checked={selected.includes(option.value)}
+          onCheckedChange={() => {
+            setSelected((prev) =>
+              prev.includes(option.value)
+                ? prev.filter((v) => v !== option.value)
+                : [...prev, option.value]
+            );
+          }}
+          onSelect={(e) => e.preventDefault()}
+        >
+          {option.label}
+        </DropdownMenuCheckboxItem>
+      ))}
+    </DropdownMenuContent>
+  </DropdownMenu>
+);
+
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, 4, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    [{ indent: "-1" }, { indent: "+1" }],
+    ["link"],
+    ["clean"],
+  ],
+};
 
 const AddPlanPage = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -54,12 +166,15 @@ const AddPlanPage = () => {
     (state: RootState) => state.professionalPlans
   );
   const { userInfo } = useSelector((state: RootState) => state.user);
+  const { products } = useSelector((state: RootState) => state.products);
+
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
     reset,
-  } = useForm();
+  } = useForm<IPlanFormData>();
 
   const [mainImage, setMainImage] = useState<File | null>(null);
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
@@ -68,27 +183,28 @@ const AddPlanPage = () => {
   const [propertyType, setPropertyType] = useState<string>("");
   const [direction, setDirection] = useState<string>("");
   const [planType, setPlanType] = useState<string>("");
-  const [selectedCountries, setSelectedCountries] = useState<any[]>([]);
+  const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [isSale, setIsSale] = useState<boolean>(false);
+  const [crossSell, setCrossSell] = useState<string[]>([]);
+  const [upSell, setUpSell] = useState<string[]>([]);
 
-  const handleGalleryImagesChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      if (files.length > 5) {
-        toast.error("You can upload a maximum of 5 gallery images.");
-        e.target.value = "";
-        return;
+  useEffect(() => {
+    dispatch(fetchProducts({}));
+  }, [dispatch]);
+
+  const productOptions = products.map((p) => ({ value: p._id, label: p.name }));
+
+  const handleFileChange = (setter, files, maxFiles = 1) => {
+    if (files) {
+      if (maxFiles === 1) {
+        setter(files[0]);
+      } else {
+        if (files.length > maxFiles) {
+          toast.error(`You can only upload a maximum of ${maxFiles} images.`);
+          return;
+        }
+        setter(Array.from(files));
       }
-      setGalleryImages(files);
-    }
-  };
-
-  const handlePlanFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setPlanFiles((prev) => [...prev, ...Array.from(e.target.files)]);
-      e.target.value = "";
     }
   };
 
@@ -97,30 +213,25 @@ const AddPlanPage = () => {
   };
 
   const onSubmit = (data: any) => {
-    if (!userInfo || userInfo.role !== "professional" || !userInfo.isApproved) {
-      toast.error("You are not authorized to perform this action.");
-      return;
-    }
     if (selectedCountries.length === 0 || !propertyType || !planType) {
-      toast.error(
-        "Please select at least one Country, a Property Type, and a Plan Type."
-      );
-      return;
+      return toast.error("Country, Property Type, and Plan Type are required.");
     }
     if (!mainImage || planFiles.length === 0) {
-      toast.error("Please upload a main image and at least one plan file.");
-      return;
+      return toast.error("Main image and at least one plan file are required.");
     }
 
     const formData = new FormData();
-    Object.keys(data).forEach((key) => formData.append(key, data[key]));
+    Object.keys(data).forEach((key) => {
+      if (data[key]) formData.append(key, data[key]);
+    });
 
-    const countryValues = selectedCountries.map((c) => c.value);
-    formData.append("country", countryValues.join(","));
+    formData.append("country", selectedCountries.join(","));
     formData.append("propertyType", propertyType);
     formData.append("direction", direction);
     formData.append("planType", planType);
-    formData.append("isSale", isSale ? "true" : "false");
+    formData.append("isSale", String(isSale));
+    formData.append("crossSellProducts", crossSell.join(","));
+    formData.append("upSellProducts", upSell.join(","));
 
     if (mainImage) formData.append("mainImage", mainImage);
     if (headerImage) formData.append("headerImage", headerImage);
@@ -135,16 +246,7 @@ const AddPlanPage = () => {
       toast.success("Plan submitted for review successfully!");
       dispatch(resetPlanActionStatus());
       reset();
-      // Reset all state variables
-      setMainImage(null);
-      setGalleryImages([]);
-      setPlanFiles([]);
-      setHeaderImage(null);
-      setPropertyType("");
-      setDirection("");
-      setPlanType("");
-      setSelectedCountries([]);
-      setIsSale(false);
+      // Reset all states...
       navigate("/professional/my-products");
     }
     if (actionStatus === "failed") {
@@ -154,19 +256,35 @@ const AddPlanPage = () => {
   }, [actionStatus, error, dispatch, navigate, reset]);
 
   if (userInfo && userInfo.role === "professional" && !userInfo.isApproved) {
-    // ... (Pending Approval Message)
+    return (
+      <div className="container mx-auto flex items-center justify-center min-h-[60vh]">
+        <Card className="w-full max-w-lg text-center p-6">
+          <CardHeader>
+            <CardTitle className="text-2xl flex items-center justify-center gap-3">
+              <ShieldAlert className="h-10 w-10 text-yellow-500" />
+              Account Pending Approval
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-6">
+              Your professional account is under review. You can add plans once
+              your account is approved.
+            </p>
+            <Button asChild>
+              <Link to="/professional/dashboard">Go to Dashboard</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold text-gray-800">Add New Plan</h1>
-          <Button
-            type="submit"
-            className="btn-primary"
-            disabled={actionStatus === "loading"}
-          >
+          <Button type="submit" disabled={actionStatus === "loading"}>
             {actionStatus === "loading" && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}
@@ -193,13 +311,14 @@ const AddPlanPage = () => {
                   )}
                 </div>
                 <div>
-                  <Label htmlFor="description">Description*</Label>
-                  <Textarea
-                    id="description"
-                    rows={8}
-                    {...register("description", {
-                      required: "Description is required",
-                    })}
+                  <Label>Description*</Label>
+                  <Controller
+                    name="description"
+                    control={control}
+                    rules={{ required: "Description is required" }}
+                    render={({ field }) => (
+                      <ReactQuill theme="snow" {...field} />
+                    )}
                   />
                   {errors.description && (
                     <p className="text-red-500 text-xs mt-1">
@@ -220,6 +339,7 @@ const AddPlanPage = () => {
                 </div>
               </CardContent>
             </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Plan Specifications</CardTitle>
@@ -244,7 +364,6 @@ const AddPlanPage = () => {
                   <Input
                     id="city"
                     {...register("city", { required: "City is required" })}
-                    placeholder="e.g., Mumbai, Delhi"
                   />
                   {errors.city && (
                     <p className="text-red-500 text-xs mt-1">
@@ -273,6 +392,7 @@ const AddPlanPage = () => {
                     type="number"
                     {...register("plotArea", {
                       required: "Plot area is required",
+                      valueAsNumber: true,
                     })}
                   />
                   {errors.plotArea && (
@@ -288,6 +408,7 @@ const AddPlanPage = () => {
                     type="number"
                     {...register("rooms", {
                       required: "Rooms count is required",
+                      valueAsNumber: true,
                     })}
                   />
                   {errors.rooms && (
@@ -301,16 +422,24 @@ const AddPlanPage = () => {
                   <Input
                     id="bathrooms"
                     type="number"
-                    {...register("bathrooms")}
+                    {...register("bathrooms", { valueAsNumber: true })}
                   />
                 </div>
                 <div>
                   <Label htmlFor="kitchen">Kitchen</Label>
-                  <Input id="kitchen" type="number" {...register("kitchen")} />
+                  <Input
+                    id="kitchen"
+                    type="number"
+                    {...register("kitchen", { valueAsNumber: true })}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="floors">Floors</Label>
-                  <Input id="floors" type="number" {...register("floors")} />
+                  <Input
+                    id="floors"
+                    type="number"
+                    {...register("floors", { valueAsNumber: true })}
+                  />
                 </div>
                 <div>
                   <Label>Facing Direction</Label>
@@ -319,26 +448,30 @@ const AddPlanPage = () => {
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="North">North</SelectItem>
-                      <SelectItem value="South">South</SelectItem>
-                      <SelectItem value="East">East</SelectItem>
-                      <SelectItem value="West">West</SelectItem>
-                      <SelectItem value="North-East">North-East</SelectItem>
-                      <SelectItem value="North-West">North-West</SelectItem>
-                      <SelectItem value="South-East">South-East</SelectItem>
-                      <SelectItem value="South-West">South-West</SelectItem>
+                      {[
+                        "North",
+                        "South",
+                        "East",
+                        "West",
+                        "North-East",
+                        "North-West",
+                        "South-East",
+                        "South-West",
+                      ].map((d) => (
+                        <SelectItem key={d} value={d}>
+                          {d}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="md:col-span-3">
-                  <Label htmlFor="country">Country*</Label>
-                  <MultiSelect
-                    isMulti
+                  <Label>Country*</Label>
+                  <MultiSelectCountry
+                    selected={selectedCountries}
+                    setSelected={setSelectedCountries}
                     options={countries}
-                    value={selectedCountries}
-                    onChange={setSelectedCountries}
-                    className="mt-1"
-                    classNamePrefix="select"
+                    placeholder="Select countries..."
                   />
                 </div>
               </CardContent>
@@ -346,75 +479,62 @@ const AddPlanPage = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>SEO Optimization</CardTitle>
+                <CardTitle>SEO & Marketing</CardTitle>
                 <CardDescription>
-                  Improve search engine visibility for this plan.
+                  Improve search visibility for this plan.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="seoTitle">SEO Title</Label>
-                  <Input
-                    id="seoTitle"
-                    {...register("seoTitle")}
-                    placeholder="e.g., Modern 30x40 House Plan with 3BHK"
-                  />
+                  <Input id="seoTitle" {...register("seoTitle")} />
+                </div>
+                <div>
+                  <Label htmlFor="seoAltText">Main Image Alt Text</Label>
+                  <Input id="seoAltText" {...register("seoAltText")} />
                 </div>
                 <div>
                   <Label htmlFor="seoDescription">Meta Description</Label>
                   <Textarea
                     id="seoDescription"
-                    rows={4}
+                    rows={3}
                     {...register("seoDescription")}
-                    placeholder="A brief summary (max 160 characters)."
                   />
                 </div>
                 <div>
-                  <Label htmlFor="seoKeywords">Keywords</Label>
-                  <Input
-                    id="seoKeywords"
-                    {...register("seoKeywords")}
-                    placeholder="e.g., house plan, 3bhk, vastu"
-                  />
+                  <Label htmlFor="seoKeywords">
+                    Keywords (comma-separated)
+                  </Label>
+                  <Input id="seoKeywords" {...register("seoKeywords")} />
+                </div>
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div>
+                    <Label>Cross-Sell Products</Label>
+                    <MultiSelectForProducts
+                      options={productOptions}
+                      selected={crossSell}
+                      onChange={setCrossSell}
+                      placeholder="Select related products..."
+                    />
+                  </div>
+                  <div>
+                    <Label>Up-Sell Products</Label>
+                    <MultiSelectForProducts
+                      options={productOptions}
+                      selected={upSell}
+                      onChange={setUpSell}
+                      placeholder="Select premium alternatives..."
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
-
-            {planType === "Construction Products" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Contact Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="contactName">Contact Name</Label>
-                    <Input id="contactName" {...register("contactName")} />
-                  </div>
-                  <div>
-                    <Label htmlFor="contactEmail">Contact Email</Label>
-                    <Input
-                      id="contactEmail"
-                      type="email"
-                      {...register("contactEmail")}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="contactPhone">Contact Phone</Label>
-                    <Input
-                      id="contactPhone"
-                      type="tel"
-                      {...register("contactPhone")}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
 
             <Card>
               <CardHeader>
                 <CardTitle>Files</CardTitle>
                 <CardDescription>
-                  Upload main image, gallery, header, and plan files.
+                  Upload main image, gallery, and plan files.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -424,7 +544,7 @@ const AddPlanPage = () => {
                     id="mainImage"
                     type="file"
                     onChange={(e) =>
-                      setMainImage(e.target.files ? e.target.files[0] : null)
+                      handleFileChange(setMainImage, e.target.files)
                     }
                     required
                   />
@@ -437,26 +557,33 @@ const AddPlanPage = () => {
                     id="galleryImages"
                     type="file"
                     multiple
-                    onChange={handleGalleryImagesChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="headerImage">Header Image</Label>
-                  <Input
-                    id="headerImage"
-                    type="file"
                     onChange={(e) =>
-                      setHeaderImage(e.target.files ? e.target.files[0] : null)
+                      handleFileChange(setGalleryImages, e.target.files, 5)
                     }
                   />
                 </div>
                 <div>
-                  <Label htmlFor="planFileInput">Plan Files*</Label>
+                  <Label htmlFor="headerImage">Header Image (Optional)</Label>
+                  <Input
+                    id="headerImage"
+                    type="file"
+                    onChange={(e) =>
+                      handleFileChange(setHeaderImage, e.target.files)
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Plan Files*</Label>
                   <Input
                     id="planFileInput"
                     type="file"
                     multiple
-                    onChange={handlePlanFilesChange}
+                    onChange={(e) =>
+                      setPlanFiles((prev) => [
+                        ...prev,
+                        ...Array.from(e.target.files),
+                      ])
+                    }
                     className="hidden"
                   />
                   <Button
@@ -490,10 +617,11 @@ const AddPlanPage = () => {
               </CardContent>
             </Card>
           </div>
+
           <div className="lg:col-span-1 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Pricing</CardTitle>
+                <CardTitle>Pricing & Tax</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -501,7 +629,10 @@ const AddPlanPage = () => {
                   <Input
                     id="price"
                     type="number"
-                    {...register("price", { required: "Price is required" })}
+                    {...register("price", {
+                      required: "Price is required",
+                      valueAsNumber: true,
+                    })}
                   />
                   {errors.price && (
                     <p className="text-red-500 text-xs mt-1">
@@ -514,7 +645,15 @@ const AddPlanPage = () => {
                   <Input
                     id="salePrice"
                     type="number"
-                    {...register("salePrice")}
+                    {...register("salePrice", { valueAsNumber: true })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="taxRate">Tax Rate (%)</Label>
+                  <Input
+                    id="taxRate"
+                    type="number"
+                    {...register("taxRate", { valueAsNumber: true })}
                   />
                 </div>
                 <div className="flex items-center space-x-2 pt-2">
@@ -527,6 +666,7 @@ const AddPlanPage = () => {
                 </div>
               </CardContent>
             </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Organization</CardTitle>
@@ -539,26 +679,42 @@ const AddPlanPage = () => {
                       <SelectValue placeholder="Select Plan Type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Floor Plans">Floor Plans</SelectItem>
-                      <SelectItem value="Floor Plan + 3D Elevations">
-                        Floor Plans + 3D Elevations
-                      </SelectItem>
-                      <SelectItem value="Interior Designs">
-                        Interior Designs
-                      </SelectItem>
-                      <SelectItem value="Construction Products">
-                        Construction Products
-                      </SelectItem>
+                      {[
+                        "Floor Plans",
+                        "Floor Plan + 3D Elevations",
+                        "Interior Designs",
+                        "Construction Products",
+                      ].map((pt) => (
+                        <SelectItem key={pt} value={pt}>
+                          {pt}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label>Category*</Label>
-                  <Input
-                    id="category"
-                    {...register("category", {
-                      required: "Category is required",
-                    })}
+                  <Controller
+                    name="category"
+                    control={control}
+                    rules={{ required: "Category is required" }}
+                    render={({ field }) => (
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60 overflow-y-auto">
+                          {categories.map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   />
                   {errors.category && (
                     <p className="text-red-500 text-xs mt-1">
