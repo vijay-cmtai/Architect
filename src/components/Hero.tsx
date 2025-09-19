@@ -40,7 +40,6 @@ const Hero = () => {
   const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
 
-  // ✨ Redux store se products aur unka status get karein ✨
   const { products, listStatus } = useSelector(
     (state: RootState) => state.products
   );
@@ -49,7 +48,6 @@ const Hero = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    // Agar products load nahi hain, to unhe fetch karein
     if (listStatus === "idle") {
       dispatch(fetchProducts({}));
     }
@@ -62,31 +60,26 @@ const Hero = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // ✨ Product list se unique categories nikalne ka logic ✨
   const uniqueCategories = useMemo(() => {
-    if (!products || products.length === 0) {
-      return [];
-    }
-    // Set ka istemal karke sirf unique values nikalein
+    if (!products || products.length === 0) return [];
     const categories = new Set(
       products.map((product) => product.category).filter(Boolean)
     );
-    return Array.from(categories).sort(); // Alphabetically sort karein
+    return Array.from(categories).sort();
   }, [products]);
 
   const handleSearch = () => {
     const queryParams = new URLSearchParams();
-    if (selectedCategory) {
-      queryParams.append("category", selectedCategory);
-    }
-    if (searchTerm) {
-      queryParams.append("search", searchTerm);
-    }
+    if (selectedCategory) queryParams.append("category", selectedCategory);
+    if (searchTerm) queryParams.append("search", searchTerm);
     navigate(`/products?${queryParams.toString()}`);
   };
 
   return (
-    <section className="relative h-screen min-h-[700px] flex items-center justify-center text-white overflow-hidden">
+    // --- Responsive Height ---
+    // Desktop: h-screen, Mobile: h-[85vh] (85% of viewport height)
+    <section className="relative h-[85vh] min-h-[600px] md:h-screen md:min-h-[700px] flex items-center justify-center text-white overflow-hidden">
+      {/* Background Image Slider */}
       <div className="absolute inset-0">
         <AnimatePresence>
           <motion.img
@@ -103,8 +96,10 @@ const Hero = () => {
         <div className="absolute inset-0 bg-black/60"></div>
       </div>
 
-      <div className="relative z-10 text-center max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-4xl md:text-6xl font-bold mb-6 animate-slide-up">
+      {/* Hero Content */}
+      <div className="relative z-10 text-center max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+        {/* --- Responsive Text Size --- */}
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 animate-slide-up">
           Find Your Perfect
           <span
             className="block text-white animate-bounce-in"
@@ -114,12 +109,13 @@ const Hero = () => {
           </span>
         </h1>
         <p
-          className="text-xl md:text-2xl mb-8 text-white/90 font-light animate-fade-in"
+          className="text-lg md:text-xl mb-8 text-white/90 font-light animate-fade-in"
           style={{ animationDelay: "0.6s" }}
         >
           Discover amazing architectural designs for your dream home
         </p>
 
+        {/* Explore Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -133,13 +129,14 @@ const Hero = () => {
           </Link>
         </motion.div>
 
+        {/* --- Responsive Search Bar --- */}
         <div
-          className="bg-white rounded-2xl p-4 shadow-large max-w-2xl mx-auto animate-scale-in"
+          className="bg-white rounded-2xl p-3 sm:p-4 shadow-large max-w-2xl w-full mx-auto animate-scale-in"
           style={{ animationDelay: "0.9s" }}
         >
-          <div className="flex flex-col md:flex-row gap-4">
+          {/* Mobile: flex-col, Desktop: flex-row */}
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <div className="flex-1">
-              {/* ✨ Category dropdown ab dynamic hai ✨ */}
               <Select
                 onValueChange={setSelectedCategory}
                 disabled={listStatus === "loading"}
@@ -171,16 +168,17 @@ const Hero = () => {
               />
             </div>
             <Button
-              className="btn-primary md:px-8 group"
+              className="btn-primary w-full sm:w-auto sm:px-8 group"
               onClick={handleSearch}
             >
-              <Search className="w-5 h-5 md:mr-2 group-hover:rotate-12 transition-transform duration-300" />
-              <span className="hidden md:inline">Search</span>
+              <Search className="w-5 h-5 sm:mr-2 group-hover:rotate-12 transition-transform duration-300" />
+              <span className="hidden sm:inline">Search</span>
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-8 mt-12 max-w-lg mx-auto">
+        {/* Animated Stats */}
+        <div className="grid grid-cols-3 gap-4 md:gap-8 mt-12 max-w-lg mx-auto">
           <AnimatedStat end={500} suffix="+" label="House Plans" />
           <AnimatedStat end={50} suffix="k+" label="Happy Customers" />
           <AnimatedStat end={15} suffix="+" label="Years Experience" />

@@ -90,7 +90,7 @@ const Footer = () => {
                 { name: "Interior Design", href: "/interior-designs" },
                 { name: "Building Permits", href: "/services" },
                 { name: "Construction Support", href: "/contact" },
-                { name: "Gallery", href: "/gallery" },
+                { name: "About", href: "/about" },
               ].map((service) => (
                 <li key={service.name}>
                   <Link

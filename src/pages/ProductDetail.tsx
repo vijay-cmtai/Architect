@@ -25,6 +25,7 @@ import {
   AtSign,
   MessageSquare,
   Star,
+  ShoppingBag,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -54,7 +55,9 @@ const StarRating = ({ rating, text }: { rating: number; text?: string }) => (
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
-          className={`h-5 w-5 ${rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+          className={`h-5 w-5 ${
+            rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+          }`}
         />
       ))}
     </div>
@@ -199,6 +202,14 @@ const DetailPage = () => {
     navigate("/checkout");
   };
 
+  const whatsappNumber = "+918815939484";
+  const whatsappMessage = `Hello, I'm interested in modifying this plan: *${displayData?.name}*. \nProduct Link: ${currentUrl}`;
+  const encodedWhatsappMessage = encodeURIComponent(whatsappMessage);
+  const whatsappLink = `https://wa.me/${whatsappNumber.replace(
+    "+",
+    ""
+  )}?text=${encodedWhatsappMessage}`;
+
   const handleReviewSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!rating || !comment) {
@@ -240,29 +251,12 @@ const DetailPage = () => {
   };
 
   const relatedProducts = useMemo(() => {
-    if (!displayData) return [];
-    const allItems = [
-      ...(Array.isArray(adminProducts)
-        ? adminProducts.map((p) => ({
-            ...p,
-            name: p.name,
-            image: p.mainImage,
-            source: "product",
-          }))
-        : []),
-      ...(Array.isArray(professionalPlans)
-        ? professionalPlans.map((p) => ({
-            ...p,
-            name: p.planName,
-            image: p.mainImage,
-            source: "professional",
-          }))
-        : []),
-    ];
-    return allItems
+    if (!displayData || !adminProducts) return [];
+    return adminProducts
       .filter((p: any) => p.category === displayData.category && p._id !== id)
-      .slice(0, 2);
-  }, [adminProducts, professionalPlans, displayData, id]);
+      .slice(0, 2)
+      .map((p) => ({ ...p, source: "product" }));
+  }, [adminProducts, displayData, id]);
 
   const isLoading =
     (adminListStatus === "loading" && !singleProduct) ||
@@ -377,13 +371,39 @@ const DetailPage = () => {
                 alt={displayData.seo?.altText || displayData.name}
                 className="w-full h-96 lg:h-[500px] object-contain transition-transform duration-500 group-hover:scale-105"
               />
+              {/* --- BUTTONS ON IMAGE --- */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 p-2 bg-black/40 backdrop-blur-sm rounded-full">
+                <Button
+                  onClick={handleBuyNow}
+                  className="rounded-full px-6 py-3 text-base font-semibold flex items-center gap-2 bg-orange-500 hover:bg-orange-600"
+                >
+                  <ShoppingBag className="w-5 h-5" />
+                  Buy Now
+                </Button>
+                <a
+                  href={whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center"
+                >
+                  <Button
+                    variant="secondary"
+                    className="bg-green-500 hover:bg-green-600 text-white rounded-full px-6 py-3 text-base font-semibold flex items-center gap-2"
+                  >
+                    <MessageSquare className="w-5 h-5" />
+                    Modify Plan
+                  </Button>
+                </a>
+              </div>
             </div>
             <div className="grid grid-cols-3 gap-4">
               {productImages.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
-                  className={`relative overflow-hidden rounded-lg ${selectedImageIndex === index ? "ring-2 ring-primary" : ""}`}
+                  className={`relative overflow-hidden rounded-lg ${
+                    selectedImageIndex === index ? "ring-2 ring-primary" : ""
+                  }`}
                   type="button"
                 >
                   <img
@@ -522,7 +542,9 @@ const DetailPage = () => {
                     onClick={() => setIsLiked(!isLiked)}
                   >
                     <Heart
-                      className={`w-6 h-6 ${isLiked ? "fill-current text-red-500" : ""}`}
+                      className={`w-6 h-6 ${
+                        isLiked ? "fill-current text-red-500" : ""
+                      }`}
                     />
                   </Button>
                 </div>
@@ -593,7 +615,11 @@ const DetailPage = () => {
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
-                          className={`h-6 w-6 cursor-pointer ${rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+                          className={`h-6 w-6 cursor-pointer ${
+                            rating >= star
+                              ? "text-yellow-400 fill-yellow-400"
+                              : "text-gray-300"
+                          }`}
                           onClick={() => setRating(star)}
                         />
                       ))}

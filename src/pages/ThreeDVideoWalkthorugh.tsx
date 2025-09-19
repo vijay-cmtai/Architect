@@ -7,13 +7,14 @@ import {
   submitCustomizationRequest,
   resetStatus,
 } from "@/lib/features/customization/customizationSlice";
-// --- CHANGE 1: VIDEO SLICE SE ACTIONS IMPORT KIYE GAYE HAIN ---
 import { fetchVideos, fetchTopics } from "@/lib/features/videos/videoSlice";
 import RequestPageLayout from "../components/RequestPageLayout";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
-import { Loader2, PlayCircle } from "lucide-react"; // Icons
+import { Loader2 } from "lucide-react";
+import YouTube from "react-youtube"; // YouTube player ke liye import
 
+// Form styles (isko change nahi kiya gaya hai)
 export const formStyles = {
   label: "block text-sm font-semibold mb-2 text-gray-700",
   input:
@@ -31,7 +32,6 @@ const ThreeDWalkthroughPage = () => {
   const { actionStatus, error } = useSelector((state) => state.customization);
   const [formKey, setFormKey] = useState(Date.now());
 
-  // --- CHANGE 2: VIDEO STATE REDUX SE LIYA GAYA HAI ---
   const {
     videos,
     topics,
@@ -39,12 +39,13 @@ const ThreeDWalkthroughPage = () => {
   } = useSelector((state) => state.videos);
   const [selectedTopic, setSelectedTopic] = useState("All");
 
-  // Fetch videos and topics on component mount
+  // Data fetch karne ke liye useEffect
   useEffect(() => {
     dispatch(fetchVideos());
     dispatch(fetchTopics());
   }, [dispatch]);
 
+  // Form submit karne ka function
   const handleSubmit = (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -52,6 +53,7 @@ const ThreeDWalkthroughPage = () => {
     dispatch(submitCustomizationRequest(formData));
   };
 
+  // Success/Error message dikhane ke liye useEffect
   useEffect(() => {
     if (actionStatus === "succeeded") {
       toast.success(
@@ -66,7 +68,7 @@ const ThreeDWalkthroughPage = () => {
     }
   }, [actionStatus, error, dispatch]);
 
-  // --- CHANGE 3: VIDEO FILTERING LOGIC ---
+  // Videos ko topic ke hisab se filter karne ka logic
   const filteredVideos = useMemo(() => {
     if (!videos || videos.length === 0) return [];
     if (selectedTopic === "All") {
@@ -75,10 +77,28 @@ const ThreeDWalkthroughPage = () => {
     return videos.filter((video) => video.topic === selectedTopic);
   }, [videos, selectedTopic]);
 
+  // YouTube player ke liye options (autoplay, mute, loop, no controls)
+  const videoOptions = (videoId) => ({
+    height: "100%",
+    width: "100%",
+    playerVars: {
+      autoplay: 1,
+      mute: 1,
+      loop: 1,
+      playlist: videoId,
+      controls: 0,
+      showinfo: 0,
+      modestbranding: 1,
+      rel: 0,
+      fs: 0,
+    },
+  });
+
   return (
     <>
       <Navbar />
-      {/* --- SECTION 1: REQUEST FORM --- */}
+
+      {/* SECTION 1: REQUEST FORM (Isme koi change nahi hai) */}
       <form key={formKey} onSubmit={handleSubmit}>
         <RequestPageLayout
           title="Request a 3D Video Walkthrough"
@@ -156,7 +176,7 @@ const ThreeDWalkthroughPage = () => {
             <textarea
               id="description"
               name="description"
-              placeholder="e.g., I want to showcase the flow from the living room to the kitchen..."
+              placeholder="e.g., I want to showcase the flow from the living room..."
               className={formStyles.textarea}
               rows={4}
             ></textarea>
@@ -174,7 +194,7 @@ const ThreeDWalkthroughPage = () => {
         </RequestPageLayout>
       </form>
 
-      {/* --- CHANGE 4: NAYA VIDEO GALLERY SECTION ADD KIYA GAYA HAI --- */}
+      {/* SECTION 2: VIDEO GALLERY (Yeh naya updated section hai) */}
       <div className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
@@ -218,16 +238,23 @@ const ThreeDWalkthroughPage = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredVideos.map((video) => (
-                  <a
+                  <div
                     key={video._id}
-                    href={video.youtubeLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className="group block bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
                   >
-                    <div className="relative h-48 bg-gray-800 flex items-center justify-center">
-                      <PlayCircle className="w-16 h-16 text-white opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all" />
-                      {/* Agar thumbnail hota, to yahan img tag aata */}
+                    <div className="relative aspect-video bg-gray-200">
+                      {video.youtubeVideoId ? (
+                        <YouTube
+                          videoId={video.youtubeVideoId}
+                          opts={videoOptions(video.youtubeVideoId)}
+                          className="absolute top-0 left-0 w-full h-full"
+                          iframeClassName="pointer-events-none" // Taaki card ke neeche wala link clickable rahe
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-500">
+                          Invalid Video Link
+                        </div>
+                      )}
                     </div>
                     <div className="p-4">
                       <span className="text-xs bg-orange-100 text-orange-800 font-semibold px-2 py-1 rounded-full">
@@ -239,8 +266,16 @@ const ThreeDWalkthroughPage = () => {
                       >
                         {video.title}
                       </h3>
+                      <a
+                        href={video.youtubeLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-orange-600 hover:underline mt-1 inline-block"
+                      >
+                        Watch on YouTube
+                      </a>
                     </div>
-                  </a>
+                  </div>
                 ))}
               </div>
             )}

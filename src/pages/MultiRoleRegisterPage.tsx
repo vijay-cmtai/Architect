@@ -40,6 +40,8 @@ const professionalSubRoles = [
   "Contractor",
   "Vastu Consultant",
   "Site Engineer",
+  "Map Consultant",
+  "3D Visualizer",
 ];
 
 const contractorProfessions = [
