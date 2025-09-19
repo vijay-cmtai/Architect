@@ -1,5 +1,3 @@
-// src/pages/InteriorDesignsPage.jsx
-
 import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
@@ -34,14 +32,54 @@ import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalP
 import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
 import house3 from "@/assets/house-3.jpg";
 
-// --- Enhanced FilterSidebar Component ---
+const themes = [
+  "Modern Theme",
+  "Contemporary Theme",
+  "Minimalist Theme",
+  "Traditional Theme",
+  "Industrial Theme",
+  "Bohemian (Boho) Theme",
+  "Scandinavian Theme",
+  "Rustic Theme",
+  "Transitional Theme",
+  "Eclectic Theme",
+];
+
 const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
-  <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-white rounded-xl shadow-lg h-fit border border-gray-200">
+  // --- YAHAN BADLAV KIYA GAYA HAI ---
+  <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-white rounded-xl shadow-lg h-fit border border-gray-200 sticky top-24">
     <h3 className="text-xl font-bold mb-4 flex items-center text-gray-800">
       <Filter className="w-5 h-5 mr-2 text-gray-500" />
       Filters
     </h3>
     <div className="space-y-6">
+      <div>
+        <Label htmlFor="theme" className="font-semibold text-gray-600">
+          Theme
+        </Label>
+        <Select
+          value={filters.theme}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, theme: value }))
+          }
+        >
+          <SelectTrigger
+            id="theme"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Theme" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Themes</SelectItem>
+            {themes.map((theme) => (
+              <SelectItem key={theme} value={theme}>
+                {theme}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <div>
         <Label htmlFor="category" className="font-semibold text-gray-600">
           Category (Style)
@@ -97,82 +135,6 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
       </div>
 
       <div>
-        <Label htmlFor="plotArea" className="font-semibold text-gray-600">
-          Plot Area (sqft)
-        </Label>
-        <Select
-          value={filters.plotArea}
-          onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, plotArea: value }))
-          }
-        >
-          <SelectTrigger
-            id="plotArea"
-            className="mt-2 bg-gray-100 border-transparent h-12"
-          >
-            <SelectValue placeholder="Select Area" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Areas</SelectItem>
-            <SelectItem value="500-1000">500-1000</SelectItem>
-            <SelectItem value="1000-2000">1000-2000</SelectItem>
-            <SelectItem value="2000+">2000+</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <Label htmlFor="direction" className="font-semibold text-gray-600">
-          Direction
-        </Label>
-        <Select
-          value={filters.direction}
-          onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, direction: value }))
-          }
-        >
-          <SelectTrigger
-            id="direction"
-            className="mt-2 bg-gray-100 border-transparent h-12"
-          >
-            <SelectValue placeholder="Select Direction" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Directions</SelectItem>
-            <SelectItem value="East">East</SelectItem>
-            <SelectItem value="West">West</SelectItem>
-            <SelectItem value="North">North</SelectItem>
-            <SelectItem value="South">South</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <Label htmlFor="floors" className="font-semibold text-gray-600">
-          Floors
-        </Label>
-        <Select
-          value={filters.floors}
-          onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, floors: value }))
-          }
-        >
-          <SelectTrigger
-            id="floors"
-            className="mt-2 bg-gray-100 border-transparent h-12"
-          >
-            <SelectValue placeholder="Select Floors" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Floors</SelectItem>
-            <SelectItem value="1">1</SelectItem>
-            <SelectItem value="2">2</SelectItem>
-            <SelectItem value="3">3+</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
         <Label htmlFor="propertyType" className="font-semibold text-gray-600">
           Property Type
         </Label>
@@ -219,11 +181,9 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
       <Button
         onClick={() =>
           setFilters({
+            theme: "all",
             category: "all",
             roomType: "all",
-            plotArea: "all",
-            direction: "all",
-            floors: "all",
             propertyType: "all",
             budget: [500, 50000],
           })
@@ -237,7 +197,6 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
   </aside>
 );
 
-// --- Enhanced ProductCard Component with Authentication ---
 const ProductCard = ({ product, userOrders }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -250,7 +209,6 @@ const ProductCard = ({ product, userOrders }) => {
       ? `/product/${product._id}`
       : `/professional-plan/${product._id}`;
 
-  // Check if user has purchased this product
   const hasPurchased = userOrders?.some(
     (order) =>
       order.isPaid &&
@@ -288,7 +246,7 @@ const ProductCard = ({ product, userOrders }) => {
     }
 
     try {
-      const response = await fetch(product.planFile);
+      const response = await fetch(product.planFile[0]); // Assuming planFile is an array
       if (!response.ok) throw new Error("Network response was not ok.");
       const blob = await response.blob();
 
@@ -297,7 +255,7 @@ const ProductCard = ({ product, userOrders }) => {
       link.href = url;
 
       const fileExtension =
-        product.planFile.split(".").pop()?.split("?")[0] || "pdf";
+        product.planFile[0].split(".").pop()?.split("?")[0] || "pdf";
       link.setAttribute(
         "download",
         `ArchHome-Interior-${product.name.replace(/\s+/g, "-")}.${fileExtension}`
@@ -416,7 +374,7 @@ const ProductCard = ({ product, userOrders }) => {
           className={`w-full text-white rounded-md ${
             hasPurchased
               ? "bg-teal-500 hover:bg-teal-600"
-              : "bg-gray-400 hover:bg-gray-500"
+              : "bg-gray-400 cursor-not-allowed"
           }`}
           onClick={handleDownload}
           disabled={!hasPurchased}
@@ -438,10 +396,8 @@ const ProductCard = ({ product, userOrders }) => {
   );
 };
 
-// --- Main Page ---
 const InteriorDesignsPage = () => {
   const dispatch: AppDispatch = useDispatch();
-  const navigate = useNavigate();
 
   const {
     products: adminProducts,
@@ -458,11 +414,9 @@ const InteriorDesignsPage = () => {
 
   const [sortBy, setSortBy] = useState("newest");
   const [filters, setFilters] = useState({
+    theme: "all",
     category: "all",
     roomType: "all",
-    plotArea: "all",
-    direction: "all",
-    floors: "all",
     propertyType: "all",
     budget: [500, 50000],
   });
@@ -470,7 +424,6 @@ const InteriorDesignsPage = () => {
   const CARDS_PER_PAGE = 6;
 
   useEffect(() => {
-    // Only send filters that are not "all" or default
     const apiParams: Record<string, any> = {};
     Object.entries(filters).forEach(([key, value]) => {
       if (key === "budget") {
@@ -484,7 +437,6 @@ const InteriorDesignsPage = () => {
     dispatch(fetchProducts(apiParams));
     dispatch(fetchAllApprovedPlans(apiParams));
 
-    // Fetch user orders if logged in
     if (userInfo) {
       dispatch(fetchMyOrders());
     }
@@ -493,19 +445,14 @@ const InteriorDesignsPage = () => {
   const combinedProducts = useMemo(() => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
     const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
-    const normalizedAdmin = adminArray.map((p) => ({
-      ...p,
-      name: p.name || "Unnamed",
-      image: p.image || "",
-      source: "admin",
-    }));
-    const normalizedProf = profArray.map((p) => ({
-      ...p,
-      name: p.planName || "Unnamed",
-      image: p.mainImage || "",
-      source: "professional",
-    }));
-    return [...normalizedAdmin, ...normalizedProf];
+    return [
+      ...adminArray.map((p) => ({ ...p, source: "admin" })),
+      ...profArray.map((p) => ({
+        ...p,
+        name: p.planName,
+        source: "professional",
+      })),
+    ];
   }, [adminProducts, professionalPlans]);
 
   const interiorDesigns = useMemo(
@@ -524,43 +471,24 @@ const InteriorDesignsPage = () => {
     let products = interiorDesigns.filter((product) => {
       if (!product || typeof product.price === "undefined") return false;
 
-      // Only show "Interior Designs"
-      if (product.planType !== "Interior Designs") return false;
-
       const productPrice = product.isSale ? product.salePrice : product.price;
       const matchesBudget =
         productPrice >= filters.budget[0] && productPrice <= filters.budget[1];
+      const matchesTheme =
+        filters.theme === "all" || product.theme === filters.theme;
       const matchesCategory =
         filters.category === "all" || product.category === filters.category;
       const matchesRoomType =
-        filters.roomType === "all" ||
-        product.roomType === filters.roomType ||
-        product.size === filters.roomType;
-      const matchesPlotArea =
-        filters.plotArea === "all" ||
-        (filters.plotArea === "500-1000"
-          ? product.plotArea >= 500 && product.plotArea <= 1000
-          : filters.plotArea === "1000-2000"
-            ? product.plotArea > 1000 && product.plotArea <= 2000
-            : filters.plotArea === "2000+"
-              ? product.plotArea > 2000
-              : true);
-      const matchesDirection =
-        filters.direction === "all" || product.direction === filters.direction;
-      const matchesFloors =
-        filters.floors === "all" ||
-        product.floors === parseInt(filters.floors, 10);
+        filters.roomType === "all" || product.roomType === filters.roomType;
       const matchesPropertyType =
         filters.propertyType === "all" ||
         product.propertyType === filters.propertyType;
 
       return (
         matchesBudget &&
+        matchesTheme &&
         matchesCategory &&
         matchesRoomType &&
-        matchesPlotArea &&
-        matchesDirection &&
-        matchesFloors &&
         matchesPropertyType
       );
     });
@@ -578,11 +506,10 @@ const InteriorDesignsPage = () => {
           (a.isSale ? a.salePrice : a.price)
       );
     } else {
-      products.sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
+      products.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
     }
 
     return products;
@@ -601,7 +528,7 @@ const InteriorDesignsPage = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filteredAndSortedProducts]);
+  }, [filteredAndSortedProducts.length]);
 
   const isLoading =
     adminListStatus === "loading" || profListStatus === "loading";
@@ -612,7 +539,7 @@ const InteriorDesignsPage = () => {
     <div className="bg-gray-50">
       <Navbar />
       <main className="container mx-auto px-4 py-12">
-        <div className="flex flex-col lg:flex-row gap-12">
+        <div className="flex flex-col lg:flex-row gap-12 items-start">
           <FilterSidebar
             filters={filters}
             setFilters={setFilters}
@@ -663,19 +590,6 @@ const InteriorDesignsPage = () => {
               </div>
             )}
 
-            {!isLoading &&
-              !isError &&
-              filteredAndSortedProducts.length === 0 && (
-                <div className="text-center py-20">
-                  <h3 className="text-xl font-semibold">
-                    No Interior Designs Found
-                  </h3>
-                  <p className="mt-2 text-gray-500">
-                    Try adjusting your filters to see more results.
-                  </p>
-                </div>
-              )}
-
             {!isLoading && !isError && (
               <>
                 <motion.div
@@ -692,7 +606,12 @@ const InteriorDesignsPage = () => {
                     ))
                   ) : (
                     <div className="col-span-full text-center py-20">
-                      <p className="text-gray-500 text-lg">No designs found.</p>
+                      <h3 className="text-xl font-semibold">
+                        No Interior Designs Found
+                      </h3>
+                      <p className="mt-2 text-gray-500">
+                        Try adjusting your filters to see more results.
+                      </p>
                     </div>
                   )}
                 </motion.div>
