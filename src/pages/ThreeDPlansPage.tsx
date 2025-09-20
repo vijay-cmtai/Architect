@@ -1,17 +1,16 @@
+// src/pages/ThreeDPlansPage.jsx
+
 import React, { useState, useEffect, useMemo } from "react";
-import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { Helmet } from "react-helmet-async"; // Helmet को import करें
+import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
+import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   Loader2,
   ServerCrash,
-  Download,
   Filter,
   Heart,
-  ChevronLeft,
-  ChevronRight,
+  Download,
   Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,112 +23,148 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useToast } from "@/components/ui/use-toast";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import house1 from "@/assets/house-1.jpg";
+
+// Import both thunks
 import { fetchProducts } from "@/lib/features/products/productSlice";
 import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice";
 import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
-import house3 from "@/assets/house-3.jpg";
 
-const themes = [
-  "Modern Theme",
-  "Contemporary Theme",
-  "Minimalist Theme",
-  "Traditional Theme",
-  "Industrial Theme",
-  "Bohemian (Boho) Theme",
-  "Scandinavian Theme",
-  "Rustic Theme",
-  "Transitional Theme",
-  "Eclectic Theme",
-];
-
-const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
-  <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-white rounded-xl shadow-lg h-fit border border-gray-200 sticky top-24">
+// --- Enhanced FilterSidebar Component ---
+const FilterSidebar = ({ filters, setFilters }) => (
+  <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-white rounded-xl shadow-lg h-fit border border-gray-200">
     <h3 className="text-xl font-bold mb-4 flex items-center text-gray-800">
       <Filter className="w-5 h-5 mr-2 text-gray-500" />
       Filters
     </h3>
     <div className="space-y-6">
       <div>
-        <Label htmlFor="theme" className="font-semibold text-gray-600">
-          Theme
+        <Label htmlFor="plotSize" className="font-semibold text-gray-600">
+          Plot Size
         </Label>
         <Select
-          value={filters.theme}
+          value={filters.plotSize}
           onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, theme: value }))
+            setFilters((prev) => ({ ...prev, plotSize: value }))
           }
         >
           <SelectTrigger
-            id="theme"
+            id="plotSize"
             className="mt-2 bg-gray-100 border-transparent h-12"
           >
-            <SelectValue placeholder="Select Theme" />
+            <SelectValue placeholder="Select Size" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Themes</SelectItem>
-            {themes.map((theme) => (
-              <SelectItem key={theme} value={theme}>
-                {theme}
-              </SelectItem>
-            ))}
+            <SelectItem value="all">All Sizes</SelectItem>
+            <SelectItem value="30x40">30x40</SelectItem>
+            <SelectItem value="40x60">40x60</SelectItem>
+            <SelectItem value="50x80">50x80</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div>
-        <Label htmlFor="category" className="font-semibold text-gray-600">
-          Category (Style)
+        <Label htmlFor="plotArea" className="font-semibold text-gray-600">
+          Plot Area (sqft)
         </Label>
         <Select
-          value={filters.category}
+          value={filters.plotArea}
           onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, category: value }))
+            setFilters((prev) => ({ ...prev, plotArea: value }))
           }
         >
           <SelectTrigger
-            id="category"
+            id="plotArea"
             className="mt-2 bg-gray-100 border-transparent h-12"
           >
-            <SelectValue placeholder="Select Style" />
+            <SelectValue placeholder="Select Area" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Styles</SelectItem>
-            {uniqueCategories.map((cat) => (
-              <SelectItem key={cat} value={cat}>
-                {cat}
-              </SelectItem>
-            ))}
+            <SelectItem value="all">All Areas</SelectItem>
+            <SelectItem value="500-1000">500-1000</SelectItem>
+            <SelectItem value="1000-2000">1000-2000</SelectItem>
+            <SelectItem value="2000+">2000+</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div>
-        <Label htmlFor="roomType" className="font-semibold text-gray-600">
-          Room Type
+        <Label htmlFor="bhk" className="font-semibold text-gray-600">
+          Rooms (BHK)
         </Label>
         <Select
-          value={filters.roomType}
+          value={filters.bhk}
           onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, roomType: value }))
+            setFilters((prev) => ({ ...prev, bhk: value }))
           }
         >
           <SelectTrigger
-            id="roomType"
+            id="bhk"
             className="mt-2 bg-gray-100 border-transparent h-12"
           >
-            <SelectValue placeholder="Select Room" />
+            <SelectValue placeholder="Select Rooms" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Rooms</SelectItem>
-            <SelectItem value="Kitchen">Kitchen</SelectItem>
-            <SelectItem value="Bedroom">Bedroom</SelectItem>
-            <SelectItem value="Living Room">Living Room</SelectItem>
-            <SelectItem value="Bathroom">Bathroom</SelectItem>
-            <SelectItem value="Dining Room">Dining Room</SelectItem>
+            <SelectItem value="all">All BHKs</SelectItem>
+            <SelectItem value="1">1 BHK</SelectItem>
+            <SelectItem value="2">2 BHK</SelectItem>
+            <SelectItem value="3">3 BHK</SelectItem>
+            <SelectItem value="4">4+ BHK</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="direction" className="font-semibold text-gray-600">
+          Direction
+        </Label>
+        <Select
+          value={filters.direction}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, direction: value }))
+          }
+        >
+          <SelectTrigger
+            id="direction"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Direction" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Directions</SelectItem>
+            <SelectItem value="East">East</SelectItem>
+            <SelectItem value="West">West</SelectItem>
+            <SelectItem value="North">North</SelectItem>
+            <SelectItem value="South">South</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="floors" className="font-semibold text-gray-600">
+          Floors
+        </Label>
+        <Select
+          value={filters.floors}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, floors: value }))
+          }
+        >
+          <SelectTrigger
+            id="floors"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Floors" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Floors</SelectItem>
+            <SelectItem value="1">1</SelectItem>
+            <SelectItem value="2">2</SelectItem>
+            <SelectItem value="3">3+</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -171,9 +206,9 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
               budget: value as [number, number],
             }))
           }
-          max={50000}
+          max={100000}
           min={500}
-          step={100}
+          step={500}
           className="mt-3"
         />
       </div>
@@ -181,11 +216,13 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
       <Button
         onClick={() =>
           setFilters({
-            theme: "all",
-            category: "all",
-            roomType: "all",
+            plotArea: "all",
+            plotSize: "all",
+            bhk: "all",
+            direction: "all",
+            floors: "all",
             propertyType: "all",
-            budget: [500, 50000],
+            budget: [500, 100000],
           })
         }
         variant="outline"
@@ -197,24 +234,26 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
   </aside>
 );
 
-const ProductCard = ({ product, userOrders }) => {
+// --- Enhanced ProductCard Component with Authentication ---
+const ProductCard = ({ plan, userOrders }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { userInfo } = useSelector((state: RootState) => state.user);
 
-  const isWishlisted = isInWishlist(product._id);
+  const isWishlisted = isInWishlist(plan._id);
   const linkTo =
-    product.source === "admin"
-      ? `/product/${product._id}`
-      : `/professional-plan/${product._id}`;
+    plan.source === "admin"
+      ? `/product/${plan._id}`
+      : `/professional-plan/${plan._id}`;
 
+  // Check if user has purchased this product
   const hasPurchased = userOrders?.some(
     (order) =>
       order.isPaid &&
       order.orderItems?.some(
         (item) =>
-          item.productId === product._id || item.productId?._id === product._id
+          item.productId === plan._id || item.productId?._id === plan._id
       )
   );
 
@@ -231,22 +270,22 @@ const ProductCard = ({ product, userOrders }) => {
     if (!hasPurchased) {
       toast({
         title: "Product Not Purchased",
-        description: "You must purchase this design to download the file.",
+        description: "You must purchase this plan to download the file.",
         action: <Button onClick={() => navigate(linkTo)}>View Product</Button>,
       });
       return;
     }
 
-    if (!product.planFile) {
+    if (!plan.planFile) {
       toast({
         title: "Error",
-        description: "Download file is not available for this design.",
+        description: "Download file is not available for this plan.",
       });
       return;
     }
 
     try {
-      const response = await fetch(product.planFile[0]); // Assuming planFile is an array
+      const response = await fetch(plan.planFile);
       if (!response.ok) throw new Error("Network response was not ok.");
       const blob = await response.blob();
 
@@ -255,10 +294,10 @@ const ProductCard = ({ product, userOrders }) => {
       link.href = url;
 
       const fileExtension =
-        product.planFile[0].split(".").pop()?.split("?")[0] || "pdf";
+        plan.planFile.split(".").pop()?.split("?")[0] || "pdf";
       link.setAttribute(
         "download",
-        `ArchHome-Interior-${product.name.replace(/\s+/g, "-")}.${fileExtension}`
+        `ArchHome-3D-${plan.name.replace(/\s+/g, "-")}.${fileExtension}`
       );
 
       document.body.appendChild(link);
@@ -269,7 +308,7 @@ const ProductCard = ({ product, userOrders }) => {
 
       toast({
         title: "Success",
-        description: "Your interior design download has started!",
+        description: "Your 3D plan download has started!",
       });
     } catch (error) {
       console.error("Download failed:", error);
@@ -291,12 +330,19 @@ const ProductCard = ({ product, userOrders }) => {
       <div className="relative p-2">
         <Link to={linkTo}>
           <img
-            src={product.mainImage || product.image || house3}
-            alt={product.name}
+            src={plan.mainImage || plan.image || house1}
+            alt={plan.name}
             className="w-full h-48 object-cover rounded-md group-hover:scale-105 transition-transform duration-500"
           />
+          <div className="absolute inset-2 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md"></div>
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-gray-900/80 text-white text-xs font-bold px-4 py-2 rounded-md shadow-lg text-center">
+            <p>{plan.plotSize} 3D Elevation</p>
+            <p className="text-xs font-normal">
+              {hasPurchased ? "Download pdf file" : "Purchase to download"}
+            </p>
+          </div>
         </Link>
-        {product.isSale && (
+        {plan.isSale && (
           <div className="absolute top-4 left-4 bg-white text-gray-800 text-xs font-bold px-3 py-1 rounded-md shadow">
             Sale!
           </div>
@@ -306,62 +352,59 @@ const ProductCard = ({ product, userOrders }) => {
             Purchased
           </div>
         )}
-        <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={() => {
-              isWishlisted
-                ? removeFromWishlist(product._id)
-                : addToWishlist(product);
-            }}
-            className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-gray-600 hover:text-red-500 hover:scale-110"}`}
-            aria-label="Toggle Wishlist"
-          >
-            <Heart
-              className="w-5 h-5"
-              fill={isWishlisted ? "currentColor" : "none"}
-            />
-          </button>
+        <button
+          onClick={() =>
+            isWishlisted ? removeFromWishlist(plan._id) : addToWishlist(plan)
+          }
+          className={`absolute top-4 right-4 w-9 h-9 bg-white/80 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-gray-600 hover:text-red-500 hover:scale-110"}`}
+        >
+          <Heart
+            className="w-5 h-5"
+            fill={isWishlisted ? "currentColor" : "none"}
+          />
+        </button>
+      </div>
+      <div className="p-4 grid grid-cols-2 gap-4 border-t text-center text-sm">
+        <div>
+          <p className="text-xs text-gray-500">Plot Area</p>
+          <p className="font-bold">{plan.plotArea} sqft</p>
+        </div>
+        <div className="bg-teal-50 p-2 rounded-md">
+          <p className="text-xs text-gray-500">Rooms</p>
+          <p className="font-bold">{plan.rooms || plan.bhk} BHK</p>
+        </div>
+        <div className="bg-teal-50 p-2 rounded-md">
+          <p className="text-xs text-gray-500">Bathrooms</p>
+          <p className="font-bold">{plan.bathrooms}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500">Kitchen</p>
+          <p className="font-bold">{plan.kitchen}</p>
         </div>
       </div>
-      <div className="p-4 border-t border-gray-200">
-        <div className="grid grid-cols-2 gap-2 text-center">
-          <div className="py-2">
-            <p className="text-xs text-gray-500">Style</p>
-            <p className="font-bold text-gray-800">
-              {product.style || product.category || "N/A"}
-            </p>
-          </div>
-          <div className="bg-teal-50 p-2 rounded-md">
-            <p className="text-xs text-gray-500">Room Type</p>
-            <p className="font-bold text-gray-800">
-              {product.roomType || product.size || "N/A"}
-            </p>
-          </div>
-        </div>
-      </div>
-      <div className="p-4 pt-2">
+      <div className="p-4 border-t">
         <p className="text-xs text-gray-500 uppercase">
-          {product.category || "Interior Design"}
+          {plan.category || "3D Elevation"}
         </p>
         <h3 className="text-lg font-bold text-gray-900 mt-1 truncate">
-          {product.name || "Design Plan"}
+          {plan.name}
         </h3>
         <div className="flex items-baseline gap-2 mt-1">
-          {product.isSale && (
+          {plan.isSale && (
             <s className="text-md text-gray-400">
-              ₹{product.price.toLocaleString()}
+              ₹{plan.price.toLocaleString()}
             </s>
           )}
           <span className="text-xl font-bold text-gray-800">
             ₹
-            {(product.isSale
-              ? product.salePrice
-              : product.price
+            {(plan.isSale && plan.salePrice
+              ? plan.salePrice
+              : plan.price
             ).toLocaleString()}
           </span>
         </div>
       </div>
-      <div className="p-4 pt-2 mt-auto grid grid-cols-1 gap-2">
+      <div className="p-4 pt-0 mt-auto grid grid-cols-1 gap-2">
         <Link to={linkTo}>
           <Button
             variant="outline"
@@ -374,7 +417,7 @@ const ProductCard = ({ product, userOrders }) => {
           className={`w-full text-white rounded-md ${
             hasPurchased
               ? "bg-teal-500 hover:bg-teal-600"
-              : "bg-gray-400 cursor-not-allowed"
+              : "bg-gray-400 hover:bg-gray-500"
           }`}
           onClick={handleDownload}
           disabled={!hasPurchased}
@@ -396,8 +439,9 @@ const ProductCard = ({ product, userOrders }) => {
   );
 };
 
-const InteriorDesignsPage = () => {
+const ThreeDPlansPage = () => {
   const dispatch: AppDispatch = useDispatch();
+  const navigate = useNavigate();
 
   const {
     products: adminProducts,
@@ -412,18 +456,19 @@ const InteriorDesignsPage = () => {
   const { userInfo } = useSelector((state: RootState) => state.user);
   const { orders } = useSelector((state: RootState) => state.orders);
 
-  const [sortBy, setSortBy] = useState("newest");
   const [filters, setFilters] = useState({
-    theme: "all",
-    category: "all",
-    roomType: "all",
+    plotArea: "all",
+    plotSize: "all",
+    bhk: "all",
+    direction: "all",
+    floors: "all",
     propertyType: "all",
-    budget: [500, 50000],
+    budget: [500, 100000],
   });
-  const [currentPage, setCurrentPage] = useState(1);
-  const CARDS_PER_PAGE = 6;
+  const [sortBy, setSortBy] = useState("newest");
 
   useEffect(() => {
+    // Only send filters that are not "all" or default
     const apiParams: Record<string, any> = {};
     Object.entries(filters).forEach(([key, value]) => {
       if (key === "budget") {
@@ -432,11 +477,12 @@ const InteriorDesignsPage = () => {
         apiParams[key] = value;
       }
     });
-    apiParams.planType = "Interior Designs";
+    apiParams.planType = "3D Elevations";
 
     dispatch(fetchProducts(apiParams));
     dispatch(fetchAllApprovedPlans(apiParams));
 
+    // Fetch user orders if logged in
     if (userInfo) {
       dispatch(fetchMyOrders());
     }
@@ -445,50 +491,62 @@ const InteriorDesignsPage = () => {
   const combinedProducts = useMemo(() => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
     const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
-    return [
-      ...adminArray.map((p) => ({ ...p, source: "admin" })),
-      ...profArray.map((p) => ({
-        ...p,
-        name: p.planName,
-        source: "professional",
-      })),
-    ];
+    const normalizedAdmin = adminArray.map((p) => ({
+      ...p,
+      name: p.name || "Unnamed",
+      image: p.image || "",
+      source: "admin",
+    }));
+    const normalizedProf = profArray.map((p) => ({
+      ...p,
+      name: p.planName || "Unnamed",
+      image: p.mainImage || "",
+      source: "professional",
+    }));
+    return [...normalizedAdmin, ...normalizedProf];
   }, [adminProducts, professionalPlans]);
 
-  const interiorDesigns = useMemo(
-    () => combinedProducts.filter((p) => p.planType === "Interior Designs"),
-    [combinedProducts]
-  );
-
-  const uniqueCategories = useMemo(() => {
-    const categoriesSet = new Set(
-      interiorDesigns.map((p) => p.category).filter(Boolean)
-    );
-    return Array.from(categoriesSet).sort();
-  }, [interiorDesigns]);
-
+  // Enhanced filtering logic matching BrowsePlansPage
   const filteredAndSortedProducts = useMemo(() => {
-    let products = interiorDesigns.filter((product) => {
+    let products = combinedProducts.filter((product) => {
       if (!product || typeof product.price === "undefined") return false;
+
+      // Only show "3D Elevations"
+      if (product.planType !== "3D Elevations") return false;
 
       const productPrice = product.isSale ? product.salePrice : product.price;
       const matchesBudget =
         productPrice >= filters.budget[0] && productPrice <= filters.budget[1];
-      const matchesTheme =
-        filters.theme === "all" || product.theme === filters.theme;
-      const matchesCategory =
-        filters.category === "all" || product.category === filters.category;
-      const matchesRoomType =
-        filters.roomType === "all" || product.roomType === filters.roomType;
+      const matchesPlotSize =
+        filters.plotSize === "all" || product.plotSize === filters.plotSize;
+      const matchesPlotArea =
+        filters.plotArea === "all" ||
+        (filters.plotArea === "500-1000"
+          ? product.plotArea >= 500 && product.plotArea <= 1000
+          : filters.plotArea === "1000-2000"
+            ? product.plotArea > 1000 && product.plotArea <= 2000
+            : filters.plotArea === "2000+"
+              ? product.plotArea > 2000
+              : true);
+      const matchesBhk =
+        filters.bhk === "all" ||
+        (product.rooms || product.bhk) === parseInt(filters.bhk, 10);
+      const matchesDirection =
+        filters.direction === "all" || product.direction === filters.direction;
+      const matchesFloors =
+        filters.floors === "all" ||
+        product.floors === parseInt(filters.floors, 10);
       const matchesPropertyType =
         filters.propertyType === "all" ||
         product.propertyType === filters.propertyType;
 
       return (
         matchesBudget &&
-        matchesTheme &&
-        matchesCategory &&
-        matchesRoomType &&
+        matchesPlotSize &&
+        matchesPlotArea &&
+        matchesBhk &&
+        matchesDirection &&
+        matchesFloors &&
         matchesPropertyType
       );
     });
@@ -496,79 +554,51 @@ const InteriorDesignsPage = () => {
     if (sortBy === "price-low") {
       products.sort(
         (a, b) =>
-          (a.isSale ? a.salePrice : a.price) -
-          (b.isSale ? b.salePrice : b.price)
+          (a.isSale && a.salePrice ? a.salePrice : a.price) -
+          (b.isSale && b.salePrice ? b.salePrice : b.price)
       );
     } else if (sortBy === "price-high") {
       products.sort(
         (a, b) =>
-          (b.isSale ? b.salePrice : b.price) -
-          (a.isSale ? a.salePrice : a.price)
+          (b.isSale && b.salePrice ? b.salePrice : b.price) -
+          (a.isSale && a.salePrice ? a.salePrice : a.price)
       );
     } else {
-      products.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+      products.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
     }
-
     return products;
-  }, [interiorDesigns, filters, sortBy]);
-
-  const totalPages = Math.ceil(
-    filteredAndSortedProducts.length / CARDS_PER_PAGE
-  );
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
-    return filteredAndSortedProducts.slice(
-      startIndex,
-      startIndex + CARDS_PER_PAGE
-    );
-  }, [currentPage, filteredAndSortedProducts]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filteredAndSortedProducts.length]);
+  }, [combinedProducts, filters, sortBy]);
 
   const isLoading =
     adminListStatus === "loading" || profListStatus === "loading";
   const isError = adminListStatus === "failed" || profListStatus === "failed";
-  const errorMessage = String(adminError || profError || "An error occurred.");
+  const errorMessage = String(adminError || profError);
+  const pageTitle = "Floor Plans + 3D Elevation Plans ";
 
   return (
     <div className="bg-gray-50">
-      {/* --- Helmet Tag for SEO --- */}
-      <Helmet>
-        <title>Readymade Interior Designs | Modern Home Interiors Online</title>
-        <meta
-          name="description"
-          content="Explore readymade interior designs for living rooms, bedrooms, kitchens, and offices. Modern, stylish, and affordable interiors tailored for every home."
-        />
-      </Helmet>
-
       <Navbar />
       <main className="container mx-auto px-4 py-12">
-        <div className="flex flex-col lg:flex-row gap-12 items-start">
-          <FilterSidebar
-            filters={filters}
-            setFilters={setFilters}
-            uniqueCategories={uniqueCategories}
-          />
+        <div className="flex flex-col lg:flex-row gap-12">
+          <FilterSidebar filters={filters} setFilters={setFilters} />
           <div className="w-full lg:w-3/4 xl:w-4/5">
             <div className="flex flex-wrap gap-4 justify-between items-center mb-6 border-b pb-4">
               <div>
                 <h1 className="text-3xl font-bold text-gray-800">
-                  Interior Design Plans
+                  {pageTitle}
                 </h1>
                 <p className="text-gray-500 text-sm">
-                  Showing {paginatedProducts.length} of{" "}
-                  {filteredAndSortedProducts.length} results
+                  Showing {filteredAndSortedProducts.length} results
                 </p>
               </div>
               <div className="w-full sm:w-48">
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Sort by" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="newest">Sort by latest</SelectItem>
@@ -593,62 +623,44 @@ const InteriorDesignsPage = () => {
               <div className="text-center py-20">
                 <ServerCrash className="mx-auto h-12 w-12 text-red-500" />
                 <h3 className="mt-4 text-xl font-semibold text-red-500">
-                  Failed to Load Interior Designs
+                  Failed to Load 3D Plans
                 </h3>
                 <p className="mt-2 text-gray-500">{errorMessage}</p>
               </div>
             )}
 
-            {!isLoading && !isError && (
-              <>
-                <motion.div
-                  layout
-                  className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-                >
-                  {paginatedProducts.length > 0 ? (
-                    paginatedProducts.map((product) => (
-                      <ProductCard
-                        key={`${product.source}-${product._id}`}
-                        product={product}
-                        userOrders={orders}
-                      />
-                    ))
-                  ) : (
-                    <div className="col-span-full text-center py-20">
-                      <h3 className="text-xl font-semibold">
-                        No Interior Designs Found
-                      </h3>
-                      <p className="mt-2 text-gray-500">
-                        Try adjusting your filters to see more results.
-                      </p>
-                    </div>
-                  )}
-                </motion.div>
+            {!isLoading &&
+              !isError &&
+              filteredAndSortedProducts.length === 0 && (
+                <div className="text-center py-20">
+                  <h3 className="text-xl font-semibold">
+                    No 3D Elevation Plans Found
+                  </h3>
+                  <p className="mt-2 text-gray-500">
+                    Try adjusting your filters to see more results.
+                  </p>
+                </div>
+              )}
 
-                {totalPages > 1 && (
-                  <div className="mt-12 flex justify-center items-center gap-4">
-                    <Button
-                      variant="outline"
-                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                      disabled={currentPage === 1}
-                    >
-                      <ChevronLeft className="w-4 h-4 mr-2" /> Previous
-                    </Button>
-                    <span className="font-medium">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        setCurrentPage((p) => Math.min(p + 1, totalPages))
-                      }
-                      disabled={currentPage === totalPages}
-                    >
-                      Next <ChevronRight className="w-4 h-4 ml-2" />
-                    </Button>
+            {!isLoading && !isError && (
+              <motion.div
+                layout
+                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+              >
+                {filteredAndSortedProducts.length > 0 ? (
+                  filteredAndSortedProducts.map((plan) => (
+                    <ProductCard
+                      key={`${plan.source}-${plan._id}`}
+                      plan={plan}
+                      userOrders={orders}
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-20">
+                    <h3 className="text-xl font-semibold">No 3D Plans Found</h3>
                   </div>
                 )}
-              </>
+              </motion.div>
             )}
           </div>
         </div>
@@ -658,4 +670,4 @@ const InteriorDesignsPage = () => {
   );
 };
 
-export default InteriorDesignsPage;
+export default ThreeDPlansPage;
