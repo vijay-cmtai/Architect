@@ -269,7 +269,7 @@ const App = () => (
                 </Route>
 
                 {/* --- 404 Not Found Route --- */}
-                <Route path="*" element={<NotFound />} />
+                <Route path="*" element={<Products/>} />
               </Routes>
             </TooltipProvider>
           </WishlistProvider>
