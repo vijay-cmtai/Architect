@@ -1,6 +1,6 @@
-import { ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const CTA = () => {
   return (
@@ -18,18 +18,22 @@ const CTA = () => {
           Start Your Dream Project Today!
         </h2>
         <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto">
-          Join thousands of satisfied customers who have built their dream homes with our architectural expertise.
+          Join thousands of satisfied customers who have built their dream homes
+          with our architectural expertise.
         </p>
-        
+
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <Link to="/products">
-            <Button className="bg-white text-primary hover:bg-white/90 font-semibold px-8 py-4 text-lg rounded-xl shadow-large">
+            <Button className="bg-white text-orange-600 hover:bg-white/90 font-semibold px-8 py-4 text-lg rounded-xl shadow-large">
               Browse House Plans
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>
           <Link to="/contact">
-            <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-primary font-semibold px-8 py-4 text-lg rounded-xl">
+            <Button
+              variant="outline"
+              className="border-2 border-white text-orange-600 bg-white/90 hover:bg-white font-semibold px-8 py-4 text-lg rounded-xl"
+            >
               Contact Our Experts
             </Button>
           </Link>

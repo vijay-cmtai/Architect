@@ -1,68 +1,49 @@
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
-
-// El array de datos con todo el contenido de las tarjetas
-const packages = [
-  {
-    title: "Floor Plan",
-    price: "2",
-    unit: "Per sq.ft.",
-    areaType: "Built-up Area",
-    isPopular: false,
-    features: [
-      "Revision Unlimited upto satisfaction",
-      "Requirements fixed",
-      "General vastu follows",
-      "24 Hours Delivery",
-    ],
-  },
-  {
-    title: "Floor Plan + 3D Elevation",
-    price: "5",
-    unit: "Per sq.ft.",
-    areaType: "Built-up Area",
-    isPopular: true,
-    features: [
-      "Plan Revision Unlimited upto satisfaction",
-      "1 3D model on Reference",
-      "Design & colour change flexibility",
-      "Plan 24 Hours. Elevation 48 Hours Delivery",
-    ],
-  },
-  {
-    title: "Complete House Plan File",
-    price: "Custom",
-    unit: "Price",
-    areaType: "",
-    isPopular: false,
-    includes: [
-      "Floor plan",
-      "3D Elevation + working plan",
-      "Structural Detail plan",
-      "Electrical Detail plan",
-      "Plumbing Detail plan",
-      "Sanitary Detail plan",
-      "Door window Detail",
-      "Staircase Detail",
-    ],
-    note: "Delivery in 3 working days after plan & elevation final. Condition Same as Package-2.",
-  },
-  {
-    title: "Interior Design",
-    price: "25",
-    unit: "Per sq.ft.",
-    areaType: "Carpet Area",
-    isPopular: false,
-    features: [
-      "24 Hours Delivery",
-      "Changes are accepted",
-      "Revisions are accepted",
-    ],
-  },
-];
+import { AppDispatch, RootState } from "@/lib/store"; 
+import { fetchAllPackages } from "@/lib/features/packages/packageSlice"; 
 
 const StandardPackagesSection = () => {
+  const dispatch: AppDispatch = useDispatch();
+
+  const { packages, status, error } = useSelector(
+    (state: RootState) => state.packages
+  );
+
+  useEffect(() => {
+    
+    dispatch(fetchAllPackages());
+  }, [dispatch]);
+
+  const standardPackages = packages.filter(
+    (pkg) => pkg.packageType === "standard"
+  );
+
+  if (status === "loading") {
+    return (
+      <section className="py-16 bg-soft-teal">
+        <div className="container mx-auto px-4 text-center">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+          <p className="mt-4 text-lg">Loading Packages...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (status === "failed") {
+    return (
+      <section className="py-16 bg-red-50">
+        <div className="container mx-auto px-4 text-center text-red-600">
+          <h3 className="text-2xl font-bold">Something went wrong!</h3>
+          <p>{error}</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-16 bg-soft-teal">
       <div className="container mx-auto px-4">
@@ -82,9 +63,9 @@ const StandardPackagesSection = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {packages.map((pkg, index) => (
+          {standardPackages.map((pkg, index) => (
             <motion.div
-              key={index}
+              key={pkg._id}
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -112,7 +93,7 @@ const StandardPackagesSection = () => {
                   {pkg.areaType}
                 </p>
 
-                {pkg.features && (
+                {pkg.features && pkg.features.length > 0 && (
                   <div className="text-left mt-3 text-xs space-y-1">
                     {pkg.features.map((feature) => (
                       <div key={feature} className="flex items-center gap-2">
@@ -126,7 +107,7 @@ const StandardPackagesSection = () => {
                   </div>
                 )}
 
-                {pkg.includes && (
+                {pkg.includes && pkg.includes.length > 0 && (
                   <div className="text-left mt-3 text-xs space-y-1">
                     <p className="font-bold text-foreground mb-1">Includes:</p>
                     {pkg.includes.map((item) => (
@@ -155,7 +136,7 @@ const StandardPackagesSection = () => {
                   packageUnit: pkg.unit,
                   packagePrice: pkg.price,
                 }}
-                className="mt-4 w-full btn-primary text-center block text-sm py-2"
+                className="mt-4 w-full btn-primary text-center block text-sm py-2" 
               >
                 Choose Plan
               </Link>

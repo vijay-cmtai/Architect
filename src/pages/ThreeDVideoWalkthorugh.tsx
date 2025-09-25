@@ -1,9 +1,7 @@
-// src/pages/ThreeDWalkthroughPage.jsx
-
 import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
-import { Helmet } from "react-helmet-async"; // Helmet को import करें
+import { Helmet } from "react-helmet-async";
 import {
   submitCustomizationRequest,
   resetStatus,
@@ -12,10 +10,11 @@ import { fetchVideos, fetchTopics } from "@/lib/features/videos/videoSlice";
 import RequestPageLayout from "../components/RequestPageLayout";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
-import { Loader2 } from "lucide-react";
+import { Loader2, PlayCircle, X, ShoppingCart } from "lucide-react"; // ✨ ShoppingCart आइकन इम्पोर्ट करें
 import YouTube from "react-youtube";
+import { Link } from "react-router-dom"; // ✨ Link को इम्पोर्ट करें
+import { Button } from "@/components/ui/button"; // ✨ Button को इम्पोर्ट करें
 
-// Form styles (isko change nahi kiya gaya hai)
 export const formStyles = {
   label: "block text-sm font-semibold mb-2 text-gray-700",
   input:
@@ -26,6 +25,40 @@ export const formStyles = {
     "w-full p-3 bg-gray-100 border-2 border-transparent rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition",
   fileInput:
     "w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100",
+};
+
+const VideoModal = ({ videoId, onClose }) => {
+  if (!videoId) return null;
+
+  const opts = {
+    height: "100%",
+    width: "100%",
+    playerVars: {
+      autoplay: 1,
+      controls: 1,
+    },
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-4xl aspect-video bg-black rounded-lg shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute -top-3 -right-3 h-10 w-10 bg-white rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 z-10"
+          aria-label="Close video player"
+        >
+          <X size={24} />
+        </button>
+        <YouTube videoId={videoId} opts={opts} className="w-full h-full" />
+      </div>
+    </div>
+  );
 };
 
 const ThreeDWalkthroughPage = () => {
@@ -39,6 +72,8 @@ const ThreeDWalkthroughPage = () => {
     listStatus: videoListStatus,
   } = useSelector((state) => state.videos);
   const [selectedTopic, setSelectedTopic] = useState("All");
+
+  const [playingVideoId, setPlayingVideoId] = useState(null);
 
   useEffect(() => {
     dispatch(fetchVideos());
@@ -74,25 +109,22 @@ const ThreeDWalkthroughPage = () => {
     return videos.filter((video) => video.topic === selectedTopic);
   }, [videos, selectedTopic]);
 
-  const videoOptions = (videoId) => ({
+  const thumbnailOptions = (videoId) => ({
     height: "100%",
     width: "100%",
     playerVars: {
-      autoplay: 1,
-      mute: 1,
-      loop: 1,
-      playlist: videoId,
+      autoplay: 0,
       controls: 0,
       showinfo: 0,
       modestbranding: 1,
       rel: 0,
       fs: 0,
+      iv_load_policy: 3,
     },
   });
 
   return (
     <>
-      {/* --- Helmet Tag for SEO --- */}
       <Helmet>
         <title>
           3D Elevation & Video Walkthrough | Interactive Home Designs
@@ -102,6 +134,11 @@ const ThreeDWalkthroughPage = () => {
           content="Explore stunning 3D elevations and immersive video walkthroughs to visualize your dream home. Experience detailed designs and interactive tours for the perfect house plan."
         />
       </Helmet>
+
+      <VideoModal
+        videoId={playingVideoId}
+        onClose={() => setPlayingVideoId(null)}
+      />
 
       <Navbar />
       <form key={formKey} onSubmit={handleSubmit}>
@@ -238,24 +275,32 @@ const ThreeDWalkthroughPage = () => {
                 {filteredVideos.map((video) => (
                   <div
                     key={video._id}
-                    className="group block bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                    className="group flex flex-col bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
                   >
-                    <div className="relative aspect-video bg-gray-200">
+                    <div
+                      className="relative aspect-video bg-gray-900 cursor-pointer"
+                      onClick={() => setPlayingVideoId(video.youtubeVideoId)}
+                    >
                       {video.youtubeVideoId ? (
-                        <YouTube
-                          videoId={video.youtubeVideoId}
-                          opts={videoOptions(video.youtubeVideoId)}
-                          className="absolute top-0 left-0 w-full h-full"
-                          iframeClassName="pointer-events-none"
-                        />
+                        <>
+                          <YouTube
+                            videoId={video.youtubeVideoId}
+                            opts={thumbnailOptions(video.youtubeVideoId)}
+                            className="absolute top-0 left-0 w-full h-full"
+                            iframeClassName="pointer-events-none"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <PlayCircle className="h-16 w-16 text-white text-opacity-80" />
+                          </div>
+                        </>
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-500">
                           Invalid Video Link
                         </div>
                       )}
                     </div>
-                    <div className="p-4">
-                      <span className="text-xs bg-orange-100 text-orange-800 font-semibold px-2 py-1 rounded-full">
+                    <div className="p-4 flex flex-col flex-grow">
+                      <span className="text-xs bg-orange-100 text-orange-800 font-semibold px-2 py-1 rounded-full self-start">
                         {video.topic}
                       </span>
                       <h3
@@ -264,14 +309,22 @@ const ThreeDWalkthroughPage = () => {
                       >
                         {video.title}
                       </h3>
-                      <a
-                        href={video.youtubeLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-orange-600 hover:underline mt-1 inline-block"
+                      <button
+                        onClick={() => setPlayingVideoId(video.youtubeVideoId)}
+                        className="text-sm text-orange-600 hover:underline mt-1 inline-block text-left"
                       >
-                        Watch on YouTube
-                      </a>
+                        Watch Video
+                      </button>
+
+                      {/* ✨ यहाँ Buy Now का बटन जोड़ा गया है ✨ */}
+                      <div className="mt-auto pt-4">
+                        <Link to="/products" className="w-full block">
+                          <Button className="w-full bg-orange-500 hover:bg-orange-600">
+                            <ShoppingCart className="mr-2 h-4 w-4" />
+                            Buy Now
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 ))}

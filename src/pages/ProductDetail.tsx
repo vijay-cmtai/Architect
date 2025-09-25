@@ -276,7 +276,11 @@ const DetailPage = () => {
   const canonicalUrl = `${window.location.origin}${location.pathname}`;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    // ---- RIGHT CLICK DISABLED HERE ----
+    <div
+      className="min-h-screen bg-gray-50"
+      onContextMenu={(e) => e.preventDefault()}
+    >
       <Helmet>
         <title>
           {displayData.seo?.title || `${displayData.name} | House Plan`}
@@ -334,20 +338,6 @@ const DetailPage = () => {
                     <ShoppingBag className="w-5 h-5" />
                     Buy Now
                   </Button>
-                  <a
-                    href={whatsappLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center"
-                  >
-                    <Button
-                      variant="secondary"
-                      className="bg-green-500 hover:bg-green-600 text-white rounded-full px-6 py-3 text-base font-semibold flex items-center gap-2"
-                    >
-                      <MessageSquare className="w-5 h-5" />
-                      Modify Plan
-                    </Button>
-                  </a>
                 </div>
               </div>
               <div className="grid grid-cols-4 gap-4">
@@ -415,14 +405,30 @@ const DetailPage = () => {
                     </button>
                   </div>
                 </div>
-                <Button
-                  onClick={handleAddToCart}
-                  disabled={cartState.loading}
-                  variant="outline"
-                  className="w-full py-6 text-lg font-bold"
-                >
-                  {cartState.loading ? "Adding..." : "Add to Cart"}
-                </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Button
+                    onClick={handleAddToCart}
+                    disabled={cartState.loading}
+                    variant="outline"
+                    className="w-full py-6 text-lg font-bold"
+                  >
+                    {cartState.loading ? "Adding..." : "Add to Cart"}
+                  </Button>
+                  <a
+                    href={whatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full"
+                  >
+                    <Button
+                      variant="secondary"
+                      className="bg-green-500 hover:bg-green-600 text-white w-full py-6 text-lg font-bold flex items-center justify-center gap-2"
+                    >
+                      <MessageSquare className="w-5 h-5" />
+                      Modify Plan
+                    </Button>
+                  </a>
+                </div>
               </div>
 
               <div className="pt-4">

@@ -20,7 +20,8 @@ import {
   FileCheck2,
   Gem,
   PenSquare,
-  Image, // ✨ ICONO AÑADIDO PARA LA GALERÍA
+  Image,
+  Package, // ✨ पैकेज के लिए आइकन इम्पोर्ट करें
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/features/users/userSlice";
@@ -59,10 +60,15 @@ const blogLinks = [
   { name: "Add New Post", path: "/admin/blogs/add", icon: PlusCircle },
 ];
 
-// ✨ NUEVO: Array de Enlaces para la Galería ✨
 const galleryLinks = [
   { name: "Manage Gallery", path: "/admin/gallery", icon: Box },
   { name: "Add Image", path: "/admin/gallery/add", icon: PlusCircle },
+];
+
+// ✨ नया: पैकेज के लिए लिंक का ऐरे ✨
+const packageLinks = [
+  { name: "All Packages", path: "/admin/packages", icon: Box },
+  { name: "Add New Package", path: "/admin/packages/add", icon: PlusCircle },
 ];
 
 const userLinks = [
@@ -77,7 +83,8 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
     requests: false,
     inquiries: false,
     blogs: false,
-    gallery: false, // ✨ Nuevo estado para el menú de la galería ✨
+    gallery: false,
+    packages: false, // ✨ पैकेज मेन्यू के लिए नया स्टेट ✨
   });
 
   const dispatch = useDispatch();
@@ -105,7 +112,7 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
       className={({ isActive }) =>
         `${baseLinkClasses} my-1 ${isActive ? activeClasses : inactiveClasses}`
       }
-      onClick={() => setIsOpen(false)} // Close sidebar on mobile link click
+      onClick={() => setIsOpen(false)} // मोबाइल पर लिंक क्लिक होने पर साइडबार बंद करें
     >
       <link.icon className="h-5 w-5 mr-3" />
       <span>{link.name}</span>
@@ -178,9 +185,10 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
           {mainLinks.map(renderNavLink)}
           {renderSubMenu("Products", ShoppingBag, "products", productLinks)}
           {renderSubMenu("Blog", PenSquare, "blogs", blogLinks)}
-
-          {/* ✨ NUEVO SUBMENÚ DE LA GALERÍA ✨ */}
           {renderSubMenu("Gallery", Image, "gallery", galleryLinks)}
+
+          {/* ✨ नया पैकेज सब-मेन्यू ✨ */}
+          {renderSubMenu("Packages", Package, "packages", packageLinks)}
 
           {renderSubMenu("Users", Users, "users", userLinks)}
           {renderSubMenu("Requests", Building, "requests", requestLinks)}

@@ -1,50 +1,16 @@
-// Example file path: src/components/home/PremiumPackagesSection.jsx
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
-import { CheckCircle, Star, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  CheckCircle,
+  Star,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+} from "lucide-react";
 import { Link } from "react-router-dom";
-
-const premiumPackages = [
-  {
-    title: "Floor Plan",
-    price: "5",
-    unit: "Per sqft",
-    isPopular: false,
-    features: [
-      "3 plan option",
-      "Furniture layout",
-      "Landscaping",
-      "Free vastu Consultant (Experienced)",
-    ],
-  },
-  {
-    title: "Floor plan + 3d Elevation",
-    price: "10",
-    unit: "Per sqft",
-    isPopular: true,
-    features: [
-      "2 3D models",
-      "3 Plan option",
-      "Furniture layout",
-      "Landscaping",
-      "Free vastu Consultant (Experienced)",
-    ],
-  },
-  {
-    title:
-      " Complete House Plan File With Interior Design And Video Walkthrough",
-    price: "40",
-    unit: "Per sqft",
-    isPopular: false,
-    features: [
-      "3 plan option",
-      "2 3d model",
-      "Works under vastu Expert",
-      "With Interior Designing of Complete House",
-    ],
-  },
-];
+import { AppDispatch, RootState } from "@/lib/store";
+import { fetchAllPackages } from "@/lib/features/packages/packageSlice";
 
 const PremiumPackageCard = ({ pkg, index }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -58,7 +24,7 @@ const PremiumPackageCard = ({ pkg, index }) => {
 
   return (
     <motion.div
-      key={index}
+      key={pkg._id}
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -104,7 +70,6 @@ const PremiumPackageCard = ({ pkg, index }) => {
         )}
       </div>
 
-      {/* FIX: Se han añadido packageUnit y packagePrice al estado del Link */}
       <Link
         to="/premium-booking-form"
         state={{
@@ -121,6 +86,41 @@ const PremiumPackageCard = ({ pkg, index }) => {
 };
 
 const PremiumPackagesSection = () => {
+  const dispatch: AppDispatch = useDispatch();
+  const { packages, status, error } = useSelector(
+    (state: RootState) => state.packages
+  );
+
+  useEffect(() => {
+    dispatch(fetchAllPackages());
+  }, [dispatch]);
+
+  const premiumPackages = packages.filter(
+    (pkg) => pkg.packageType === "premium"
+  );
+
+  if (status === "loading") {
+    return (
+      <section className="py-20 bg-soft-teal">
+        <div className="container mx-auto px-4 text-center">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+          <p className="mt-4 text-lg">Loading Premium Packages...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (status === "failed") {
+    return (
+      <section className="py-20 bg-red-50">
+        <div className="container mx-auto px-4 text-center text-red-600">
+          <h3 className="text-2xl font-bold">Something went wrong!</h3>
+          <p>{error}</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-20 bg-soft-teal">
       <div className="container mx-auto px-4">
@@ -140,7 +140,7 @@ const PremiumPackagesSection = () => {
         </motion.div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {premiumPackages.map((pkg, index) => (
-            <PremiumPackageCard key={index} pkg={pkg} index={index} />
+            <PremiumPackageCard key={pkg._id} pkg={pkg} index={index} />
           ))}
         </div>
       </div>

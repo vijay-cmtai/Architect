@@ -10,7 +10,7 @@ import { store } from "./lib/store";
 import ScrollToTop from "@/components/ScrollToTop";
 
 // --- Route Protection Component ---
-import ProtectedRoute from "./components/ProtectedRoute"; // YEH IMPORT KAREIN
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // --- Public Page Imports ---
 import Index from "./pages/Index";
@@ -79,6 +79,8 @@ import AdminAddEditBlogPage from "./pages/admin/AdminAddEditBlogPage";
 import AddGalleryImagePage from "./pages/admin/AddGalleryImagePage";
 import ManageGalleryPage from "./pages/admin/ManageGalleryPage";
 import VideoUploadPage from "./pages/admin/VideoUploadPage";
+import PackageEditPage from "./pages/admin/packages/PackageEditPage";
+import PackageListPage from "./pages/admin/packages/PackageListPage";
 
 // --- Professional Dashboard Imports ---
 import ProfessionalLayout from "./pages/professional/ProfessionalLayout";
@@ -176,10 +178,6 @@ const App = () => (
                   element={<PremiumBookingPage />}
                 />
                 <Route path="/gallery" element={<GalleryPage />} />
-
-                {/* ====================================================== */}
-                {/*             2. PROTECTED USER DASHBOARD ROUTES         */}
-                {/* ====================================================== */}
                 <Route
                   element={<ProtectedRoute allowedRoles={["user", "admin"]} />}
                 >
@@ -194,10 +192,6 @@ const App = () => (
                     />
                   </Route>
                 </Route>
-
-                {/* ====================================================== */}
-                {/*        3. PROTECTED PROFESSIONAL DASHBOARD ROUTES      */}
-                {/* ====================================================== */}
                 <Route
                   element={
                     <ProtectedRoute allowedRoles={["professional", "admin"]} />
@@ -217,10 +211,6 @@ const App = () => (
                     <Route path="profile" element={<ProfilePageProf />} />
                   </Route>
                 </Route>
-
-                {/* ====================================================== */}
-                {/*           4. PROTECTED ADMIN DASHBOARD ROUTES          */}
-                {/* ====================================================== */}
                 <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<AdminDashboardPage />} />
@@ -238,6 +228,14 @@ const App = () => (
                       path="gallery/add"
                       element={<AddGalleryImagePage />}
                     />
+
+                    <Route path="packages" element={<PackageListPage />} />
+                    <Route path="packages/add" element={<PackageEditPage />} />
+                    <Route
+                      path="packages/edit/:id"
+                      element={<PackageEditPage />}
+                    />
+
                     <Route
                       path="standard-requests"
                       element={<StandardRequestsPage />}
