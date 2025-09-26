@@ -123,7 +123,6 @@ const DetailPage = () => {
 
   const encodedUrl = encodeURIComponent(currentUrl);
   const encodedTitle = encodeURIComponent(displayData?.name || "");
-  const encodedImage = encodeURIComponent(productImages[selectedImageIndex]);
 
   const socialPlatforms = [
     {
@@ -154,7 +153,8 @@ const DetailPage = () => {
       name: "Pinterest",
       icon: <PinterestIcon />,
       color: "bg-red-600",
-      href: `https://pinterest.com/pin/create/button/?url=${encodedUrl}&media=${encodedImage}&description=${encodedTitle}`,
+      // --- ✨ बदलाव यहाँ किया गया है ---
+      href: "https://pinterest.com/houseplanfiles/",
     },
   ];
 
@@ -276,7 +276,6 @@ const DetailPage = () => {
   const canonicalUrl = `${window.location.origin}${location.pathname}`;
 
   return (
-    // ---- RIGHT CLICK DISABLED HERE ----
     <div
       className="min-h-screen bg-gray-50"
       onContextMenu={(e) => e.preventDefault()}
@@ -329,7 +328,6 @@ const DetailPage = () => {
                     />
                   </Button>
                 </div>
-                {/* --- BUTTONS ON IMAGE --- */}
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 p-2 bg-black/40 backdrop-blur-sm rounded-full">
                   <Button
                     onClick={handleBuyNow}
@@ -442,7 +440,7 @@ const DetailPage = () => {
                       href={p.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      title={`Share on ${p.name}`}
+                      title={`${p.name === "Pinterest" ? "Visit our Pinterest" : `Share on ${p.name}`}`}
                       className={`w-9 h-9 flex items-center justify-center rounded-md text-white ${p.color} transition-opacity hover:opacity-80`}
                     >
                       {p.icon}
