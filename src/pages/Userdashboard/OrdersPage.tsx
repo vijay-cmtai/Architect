@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { format } from "date-fns";
+import { toast } from "sonner"; // Sonner टोस्ट का उपयोग करेंगे
 
 import { RootState, AppDispatch } from "@/lib/store";
 import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Loader2, Download } from "lucide-react";
-import { Badge } from "@/components/ui/badge"; // Import Badge component
+import { Badge } from "@/components/ui/badge";
 
 const getStatusBadgeVariant = (isPaid) => {
   return isPaid ? "default" : "destructive";
@@ -23,26 +24,34 @@ const MyOrdersPage = () => {
     dispatch(fetchMyOrders());
   }, [dispatch]);
 
-  // ==========================================================
-  // ✨ FIX IS HERE: The handleDownload function is now fully functional ✨
-  // ==========================================================
   const handleDownload = (item) => {
-    // The 'productId' object is now populated with the product's details
-    const fileUrl = item.productId?.planFile;
+    // --- ✨ सुरक्षित डाउनलोड लॉजिक ---
+    // 1. जाँचें कि productId और planFile मौजूद हैं
+    if (
+      !item.productId ||
+      !item.productId.planFile ||
+      item.productId.planFile.length === 0
+    ) {
+      toast.error(
+        "Download file is not available for this product. Please contact support."
+      );
+      return;
+    }
+
+    // 2. पहला फ़ाइल लिंक प्राप्त करें
+    const fileUrl = item.productId.planFile[0];
 
     if (fileUrl) {
-      // Create a temporary link element to trigger the download
+      toast.info("Your download is starting...");
       const link = document.createElement("a");
       link.href = fileUrl;
-      // Suggest a filename for the user
-      link.setAttribute("download", `${item.name}-plan.pdf`); // You can adjust the extension
+      link.setAttribute(
+        "download",
+        `${item.name.replace(/\s+/g, "-")}-plan.pdf`
+      );
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    } else {
-      alert(
-        "Download file is not available for this product. Please contact support."
-      );
     }
   };
 
@@ -107,7 +116,8 @@ const MyOrdersPage = () => {
               <div className="space-y-3">
                 {order.orderItems.map((item) => (
                   <div
-                    key={item.productId._id}
+                    // --- ✨ बदलाव यहाँ किया गया है ---
+                    key={item._id} // item._id का उपयोग करें जो हमेशा यूनिक होता है
                     className="flex justify-between items-center p-2 rounded-md hover:bg-gray-50"
                   >
                     <div className="flex items-center gap-4">
@@ -130,9 +140,11 @@ const MyOrdersPage = () => {
                         size="sm"
                         variant="outline"
                         onClick={() => handleDownload(item)}
+                        // अगर productId null है तो बटन को डिसेबल करें
+                        disabled={!item.productId}
                       >
                         <Download className="w-4 h-4 mr-2" />
-                        Download Plan
+                        {item.productId ? "Download Plan" : "Not Available"}
                       </Button>
                     ) : (
                       <span className="text-sm text-gray-400 font-medium">
