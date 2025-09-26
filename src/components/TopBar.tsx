@@ -1,5 +1,3 @@
-// Example file path: src/components/TopBar.jsx
-
 import React from "react";
 // All necessary icons are imported
 import {
@@ -74,7 +72,7 @@ const TopBar = () => {
     {
       name: "Pinterest",
       icon: <PinterestIcon />,
-      href: "https://pinterest.com",
+      href: "https://pinterest.com/houseplanfiles/", 
     },
     {
       name: "Telegram",
@@ -85,7 +83,6 @@ const TopBar = () => {
   ];
 
   return (
-    // The blue line is now part of the header structure, not a separate element
     <header className="bg-white border-b border-gray-200 pt-1 bg-sky-400">
       <div className="bg-white">
         <div className="container mx-auto px-4 py-2 flex flex-col lg:flex-row lg:justify-between lg:items-center">
@@ -98,7 +95,6 @@ const TopBar = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 title={social.name}
-                // FIX: Updated styles to be simple icons that change color on hover
                 className="text-gray-500 transition-colors hover:text-orange-500"
               >
                 {social.icon}
@@ -119,7 +115,6 @@ const TopBar = () => {
               href={`mailto:${contactInfo.email}`}
               className="flex items-center gap-x-2 transition-colors hover:text-orange-500"
             >
-              {/* FIX: Icon color updated */}
               <Mail size={16} className="text-orange-500" />
               <span>{contactInfo.email}</span>
             </a>
@@ -127,7 +122,6 @@ const TopBar = () => {
               href={`tel:${contactInfo.phone}`}
               className="flex items-center gap-x-2 transition-colors hover:text-orange-500"
             >
-              {/* FIX: Icon color updated */}
               <Phone size={16} className="text-orange-500" />
               <span>{contactInfo.phone}</span>
             </a>
