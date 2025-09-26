@@ -15,39 +15,54 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button"; 
+import { Button } from "@/components/ui/button";
 import { Loader2, ServerCrash, CameraOff, ShoppingCart } from "lucide-react";
-import { useNavigate, Link } from "react-router-dom"; 
+import { useNavigate, Link } from "react-router-dom";
 
 const GalleryImageCard = ({ item }: { item: GalleryItem }) => {
+  const hasProductLink = item.productLink && item.productLink.trim() !== "";
+
   return (
     <Card className="rounded-xl overflow-hidden group relative border-2 border-transparent hover:border-orange-500/50 transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col">
       <div className="relative aspect-w-1 aspect-h-1 flex-grow">
-        <a href={item.imageUrl} target="_blank" rel="noopener noreferrer">
-          <img
-            src={item.imageUrl}
-            alt={item.title}
-            className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
-          />
-          {/* होवर पर दिखने वाला ओवरले */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-            <h3 className="text-white font-bold text-lg drop-shadow-md">
-              {item.title}
-            </h3>
-            <p className="text-orange-300 text-sm font-semibold">
-              {item.category}
-            </p>
-          </div>
-        </a>
+        {hasProductLink ? (
+          <Link to={item.productLink}>
+            <img
+              src={item.imageUrl}
+              alt={item.altText || item.title}
+              className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+            />
+          </Link>
+        ) : (
+          <a href={item.imageUrl} target="_blank" rel="noopener noreferrer">
+            <img
+              src={item.imageUrl}
+              alt={item.altText || item.title}
+              className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+            />
+          </a>
+        )}
+        
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 pointer-events-none">
+          <h3 className="text-white font-bold text-lg drop-shadow-md">
+            {item.title}
+          </h3>
+          <p className="text-orange-300 text-sm font-semibold">
+            {item.category}
+          </p>
+        </div>
       </div>
-      <div className="p-4 bg-white border-t">
-        <Link to="/products" className="w-full">
-          <Button className="w-full bg-orange-500 hover:bg-orange-600">
-            <ShoppingCart className="mr-2 h-4 w-4" />
-            Buy Now
-          </Button>
-        </Link>
-      </div>
+      
+      {hasProductLink && (
+        <div className="p-4 bg-white border-t">
+          <Link to={item.productLink} className="w-full">
+            <Button className="w-full bg-orange-500 hover:bg-orange-600">
+              <ShoppingCart className="mr-2 h-4 w-4" />
+              Buy Now
+            </Button>
+          </Link>
+        </div>
+      )}
     </Card>
   );
 };
@@ -138,7 +153,6 @@ const GalleryPage: React.FC = () => {
     <div className="bg-[#F7FAFA] min-h-screen">
       <Navbar />
       <main className="container mx-auto px-4 py-16">
-        {/* --- पेज हेडर --- */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-slate-800 tracking-tight">
             Our Project Gallery

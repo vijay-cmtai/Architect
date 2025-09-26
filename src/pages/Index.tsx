@@ -1,4 +1,4 @@
-import { Helmet } from "react-helmet-async"; // Helmet को import करें
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Services from "@/components/Services";
@@ -18,6 +18,9 @@ import SellersSection from "@/components/SellersSection";
 import ContractorsSection from "@/components/ContractorsSection";
 import ConstructionPartnersSection from "@/components/ConstructionPartnersSection";
 import TopBar from "@/components/TopBar";
+
+// ✅ Import chatbot component
+import WhatsAppChatbot from "@/components/WhatsAppChatbot";
 
 const Index = () => {
   return (

@@ -8,11 +8,9 @@ import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { store } from "./lib/store";
 import ScrollToTop from "@/components/ScrollToTop";
-
-// --- Route Protection Component ---
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// --- Public Page Imports ---
+// --- सभी पृष्ठों का आयात ---
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
@@ -48,16 +46,12 @@ import RefundPolicy from "./pages/RefundPolicy";
 import ThreeDWalkthroughPage from "./pages/ThreeDVideoWalkthorugh";
 import ProfessionalProductDetail from "./pages/ProfessionalProduct";
 import GalleryPage from "./pages/GalleryPage";
-
-// --- User Dashboard Imports ---
 import DashboardLayout from "./pages/Userdashboard/DashboardLayout";
 import DashboardPage from "./pages/Userdashboard/DashboardPage";
 import OrdersPage from "./pages/Userdashboard/OrdersPage";
 import DownloadsPage from "./pages/Userdashboard/DownloadsPage";
 import AddressesPage from "./pages/Userdashboard/AddressesPage";
 import AccountDetailsPage from "./pages/Userdashboard/AccountDetailsPage";
-
-// --- Admin Dashboard Imports ---
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AllProductsPage from "./pages/admin/products/AllProductsPage";
@@ -81,14 +75,14 @@ import ManageGalleryPage from "./pages/admin/ManageGalleryPage";
 import VideoUploadPage from "./pages/admin/VideoUploadPage";
 import PackageEditPage from "./pages/admin/packages/PackageEditPage";
 import PackageListPage from "./pages/admin/packages/PackageListPage";
-
-// --- Professional Dashboard Imports ---
 import ProfessionalLayout from "./pages/professional/ProfessionalLayout";
 import ProfessionalDashboardPage from "./pages/professional/DashboardPage";
 import MyProductsPage from "./pages/professional/MyProductsPage";
 import AddProductPageProf from "./pages/professional/AddProductPage";
 import ProfilePageProf from "./pages/professional/ProfilePage";
 import ProfessionalOrdersPage from "./pages/professional/OrdersPage";
+
+// WhatsAppChatbot का आयात हटा दिया गया है
 
 const queryClient = new QueryClient();
 
@@ -103,9 +97,7 @@ const App = () => (
               <Sonner />
               <ScrollToTop />
               <Routes>
-                {/* ====================================================== */}
-                {/*               1. PUBLIC ROUTES                       */}
-                {/* ====================================================== */}
+                {/* --- सार्वजनिक मार्ग --- */}
                 <Route path="/" element={<Index />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
@@ -130,6 +122,7 @@ const App = () => (
                 <Route path="/refund-policy" element={<RefundPolicy />} />
                 <Route path="/blogs" element={<BlogsPage />} />
                 <Route path="/blog/:slug" element={<SingleBlogPostPage />} />
+
                 <Route
                   path="/category/:categoryName"
                   element={<BrowseProductsPage />}
@@ -178,6 +171,8 @@ const App = () => (
                   element={<PremiumBookingPage />}
                 />
                 <Route path="/gallery" element={<GalleryPage />} />
+
+                {/* --- उपयोगकर्ता डैशबोर्ड मार्ग --- */}
                 <Route
                   element={<ProtectedRoute allowedRoles={["user", "admin"]} />}
                 >
@@ -192,6 +187,8 @@ const App = () => (
                     />
                   </Route>
                 </Route>
+
+                {/* --- पेशेवर डैशबोर्ड मार्ग --- */}
                 <Route
                   element={
                     <ProtectedRoute allowedRoles={["professional", "admin"]} />
@@ -211,6 +208,8 @@ const App = () => (
                     <Route path="profile" element={<ProfilePageProf />} />
                   </Route>
                 </Route>
+
+                {/* --- एडमिन डैशबोर्ड मार्ग --- */}
                 <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<AdminDashboardPage />} />
@@ -228,14 +227,12 @@ const App = () => (
                       path="gallery/add"
                       element={<AddGalleryImagePage />}
                     />
-
                     <Route path="packages" element={<PackageListPage />} />
                     <Route path="packages/add" element={<PackageEditPage />} />
                     <Route
                       path="packages/edit/:id"
                       element={<PackageEditPage />}
                     />
-
                     <Route
                       path="standard-requests"
                       element={<StandardRequestsPage />}
@@ -267,7 +264,7 @@ const App = () => (
                 </Route>
 
                 {/* --- 404 Not Found Route --- */}
-                <Route path="*" element={<Products/>} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </TooltipProvider>
           </WishlistProvider>

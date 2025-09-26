@@ -34,11 +34,12 @@ const AddGalleryImagePage: React.FC = () => {
   );
 
   const [title, setTitle] = useState("");
-  // ADDED: State for the alt text
   const [altText, setAltText] = useState("");
   const [category, setCategory] = useState("General");
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  // --- ✨ नया स्टेट यहाँ जोड़ा गया है ---
+  const [productLink, setProductLink] = useState("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -57,10 +58,13 @@ const AddGalleryImagePage: React.FC = () => {
 
     const formData = new FormData();
     formData.append("title", title);
-    // ADDED: Appending the alt text to the form data
     formData.append("altText", altText);
     formData.append("category", category);
     formData.append("image", image);
+    // --- ✨ productLink को FormData में जोड़ा गया है ---
+    if (productLink) {
+      formData.append("productLink", productLink);
+    }
 
     dispatch(createGalleryItem(formData));
   };
@@ -123,7 +127,6 @@ const AddGalleryImagePage: React.FC = () => {
                   required
                 />
               </div>
-              {/* ADDED: New input field for SEO Alt Text */}
               <div className="space-y-2">
                 <Label htmlFor="altText">SEO Alt Text</Label>
                 <Input
@@ -133,21 +136,34 @@ const AddGalleryImagePage: React.FC = () => {
                   placeholder="Describe the image for SEO"
                 />
               </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="category">Category</Label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="General">General</SelectItem>
-                    <SelectItem value="Exteriors">Exteriors</SelectItem>
-                    <SelectItem value="Interiors">Interiors</SelectItem>
-                    <SelectItem value="Projects">Projects</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
+
+            {/* --- ✨ Product Link फ़ील्ड यहाँ जोड़ी गई है ✨ --- */}
+            <div className="space-y-2">
+              <Label htmlFor="productLink">Product Link (Optional)</Label>
+              <Input
+                id="productLink"
+                value={productLink}
+                onChange={(e) => setProductLink(e.target.value)}
+                placeholder="E.g., /product/60d5ecb4d40015e9b3a0"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="General">General</SelectItem>
+                  <SelectItem value="Exteriors">Exteriors</SelectItem>
+                  <SelectItem value="Interiors">Interiors</SelectItem>
+                  <SelectItem value="Projects">Projects</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="image">Image File *</Label>
               <Input

@@ -18,12 +18,6 @@ import {
   Minus,
   Loader2,
   ServerCrash,
-  Facebook,
-  Twitter,
-  Linkedin,
-  Send,
-  AtSign,
-  MessageSquare,
   Star,
   ShoppingBag,
   FileText,
@@ -37,7 +31,56 @@ import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/components/ui/use-toast";
 import house1 from "@/assets/house-1.jpg";
 
-// --- Custom Pinterest Icon ---
+// --- ✨ असली सोशल मीडिया और फ़ोन आइकन्स ✨ ---
+
+const FacebookIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v7.028C18.343 21.128 22 16.991 22 12z" />
+  </svg>
+);
+
+const WhatsAppIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.48 3.4 1.35 4.85L2 22l5.42-1.47c1.41.82 3 1.29 4.62 1.29 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zM12.04 20.15c-1.48 0-2.91-.41-4.15-1.16l-.3-.18-3.08.83.85-3.01-.2-.32c-.82-1.3-1.26-2.81-1.26-4.39 0-4.54 3.72-8.24 8.26-8.24s8.26 3.7 8.26 8.24-3.72 8.24-8.26 8.24zm4.52-6.19c-.24-.12-1.42-.7-1.64-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94s-.28.18-.52.06c-.24-.12-1.02-.38-1.94-1.2-1.03-.9-1.5-1.88-1.68-2.2v-.02c-.18-.32-.04-.5.1-.64.12-.12.26-.32.4-.42.12-.12.16-.2.24-.34s.04-.28-.02-.4c-.06-.12-.54-1.3-.74-1.78s-.4-.4-.54-.4h-.47c-.16 0-.42.06-.64.3s-.84.82-.84 2c0 1.18.86 2.32 1 2.48.12.16 1.67 2.55 4.05 3.56.58.24 1.05.38 1.41.48.58.16 1.11.14 1.52.08.45-.06 1.42-.58 1.62-1.14s.2-1.04.14-1.14c-.06-.1-.22-.16-.46-.28z" />
+  </svg>
+);
+
+const TwitterIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 16 16"
+    fill="currentColor"
+  >
+    <path d="M12.6.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867-5.07-4.425 5.07H.316l5.733-6.57L0 .75h5.063l3.495 4.633L12.601.75Zm-.86 13.028h1.36L4.323 2.145H2.865l8.875 11.633Z" />
+  </svg>
+);
+
+const LinkedinIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+  </svg>
+);
+
 const PinterestIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -47,6 +90,18 @@ const PinterestIcon = () => (
     fill="currentColor"
   >
     <path d="M12 2C6.477 2 2 6.477 2 12c0 4.237 2.636 7.855 6.356 9.312-.084-.602-.167-1.592.034-2.327.185-.68.995-4.223.995-4.223s-.255-.51-.255-1.267c0-1.185.688-2.072 1.553-2.072.73 0 1.08.547 1.08 1.202 0 .73-.465 1.822-.705 2.832-.202.84.42 1.532 1.258 1.532 1.508 0 2.65-1.59 2.65-3.868 0-2.046-1.445-3.48-3.566-3.48-2.35 0-3.738 1.743-3.738 3.355 0 .64.246 1.332.558 1.727.06.074.068.103.05.178-.02.083-.07.28-.09.358-.026.09-.105.12-.24.06-1.1-.47-1.8-1.82-1.8-3.132 0-2.438 2.085-4.73 5.25-4.73 2.76 0 4.86 1.956 4.86 4.418 0 2.712-1.72 4.882-4.14 4.882-.828 0-1.606-.43-1.865-.934 0 0-.405 1.616-.502 2.01-.132.52-.25.99-.4 1.392.36.11.732.17 1.114.17 6.627 0 12-5.373 12-12S18.627 2 12 2z" />
+  </svg>
+);
+
+const PhoneIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
   </svg>
 );
 
@@ -125,28 +180,30 @@ const DetailPage = () => {
   const encodedTitle = encodeURIComponent(displayData?.name || "");
   const encodedImage = encodeURIComponent(productImages[selectedImageIndex]);
 
+  const phoneNumber = "+918815939484";
+
   const socialPlatforms = [
     {
       name: "Facebook",
-      icon: <Facebook size={20} />,
+      icon: <FacebookIcon />,
       color: "bg-blue-800",
       href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
     },
     {
       name: "WhatsApp",
-      icon: <MessageSquare size={20} />,
+      icon: <WhatsAppIcon />,
       color: "bg-green-500",
       href: `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`,
     },
     {
       name: "Twitter",
-      icon: <Twitter size={20} />,
-      color: "bg-sky-500",
+      icon: <TwitterIcon />,
+      color: "bg-black",
       href: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
     },
     {
       name: "LinkedIn",
-      icon: <Linkedin size={20} />,
+      icon: <LinkedinIcon />,
       color: "bg-sky-700",
       href: `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`,
     },
@@ -155,6 +212,13 @@ const DetailPage = () => {
       icon: <PinterestIcon />,
       color: "bg-red-600",
       href: `https://pinterest.com/pin/create/button/?url=${encodedUrl}&media=${encodedImage}&description=${encodedTitle}`,
+    },
+    // --- ✨ फ़ोन का आइकन यहाँ जोड़ा गया है ✨ ---
+    {
+      name: "Call Us",
+      icon: <PhoneIcon />,
+      color: "bg-gray-700",
+      href: `tel:${phoneNumber}`,
     },
   ];
 
@@ -187,10 +251,9 @@ const DetailPage = () => {
     navigate("/checkout");
   };
 
-  const whatsappNumber = "+918815939484";
   const whatsappMessage = `Hello, I'm interested in modifying this plan: *${displayData?.name}*. \nProduct Link: ${currentUrl}`;
   const encodedWhatsappMessage = encodeURIComponent(whatsappMessage);
-  const whatsappLink = `https://wa.me/${whatsappNumber.replace("+", "")}?text=${encodedWhatsappMessage}`;
+  const whatsappLink = `https://wa.me/${phoneNumber.replace("+", "")}?text=${encodedWhatsappMessage}`;
 
   const handleReviewSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -276,7 +339,6 @@ const DetailPage = () => {
   const canonicalUrl = `${window.location.origin}${location.pathname}`;
 
   return (
-    // ---- RIGHT CLICK DISABLED HERE ----
     <div
       className="min-h-screen bg-gray-50"
       onContextMenu={(e) => e.preventDefault()}
@@ -329,7 +391,6 @@ const DetailPage = () => {
                     />
                   </Button>
                 </div>
-                {/* --- BUTTONS ON IMAGE --- */}
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 p-2 bg-black/40 backdrop-blur-sm rounded-full">
                   <Button
                     onClick={handleBuyNow}
@@ -424,7 +485,7 @@ const DetailPage = () => {
                       variant="secondary"
                       className="bg-green-500 hover:bg-green-600 text-white w-full py-6 text-lg font-bold flex items-center justify-center gap-2"
                     >
-                      <MessageSquare className="w-5 h-5" />
+                      <WhatsAppIcon />
                       Modify Plan
                     </Button>
                   </a>
@@ -442,7 +503,7 @@ const DetailPage = () => {
                       href={p.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      title={`Share on ${p.name}`}
+                      title={p.name}
                       className={`w-9 h-9 flex items-center justify-center rounded-md text-white ${p.color} transition-opacity hover:opacity-80`}
                     >
                       {p.icon}

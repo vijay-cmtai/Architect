@@ -1,20 +1,73 @@
-// src/pages/ContactUs.jsx
-
-import React from "react";
-import { Helmet } from "react-helmet-async"; // Helmet को import करें
+import React, { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faMapMarkerAlt,
   faEnvelope,
   faPhone,
 } from "@fortawesome/free-solid-svg-icons";
+import { faWhatsapp, faTelegram } from "@fortawesome/free-brands-svg-icons";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
+import { toast } from "sonner";
+import axios from "axios";
 
 const ContactUs = () => {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    message: "",
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // --- ✨ बदलाव यहाँ किया गया है ---
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    // web3forms के लिए डेटा तैयार करें
+    const dataToSend = {
+      ...formData,
+      access_key: "047f7aa7-1008-4f0e-ab62-55bea05a1449", // आपकी Access Key
+      subject: "New Contact Form Submission from Your Website",
+      from_name: "HousePlanFiles",
+    };
+
+    try {
+      // सीधे web3forms API पर पोस्ट करें
+      const response = await axios.post(
+        "https://api.web3forms.com/submit",
+        dataToSend,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success(
+          "Message sent successfully! We will get back to you soon."
+        );
+        setFormData({ name: "", email: "", message: "" }); // फॉर्म को रीसेट करें
+      } else {
+        toast.error(response.data.message || "Something went wrong.");
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast.error("Failed to send message. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
-      {/* --- Helmet Tag for SEO --- */}
       <Helmet>
         <title>CONTACT HOUSEPLANFILES</title>
         <meta
@@ -25,7 +78,6 @@ const ContactUs = () => {
 
       <Navbar />
       <div className="bg-gray-50 text-gray-800 font-sans w-full">
-        {/* 1. Enhanced Page Header/Banner */}
         <section
           className="relative py-24 md:py-32 text-center text-white bg-cover bg-center"
           style={{
@@ -44,11 +96,9 @@ const ContactUs = () => {
           </div>
         </section>
 
-        {/* 2. Main Content Grid (Info + Form) */}
         <section className="py-16 md:py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row gap-12 lg:gap-24 items-start">
-              {/* Left Side: Contact Information */}
               <div className="lg:w-2/5">
                 <h3 className="text-3xl font-bold mb-4 text-gray-900">
                   Contact Information
@@ -59,9 +109,7 @@ const ContactUs = () => {
                 </p>
 
                 <div className="space-y-8">
-                  {/* Updated Address */}
                   <div className="flex items-start gap-5">
-                    {/* Orange Icon Background */}
                     <div className="flex-shrink-0 w-12 h-12 bg-orange-500 text-white rounded-full flex items-center justify-center">
                       <FontAwesomeIcon
                         icon={faMapMarkerAlt}
@@ -76,9 +124,7 @@ const ContactUs = () => {
                     </div>
                   </div>
 
-                  {/* Updated Phone */}
                   <div className="flex items-start gap-5">
-                    {/* Orange Icon Background */}
                     <div className="flex-shrink-0 w-12 h-12 bg-orange-500 text-white rounded-full flex items-center justify-center">
                       <FontAwesomeIcon icon={faPhone} className="h-6 w-6" />
                     </div>
@@ -93,9 +139,7 @@ const ContactUs = () => {
                     </div>
                   </div>
 
-                  {/* Updated Email */}
                   <div className="flex items-start gap-5">
-                    {/* Orange Icon Background */}
                     <div className="flex-shrink-0 w-12 h-12 bg-orange-500 text-white rounded-full flex items-center justify-center">
                       <FontAwesomeIcon icon={faEnvelope} className="h-6 w-6" />
                     </div>
@@ -109,44 +153,63 @@ const ContactUs = () => {
                       </a>
                     </div>
                   </div>
+
+                  <div className="flex items-start gap-5">
+                    <div className="flex-shrink-0 w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center">
+                      <FontAwesomeIcon icon={faTelegram} className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-lg">Telegram Channel</h4>
+                      <a
+                        href="https://t.me/+tPzdohVcUbJiZmNl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-600 mt-1 hover:text-blue-600 transition-colors"
+                      >
+                        Join our Telegram
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-5">
+                    <div className="flex-shrink-0 w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center">
+                      <FontAwesomeIcon icon={faWhatsapp} className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-lg">WhatsApp Channel</h4>
+                      <a
+                        href="https://whatsapp.com/channel/YOUR_CHANNEL_LINK_HERE"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-600 mt-1 hover:text-green-600 transition-colors"
+                      >
+                        Follow us on WhatsApp
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Right Side: Contact Form */}
               <div className="lg:w-3/5 w-full">
                 <div className="bg-white p-8 sm:p-10 rounded-xl shadow-2xl">
-                  <form action="#" method="POST">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label
-                          htmlFor="first-name"
-                          className="block text-sm font-semibold mb-2 text-gray-700"
-                        >
-                          First Name
-                        </label>
-                        <input
-                          type="text"
-                          name="first-name"
-                          id="first-name"
-                          placeholder="Your First Name"
-                          className="w-full p-3 bg-gray-100 border-2 border-transparent rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          htmlFor="last-name"
-                          className="block text-sm font-semibold mb-2 text-gray-700"
-                        >
-                          Last Name
-                        </label>
-                        <input
-                          type="text"
-                          name="last-name"
-                          id="last-name"
-                          placeholder="Your Last Name"
-                          className="w-full p-3 bg-gray-100 border-2 border-transparent rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
-                        />
-                      </div>
+                  <form onSubmit={handleSubmit}>
+                    <div className="mt-6">
+                      <label
+                        htmlFor="name"
+                        className="block text-sm font-semibold mb-2 text-gray-700"
+                      >
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        id="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        placeholder="Your Full Name"
+                        required
+                        className="w-full p-3 bg-gray-100 border-2 border-transparent rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+                      />
                     </div>
                     <div className="mt-6">
                       <label
@@ -159,7 +222,10 @@ const ContactUs = () => {
                         type="email"
                         name="email"
                         id="email"
+                        value={formData.email}
+                        onChange={handleChange}
                         placeholder="you@example.com"
+                        required
                         className="w-full p-3 bg-gray-100 border-2 border-transparent rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
                       />
                     </div>
@@ -174,17 +240,20 @@ const ContactUs = () => {
                         name="message"
                         id="message"
                         rows={5}
+                        value={formData.message}
+                        onChange={handleChange}
                         placeholder="How can we help you?"
+                        required
                         className="w-full p-3 bg-gray-100 border-2 border-transparent rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
                       ></textarea>
                     </div>
                     <div className="mt-8">
-                      {/* Orange Button */}
                       <button
                         type="submit"
-                        className="w-full bg-orange-500 text-white font-bold py-4 px-6 rounded-lg hover:bg-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        disabled={loading}
+                        className="w-full bg-orange-500 text-white font-bold py-4 px-6 rounded-lg hover:bg-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Send Message
+                        {loading ? "Sending..." : "Send Message"}
                       </button>
                     </div>
                   </form>
@@ -194,7 +263,6 @@ const ContactUs = () => {
           </div>
         </section>
 
-        {/* 3. Google Map Section (No changes here) */}
         <section>
           <div className="w-full h-96 md:h-[500px]">
             <iframe

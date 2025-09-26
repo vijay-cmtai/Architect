@@ -2,24 +2,22 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 import { RootState } from "@/lib/store";
 
-// Define the API URL base for this slice
 const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/gallery`;
 
-// Define the interface for a gallery item
 export interface GalleryItem {
   _id: string;
   title: string;
+  altText?: string; 
   category: string;
   imageUrl: string;
-  public_id: string; // <-- This is REQUIRED
+  productLink?: string; 
   createdAt?: string;
 }
 
-// Define the interface for the slice's state
 interface GalleryState {
   items: GalleryItem[];
   status: "idle" | "loading" | "succeeded" | "failed";
-  actionStatus: "idle" | "loading" | "succeeded" | "failed"; // For actions like create/delete
+  actionStatus: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;
 }
 
@@ -30,9 +28,7 @@ const initialState: GalleryState = {
   error: null,
 };
 
-// --- ASYNC THUNKS ---
 
-// Thunk to fetch all gallery items
 export const fetchGalleryItems = createAsyncThunk(
   "gallery/fetchItems",
   async (_, { rejectWithValue }) => {
@@ -47,7 +43,6 @@ export const fetchGalleryItems = createAsyncThunk(
   }
 );
 
-// Thunk to create a new gallery item (upload image)
 export const createGalleryItem = createAsyncThunk<GalleryItem, FormData>(
   "gallery/createItem",
   async (formData, { getState, rejectWithValue }) => {
@@ -59,7 +54,6 @@ export const createGalleryItem = createAsyncThunk<GalleryItem, FormData>(
           Authorization: `Bearer ${user.userInfo?.token}`,
         },
       };
-      // FIX: Using the full API_URL, not a relative path
       const { data } = await axios.post(API_URL, formData, config);
       return data;
     } catch (error: any) {
@@ -70,7 +64,6 @@ export const createGalleryItem = createAsyncThunk<GalleryItem, FormData>(
   }
 );
 
-// Thunk to delete a gallery item
 export const deleteGalleryItem = createAsyncThunk<string, string>(
   "gallery/deleteItem",
   async (id, { getState, rejectWithValue }) => {
@@ -81,9 +74,8 @@ export const deleteGalleryItem = createAsyncThunk<string, string>(
           Authorization: `Bearer ${user.userInfo?.token}`,
         },
       };
-      // FIX: Using the full API_URL with the item ID, not a relative path
       await axios.delete(`${API_URL}/${id}`, config);
-      return id; // Return the ID for removal from the state
+      return id;
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to delete image."
@@ -91,8 +83,6 @@ export const deleteGalleryItem = createAsyncThunk<string, string>(
     }
   }
 );
-
-// --- SLICE ---
 
 const gallerySlice = createSlice({
   name: "gallery",
@@ -128,7 +118,7 @@ const gallerySlice = createSlice({
         createGalleryItem.fulfilled,
         (state, action: PayloadAction<GalleryItem>) => {
           state.actionStatus = "succeeded";
-          state.items.unshift(action.payload); // Add the new image to the beginning
+          state.items.unshift(action.payload);
         }
       )
       .addCase(createGalleryItem.rejected, (state, action) => {
