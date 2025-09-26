@@ -116,8 +116,7 @@ const MyOrdersPage = () => {
               <div className="space-y-3">
                 {order.orderItems.map((item) => (
                   <div
-                    // --- ✨ बदलाव यहाँ किया गया है ---
-                    key={item._id} // item._id का उपयोग करें जो हमेशा यूनिक होता है
+                    key={item._id} 
                     className="flex justify-between items-center p-2 rounded-md hover:bg-gray-50"
                   >
                     <div className="flex items-center gap-4">
@@ -140,7 +139,6 @@ const MyOrdersPage = () => {
                         size="sm"
                         variant="outline"
                         onClick={() => handleDownload(item)}
-                        // अगर productId null है तो बटन को डिसेबल करें
                         disabled={!item.productId}
                       >
                         <Download className="w-4 h-4 mr-2" />
