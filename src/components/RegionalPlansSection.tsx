@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-// --- आपकी दी गई पूरी कंट्री लिस्ट ---
 const internationalPlans = [
   {
     name: "India",
