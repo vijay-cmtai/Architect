@@ -18,7 +18,7 @@ export interface CartItem {
   productId: string;
   name: string;
   quantity: number;
-  price: number; // यह अब फाइनल कीमत होगी (sale या regular)
+  price: number; 
   salePrice?: number;
   isSale?: boolean;
   taxRate?: number;
