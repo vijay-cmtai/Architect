@@ -9,17 +9,20 @@ import { RootState } from "@/lib/store";
 
 const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/cart`;
 
-// Helper to get auth token from the user state
 const getToken = (state: RootState) => {
   const { user } = state;
   return user.userInfo?.token;
 };
 
-interface CartItem {
+// इंटरफेस को अपडेट करें ताकि यह बैकएंड से आने वाली सभी फील्ड्स को हैंडल कर सके
+export interface CartItem {
   productId: string;
   name: string;
   quantity: number;
-  price: number;
+  price: number; // यह अब फाइनल कीमत होगी (sale या regular)
+  salePrice?: number;
+  isSale?: boolean;
+  taxRate?: number;
   image?: string;
   size?: string;
 }
@@ -38,7 +41,7 @@ const initialState: CartState = {
   error: null,
 };
 
-// --- Async Thunks for API Calls ---
+// --- Async Thunks ---
 
 export const fetchCart = createAsyncThunk<
   CartItem[],
@@ -46,8 +49,7 @@ export const fetchCart = createAsyncThunk<
   { state: RootState }
 >("cart/fetchCart", async (_, { getState, rejectWithValue }) => {
   try {
-    const state = getState();
-    const token = getToken(state);
+    const token = getToken(getState());
     if (!token) return [];
     const config = { headers: { Authorization: `Bearer ${token}` } };
     const { data } = await axios.get(API_URL, config);
@@ -59,14 +61,14 @@ export const fetchCart = createAsyncThunk<
   }
 });
 
+// FIX: यहाँ पूरा itemData भेजा जाएगा, सिर्फ productId और quantity नहीं
 export const addItemToCart = createAsyncThunk<
   CartItem[],
-  any,
+  CartItem, // अब पूरा CartItem ऑब्जेक्ट एक्सेप्ट करें
   { state: RootState }
 >("cart/addItem", async (itemData, { getState, rejectWithValue }) => {
   try {
-    const state = getState();
-    const token = getToken(state);
+    const token = getToken(getState());
     const config = { headers: { Authorization: `Bearer ${token}` } };
     const { data } = await axios.post(API_URL, itemData, config);
     return data.items;
@@ -85,8 +87,7 @@ export const updateCartItemQuantity = createAsyncThunk<
   "cart/updateQuantity",
   async ({ productId, quantity }, { getState, rejectWithValue }) => {
     try {
-      const state = getState();
-      const token = getToken(state);
+      const token = getToken(getState());
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const { data } = await axios.post(
         API_URL,
@@ -108,8 +109,7 @@ export const removeCartItem = createAsyncThunk<
   { state: RootState }
 >("cart/removeItem", async (productId, { getState, rejectWithValue }) => {
   try {
-    const state = getState();
-    const token = getToken(state);
+    const token = getToken(getState());
     const config = { headers: { Authorization: `Bearer ${token}` } };
     const { data } = await axios.delete(`${API_URL}/${productId}`, config);
     return data.items;
@@ -120,13 +120,11 @@ export const removeCartItem = createAsyncThunk<
   }
 });
 
-// ✨ NEW THUNK TO CLEAR THE CART IN THE DATABASE ✨
 export const clearCartDB = createAsyncThunk<void, void, { state: RootState }>(
   "cart/clearCartDB",
   async (_, { getState, rejectWithValue }) => {
     try {
-      const state = getState();
-      const token = getToken(state);
+      const token = getToken(getState());
       if (!token) return;
       const config = { headers: { Authorization: `Bearer ${token}` } };
       await axios.delete(API_URL, config);
@@ -181,7 +179,6 @@ const cartSlice = createSlice({
       .addCase(removeCartItem.pending, handlePending)
       .addCase(removeCartItem.fulfilled, handleFulfilled)
       .addCase(removeCartItem.rejected, handleRejected)
-      // Add case for the new thunk
       .addCase(clearCartDB.fulfilled, (state) => {
         state.items = [];
         state.total = 0;
