@@ -14,7 +14,6 @@ const getToken = (state: RootState) => {
   return user.userInfo?.token;
 };
 
-// इंटरफेस को अपडेट करें ताकि यह बैकएंड से आने वाली सभी फील्ड्स को हैंडल कर सके
 export interface CartItem {
   productId: string;
   name: string;
