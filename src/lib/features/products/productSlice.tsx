@@ -14,7 +14,7 @@ const getToken = (getState: () => RootState) => {
   return user.userInfo?.token;
 };
 
-// Interface for a single review
+// --- इंटरफेस परिभाषाएं ---
 interface Review {
   _id: string;
   name: string;
@@ -24,7 +24,6 @@ interface Review {
   createdAt: string;
 }
 
-// SEO Interface
 interface SeoData {
   title?: string;
   description?: string;
@@ -32,50 +31,90 @@ interface SeoData {
   altText?: string;
 }
 
-// The complete Product interface with all new fields
+// --- HYBRID PRODUCT INTERFACE (JSON + NEW DATA) ---
 export interface Product {
   _id: string;
+  user?: string;
+  createdAt?: string;
+  updatedAt?: string;
+
+  // --- UI/नया डेटा वाली फील्ड्स ---
   name: string;
   description: string;
   price: number;
   isSale?: boolean;
   salePrice?: number;
-  category: string;
-  planType: string;
+  category: string | string[]; // UI से array आएगा, JSON से string
+  planType?: string;
   plotSize?: string;
   plotArea?: number;
-  rooms?: number;
+  rooms?: number | string; // JSON से '4BHK' जैसा स्ट्रिंग आ सकता है
   bathrooms?: number;
   kitchen?: number;
-  floors?: number;
+  floors?: number | string; // JSON से '2' जैसा स्ट्रिंग आ सकता है
   direction?: string;
   country?: string[];
+  city?: string | string[];
   propertyType?: string;
   mainImage?: string;
-  planFile?: string | string[];
+  planFile?: string[];
   galleryImages?: string[];
   youtubeLink?: string;
-  user?: string;
-  createdAt?: string;
-  updatedAt?: string;
   reviews?: Review[];
   rating?: number;
   numReviews?: number;
   seo?: SeoData;
   taxRate?: number;
-  discountPercentage?: number;
   crossSellProducts?: Product[];
   upSellProducts?: Product[];
-  [key: string]: any;
+
+  // --- पुराने JSON डेटा वाली फील्ड्स (Optional) ---
+  productNo?: string | number;
+  ID?: number;
+  Type?: string;
+  SKU?: string;
+  Name?: string; // ध्यान दें: यह कैपिटल N है
+  Published?: number;
+  "Is featured?"?: number;
+  "Visibility in catalog"?: string;
+  "Short description"?: string;
+  "Regular price"?: number;
+  "Sale price"?: number;
+  "Tax status"?: string;
+  "Tax class"?: number;
+  "In stock?"?: number;
+  Categories?: string; // ध्यान दें: यह कैपिटल C है
+  Tags?: string;
+  Images?: string; // JSON में यह मेन इमेज है
+  Upsells?: string;
+  "Cross-sells"?: string;
+  Position?: number;
+
+  // JSON के फ्लैट Attributes
+  "Attribute 1 name"?: string;
+  "Attribute 1 value(s)"?: string;
+  "Attribute 2 name"?: string;
+  "Attribute 2 value(s)"?: string;
+  "Attribute 3 name"?: string;
+  "Attribute 3 value(s)"?: string;
+  "Attribute 4 name"?: string;
+  "Attribute 4 value(s)"?: string;
+  "Attribute 5 name"?: string;
+  "Attribute 5 value(s)"?: string;
+
+  // JSON के फ्लैट Downloads
+  "Download 1 URL"?: string;
+  "Download 2 URL"?: string;
+  "Download 3 URL"?: string;
+
+  [key: string]: any; // किसी भी अन्य फील्ड के लिए
 }
 
-// Shape of the API response for fetchProducts
 interface FetchProductsResponse {
   products: Product[];
   pagination?: any;
 }
 
-// Shape of the Redux state for this slice
 interface ProductState {
   products: Product[];
   product: Product | null;

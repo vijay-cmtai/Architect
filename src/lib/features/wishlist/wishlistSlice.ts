@@ -1,5 +1,3 @@
-// lib/features/wishlist/wishlistSlice.ts
-
 import axios from "axios";
 import {
   createSlice,
@@ -12,7 +10,7 @@ import { RootState } from "@/lib/store";
 const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/wishlist`;
 const getToken = (state: RootState) => state.user.userInfo?.token;
 
-interface WishlistItem {
+export interface WishlistItem {
   productId: string;
   name: string;
   price: number;
@@ -50,6 +48,7 @@ export const fetchWishlist = createAsyncThunk<
   }
 });
 
+// FIX: यहाँ पूरा productData भेजा जाएगा
 export const addToWishlist = createAsyncThunk<
   WishlistItem[],
   WishlistItem,
@@ -59,7 +58,7 @@ export const addToWishlist = createAsyncThunk<
     const token = getToken(getState());
     const { data } = await axios.post(
       API_URL + "/add",
-      { productId: productData.productId },
+      productData, // पहले सिर्फ { productId } था, अब पूरा ऑब्जेक्ट भेजें
       { headers: { Authorization: `Bearer ${token}` } }
     );
     return data.items;

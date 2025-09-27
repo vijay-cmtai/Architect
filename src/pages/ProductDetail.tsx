@@ -4,14 +4,10 @@ import { useSelector, useDispatch } from "react-redux";
 import { Helmet } from "react-helmet-async";
 import { RootState, AppDispatch } from "@/lib/store";
 import {
-  fetchProducts,
   createReview as createProductReview,
   fetchProductById,
 } from "@/lib/features/products/productSlice";
-import {
-  fetchAllApprovedPlans,
-  createPlanReview,
-} from "@/lib/features/professional/professionalPlanSlice";
+import { createPlanReview } from "@/lib/features/professional/professionalPlanSlice";
 import {
   Heart,
   Plus,
@@ -31,8 +27,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/components/ui/use-toast";
 import house1 from "@/assets/house-1.jpg";
 
-// --- ✨ असली सोशल मीडिया और फ़ोन आइकन्स ✨ ---
-
+// --- सोशल मीडिया आइकन्स ---
 const FacebookIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -44,7 +39,6 @@ const FacebookIcon = () => (
     <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v7.028C18.343 21.128 22 16.991 22 12z" />
   </svg>
 );
-
 const WhatsAppIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -56,7 +50,6 @@ const WhatsAppIcon = () => (
     <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.48 3.4 1.35 4.85L2 22l5.42-1.47c1.41.82 3 1.29 4.62 1.29 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zM12.04 20.15c-1.48 0-2.91-.41-4.15-1.16l-.3-.18-3.08.83.85-3.01-.2-.32c-.82-1.3-1.26-2.81-1.26-4.39 0-4.54 3.72-8.24 8.26-8.24s8.26 3.7 8.26 8.24-3.72 8.24-8.26 8.24zm4.52-6.19c-.24-.12-1.42-.7-1.64-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94s-.28.18-.52.06c-.24-.12-1.02-.38-1.94-1.2-1.03-.9-1.5-1.88-1.68-2.2v-.02c-.18-.32-.04-.5.1-.64.12-.12.26-.32.4-.42.12-.12.16-.2.24-.34s.04-.28-.02-.4c-.06-.12-.54-1.3-.74-1.78s-.4-.4-.54-.4h-.47c-.16 0-.42.06-.64.3s-.84.82-.84 2c0 1.18.86 2.32 1 2.48.12.16 1.67 2.55 4.05 3.56.58.24 1.05.38 1.41.48.58.16 1.11.14 1.52.08.45-.06 1.42-.58 1.62-1.14s.2-1.04.14-1.14c-.06-.1-.22-.16-.46-.28z" />
   </svg>
 );
-
 const TwitterIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -68,7 +61,6 @@ const TwitterIcon = () => (
     <path d="M12.6.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867-5.07-4.425 5.07H.316l5.733-6.57L0 .75h5.063l3.495 4.633L12.601.75Zm-.86 13.028h1.36L4.323 2.145H2.865l8.875 11.633Z" />
   </svg>
 );
-
 const LinkedinIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -80,7 +72,6 @@ const LinkedinIcon = () => (
     <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
   </svg>
 );
-
 const PinterestIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -92,7 +83,6 @@ const PinterestIcon = () => (
     <path d="M12 2C6.477 2 2 6.477 2 12c0 4.237 2.636 7.855 6.356 9.312-.084-.602-.167-1.592.034-2.327.185-.68.995-4.223.995-4.223s-.255-.51-.255-1.267c0-1.185.688-2.072 1.553-2.072.73 0 1.08.547 1.08 1.202 0 .73-.465 1.822-.705 2.832-.202.84.42 1.532 1.258 1.532 1.508 0 2.65-1.59 2.65-3.868 0-2.046-1.445-3.48-3.566-3.48-2.35 0-3.738 1.743-3.738 3.355 0 .64.246 1.332.558 1.727.06.074.068.103.05.178-.02.083-.07.28-.09.358-.026.09-.105.12-.24.06-1.1-.47-1.8-1.82-1.8-3.132 0-2.438 2.085-4.73 5.25-4.73 2.76 0 4.86 1.956 4.86 4.418 0 2.712-1.72 4.882-4.14 4.882-.828 0-1.606-.43-1.865-.934 0 0-.405 1.616-.502 2.01-.132.52-.25.99-.4 1.392.36.11.732.17 1.114.17 6.627 0 12-5.373 12-12S18.627 2 12 2z" />
   </svg>
 );
-
 const PhoneIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -112,9 +102,7 @@ const StarRating = ({ rating, text }: { rating: number; text?: string }) => (
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
-          className={`h-5 w-5 ${
-            rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
-          }`}
+          className={`h-5 w-5 ${rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
         />
       ))}
     </div>
@@ -136,6 +124,7 @@ const DetailPage = () => {
     product: singleProduct,
     listStatus: adminListStatus,
     actionStatus: adminActionStatus,
+    products: adminProducts,
   } = useSelector((state: RootState) => state.products);
   const {
     plans: professionalPlans,
@@ -143,7 +132,6 @@ const DetailPage = () => {
     actionStatus: profActionStatus,
   } = useSelector((state: RootState) => state.professionalPlans);
   const { userInfo } = useSelector((state: RootState) => state.user);
-  const { adminProducts } = useSelector((state: RootState) => state.products);
 
   const { state: cartState, addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
@@ -152,9 +140,22 @@ const DetailPage = () => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
 
-  const displayData = isProfessionalPlan
-    ? professionalPlans.find((p) => p._id === id)
-    : singleProduct;
+  const productFromList = adminProducts.find((p) => p._id === id);
+
+  const displayData = useMemo(() => {
+    if (isProfessionalPlan) {
+      return professionalPlans.find((p) => p._id === id);
+    }
+    return singleProduct && singleProduct._id === id
+      ? singleProduct
+      : productFromList;
+  }, [
+    isProfessionalPlan,
+    singleProduct,
+    productFromList,
+    professionalPlans,
+    id,
+  ]);
 
   useEffect(() => {
     if (id && !isProfessionalPlan) {
@@ -162,13 +163,66 @@ const DetailPage = () => {
     }
   }, [id, dispatch, isProfessionalPlan]);
 
+  // --- डेटा को सही से पढ़ने और दिखाने का लॉजिक ---
+  const productName = displayData?.name || displayData?.Name || "Untitled Plan";
+  const productDescription =
+    displayData?.description ||
+    displayData?.Description ||
+    "No description available.";
+
+  // FIX: Price को सही से पढ़ें
+  const regularPrice =
+    displayData?.price !== 0 && displayData?.price
+      ? displayData.price
+      : (displayData?.["Regular price"] ?? 0);
+  const salePrice =
+    displayData?.salePrice !== 0 && displayData?.salePrice
+      ? displayData.salePrice
+      : displayData?.["Sale price"];
+
+  const isSale =
+    displayData?.isSale ?? (salePrice != null && salePrice < regularPrice);
+  const currentPrice = isSale && salePrice != null ? salePrice : regularPrice;
+
+  const plotSize =
+    displayData?.plotSize || displayData?.["Attribute 1 value(s)"] || "N/A";
+  const plotArea =
+    displayData?.plotArea ||
+    (displayData?.["Attribute 2 value(s)"]
+      ? parseInt(String(displayData["Attribute 2 value(s)"]).replace(/\D/g, ""))
+      : "N/A");
+  const rooms =
+    displayData?.rooms || displayData?.["Attribute 3 value(s)"] || "N/A";
+  const direction =
+    displayData?.direction || displayData?.["Attribute 4 value(s)"] || "N/A";
+  const bathrooms = displayData?.bathrooms || "N/A";
+  const kitchen =
+    displayData?.kitchen ||
+    (displayData?.["Attribute 5 name"] === "Kitchen"
+      ? displayData["Attribute 5 value(s)"]
+      : "N/A");
+
   const productImages = useMemo(() => {
     if (!displayData) return [house1];
-    const images = [
-      displayData.mainImage,
-      ...(displayData.galleryImages || []),
-    ].filter(Boolean);
-    return images.length > 0 ? images : [house1];
+
+    let allImages = [];
+    // पहले mainImage को डालें
+    if (displayData.mainImage) allImages.push(displayData.mainImage);
+
+    // फिर JSON की Images फील्ड को डालें
+    if (displayData.Images && typeof displayData.Images === "string") {
+      const jsonImages = displayData.Images.split(",").map((url) => url.trim());
+      allImages.push(...jsonImages);
+    }
+
+    // फिर galleryImages को डालें
+    if (displayData.galleryImages && Array.isArray(displayData.galleryImages)) {
+      allImages.push(...displayData.galleryImages);
+    }
+
+    const uniqueImages = [...new Set(allImages.filter(Boolean))];
+
+    return uniqueImages.length > 0 ? uniqueImages : [house1];
   }, [displayData]);
 
   const [currentUrl, setCurrentUrl] = useState("");
@@ -177,11 +231,10 @@ const DetailPage = () => {
   }, []);
 
   const encodedUrl = encodeURIComponent(currentUrl);
-  const encodedTitle = encodeURIComponent(displayData?.name || "");
+  const encodedTitle = encodeURIComponent(productName);
   const encodedImage = encodeURIComponent(productImages[selectedImageIndex]);
 
   const phoneNumber = "+918815939484";
-
   const socialPlatforms = [
     {
       name: "Facebook",
@@ -213,7 +266,6 @@ const DetailPage = () => {
       color: "bg-red-600",
       href: `https://pinterest.com/pin/create/button/?url=${encodedUrl}&media=${encodedImage}&description=${encodedTitle}`,
     },
-    // --- ✨ फ़ोन का आइकन यहाँ जोड़ा गया है ✨ ---
     {
       name: "Call Us",
       icon: <PhoneIcon />,
@@ -226,15 +278,15 @@ const DetailPage = () => {
     if (!displayData) return;
     await addItem({
       productId: displayData._id,
-      name: displayData.name,
-      price: displayData.isSale ? displayData.salePrice : displayData.price,
+      name: productName,
+      price: currentPrice,
       image: productImages[0],
-      size: displayData.plotSize,
+      size: plotSize,
       quantity: quantity,
     });
     toast({
       title: "Added to Cart!",
-      description: `${quantity} x ${displayData.name} has been added to your cart.`,
+      description: `${quantity} x ${productName} has been added.`,
     });
   };
 
@@ -242,16 +294,16 @@ const DetailPage = () => {
     if (!displayData) return;
     await addItem({
       productId: displayData._id,
-      name: displayData.name,
-      price: displayData.isSale ? displayData.salePrice : displayData.price,
+      name: productName,
+      price: currentPrice,
       image: productImages[0],
-      size: displayData.plotSize,
+      size: plotSize,
       quantity: quantity,
     });
     navigate("/checkout");
   };
 
-  const whatsappMessage = `Hello, I'm interested in modifying this plan: *${displayData?.name}*. \nProduct Link: ${currentUrl}`;
+  const whatsappMessage = `Hello, I'm interested in modifying this plan: *${productName}*. \nProduct Link: ${currentUrl}`;
   const encodedWhatsappMessage = encodeURIComponent(whatsappMessage);
   const whatsappLink = `https://wa.me/${phoneNumber.replace("+", "")}?text=${encodedWhatsappMessage}`;
 
@@ -280,9 +332,7 @@ const DetailPage = () => {
         });
         setRating(0);
         setComment("");
-        if (!isProfessionalPlan) {
-          dispatch(fetchProductById(id!));
-        }
+        if (!isProfessionalPlan) dispatch(fetchProductById(id!));
       })
       .catch((err) => {
         toast({
@@ -295,14 +345,23 @@ const DetailPage = () => {
 
   const relatedProducts = useMemo(() => {
     if (!displayData || !adminProducts) return [];
+    const currentCategory =
+      (Array.isArray(displayData.category)
+        ? displayData.category[0]
+        : displayData.category) || displayData.Categories?.split(",")[0].trim();
     return adminProducts
-      .filter((p: any) => p.category === displayData.category && p._id !== id)
+      .filter((p) => {
+        const pCategory =
+          (Array.isArray(p.category) ? p.category[0] : p.category) ||
+          p.Categories?.split(",")[0].trim();
+        return pCategory === currentCategory && p._id !== id;
+      })
       .slice(0, 2)
       .map((p) => ({ ...p, source: "product" }));
   }, [adminProducts, displayData, id]);
 
   const isLoading =
-    (adminListStatus === "loading" && !singleProduct) ||
+    (adminListStatus === "loading" && !displayData) ||
     (profListStatus === "loading" && isProfessionalPlan);
 
   if (isLoading)
@@ -329,10 +388,6 @@ const DetailPage = () => {
       </div>
     );
 
-  const currentPrice = displayData.isSale
-    ? displayData.salePrice
-    : displayData.price;
-  const originalPrice = displayData.price;
   const actionStatus = isProfessionalPlan
     ? profActionStatus
     : adminActionStatus;
@@ -344,14 +399,11 @@ const DetailPage = () => {
       onContextMenu={(e) => e.preventDefault()}
     >
       <Helmet>
-        <title>
-          {displayData.seo?.title || `${displayData.name} | House Plan`}
-        </title>
+        <title>{displayData.seo?.title || `${productName} | House Plan`}</title>
         <meta
           name="description"
           content={
-            displayData.seo?.description ||
-            displayData.description.substring(0, 160)
+            displayData.seo?.description || productDescription.substring(0, 160)
           }
         />
         <link rel="canonical" href={canonicalUrl} />
@@ -367,7 +419,7 @@ const DetailPage = () => {
             Products
           </Link>
           <span>/</span>
-          <span className="text-gray-800 font-medium">{displayData.name}</span>
+          <span className="text-gray-800 font-medium">{productName}</span>
         </nav>
 
         <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm">
@@ -376,7 +428,7 @@ const DetailPage = () => {
               <div className="relative overflow-hidden rounded-xl shadow-md group bg-gray-100">
                 <img
                   src={productImages[selectedImageIndex]}
-                  alt={displayData.seo?.altText || displayData.name}
+                  alt={displayData.seo?.altText || productName}
                   className="w-full h-96 lg:h-[500px] object-contain transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute top-4 right-4">
@@ -411,7 +463,7 @@ const DetailPage = () => {
                   >
                     <img
                       src={image}
-                      alt={`${displayData.name} view ${index + 1}`}
+                      alt={`${productName} view ${index + 1}`}
                       className="w-full h-24 object-cover"
                     />
                   </button>
@@ -422,7 +474,7 @@ const DetailPage = () => {
             <div className="lg:col-span-2 space-y-6">
               <div>
                 <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-2">
-                  {displayData.name}
+                  {productName}
                 </h1>
                 <div className="flex items-center gap-4 mb-4">
                   <StarRating
@@ -431,14 +483,14 @@ const DetailPage = () => {
                   />
                 </div>
                 <div className="flex items-baseline gap-4 mb-6">
+                  {isSale && (
+                    <span className="text-xl text-gray-500 line-through">
+                      ₹{regularPrice?.toLocaleString()}
+                    </span>
+                  )}
                   <span className="text-4xl font-bold text-primary">
                     ₹{currentPrice?.toLocaleString()}
                   </span>
-                  {displayData.isSale && (
-                    <span className="text-xl text-gray-500 line-through">
-                      ₹{originalPrice?.toLocaleString()}
-                    </span>
-                  )}
                 </div>
               </div>
 
@@ -535,37 +587,34 @@ const DetailPage = () => {
               {activeTab === "description" && (
                 <div
                   className="text-gray-600 text-base leading-relaxed prose max-w-none"
-                  dangerouslySetInnerHTML={{
-                    __html:
-                      displayData.description || "No description available.",
-                  }}
+                  dangerouslySetInnerHTML={{ __html: productDescription }}
                 />
               )}
               {activeTab === "specifications" && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-md p-4 bg-gray-50 rounded-lg">
                   <div>
                     <span className="font-bold text-gray-700">Plot Size:</span>{" "}
-                    {displayData.plotSize}
+                    {plotSize}
                   </div>
                   <div>
                     <span className="font-bold text-gray-700">Plot Area:</span>{" "}
-                    {displayData.plotArea} sqft
+                    {plotArea} sqft
                   </div>
                   <div>
                     <span className="font-bold text-gray-700">Rooms:</span>{" "}
-                    {displayData.rooms} BHK
+                    {rooms}
                   </div>
                   <div>
                     <span className="font-bold text-gray-700">Bathrooms:</span>{" "}
-                    {displayData.bathrooms}
+                    {bathrooms}
                   </div>
                   <div>
                     <span className="font-bold text-gray-700">Kitchen:</span>{" "}
-                    {displayData.kitchen}
+                    {kitchen}
                   </div>
                   <div>
                     <span className="font-bold text-gray-700">Direction:</span>{" "}
-                    {displayData.direction}
+                    {direction}
                   </div>
                 </div>
               )}
@@ -686,17 +735,31 @@ const DetailPage = () => {
                   className="group block bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden"
                 >
                   <img
-                    src={relatedProd.mainImage || house1}
-                    alt={relatedProd.name}
+                    src={
+                      relatedProd.mainImage ||
+                      relatedProd.Images?.split(",")[0].trim() ||
+                      house1
+                    }
+                    alt={relatedProd.name || relatedProd.Name}
                     className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="p-6">
                     <h3 className="text-xl font-bold text-gray-900 mb-2">
-                      {relatedProd.name}
+                      {relatedProd.name || relatedProd.Name}
                     </h3>
-                    <p className="text-gray-600 mb-3">{relatedProd.plotSize}</p>
+                    <p className="text-gray-600 mb-3">
+                      {relatedProd.plotSize ||
+                        relatedProd["Attribute 1 value(s)"]}
+                    </p>
                     <div className="text-2xl font-bold text-primary">
-                      ₹{relatedProd.price?.toLocaleString()}
+                      ₹
+                      {(relatedProd.salePrice ?? relatedProd["Sale price"])
+                        ? (
+                            relatedProd.salePrice ?? relatedProd["Sale price"]
+                          ).toLocaleString()
+                        : (
+                            relatedProd.price ?? relatedProd["Regular price"]
+                          )?.toLocaleString()}
                     </div>
                   </div>
                 </Link>

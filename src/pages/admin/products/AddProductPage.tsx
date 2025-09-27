@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css"; // Import Quill styles
+import "react-quill/dist/quill.snow.css"; // Quill styles को इम्पोर्ट करें
 
 import {
   createProduct,
@@ -15,7 +15,7 @@ import { RootState, AppDispatch } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea"; // Used for Meta Description
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -47,8 +47,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MultiSelect as MultiSelectForProducts } from "@/components/ui/MultiSelectDropdown";
 
-// --- TYPE DEFINITIONS for improved safety and error prevention ---
-
+// --- टाइप परिभाषाएं ---
 interface IProductFormData {
   name: string;
   description: string;
@@ -71,20 +70,18 @@ interface IProductFormData {
   price: number;
   salePrice?: number;
   taxRate?: number;
-  category: string;
 }
 
-interface MultiSelectCountryProps {
+interface MultiSelectProps {
   selected: string[];
   setSelected: React.Dispatch<React.SetStateAction<string[]>>;
-  options: { value: string; label: string }[];
+  options: any[];
   placeholder: string;
+  isObject?: boolean;
 }
 
-// --- STATIC DATA ---
-
+// --- स्टेटिक डेटा ---
 const countries = [
-  // ... (country list remains the same)
   { value: "India", label: "India" },
   { value: "Pakistan", label: "Pakistan" },
   { value: "Sri Lanka", label: "Sri Lanka" },
@@ -166,7 +163,6 @@ const countries = [
 ].sort((a, b) => a.label.localeCompare(b.label));
 
 const categories = [
-  // ... (category list remains the same)
   "Modern Home Design",
   "Duplex House Plans",
   "Single Storey House Plan",
@@ -189,13 +185,13 @@ const categories = [
   "Temple & Mosque",
 ];
 
-// --- HELPER COMPONENTS ---
-// ... (MultiSelectCountry and quillModules remain the same)
-const MultiSelectCountry: React.FC<MultiSelectCountryProps> = ({
+// --- हेल्पर कंपोनेंट्स ---
+const MultiSelectDropdown: React.FC<MultiSelectProps> = ({
   selected,
   setSelected,
   options,
   placeholder,
+  isObject = false,
 }) => {
   const handleSelect = (value: string) => {
     setSelected((prev) =>
@@ -203,7 +199,8 @@ const MultiSelectCountry: React.FC<MultiSelectCountryProps> = ({
     );
   };
   const displayText =
-    selected.length > 0 ? `${selected.length} countries selected` : placeholder;
+    selected.length > 0 ? `${selected.length} selected` : placeholder;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -216,16 +213,20 @@ const MultiSelectCountry: React.FC<MultiSelectCountryProps> = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-60 overflow-y-auto">
-        {options.map((option) => (
-          <DropdownMenuCheckboxItem
-            key={option.value}
-            checked={selected.includes(option.value)}
-            onCheckedChange={() => handleSelect(option.value)}
-            onSelect={(e) => e.preventDefault()}
-          >
-            {option.label}
-          </DropdownMenuCheckboxItem>
-        ))}
+        {options.map((option) => {
+          const value = isObject ? option.value : option;
+          const label = isObject ? option.label : option;
+          return (
+            <DropdownMenuCheckboxItem
+              key={value}
+              checked={selected.includes(value)}
+              onCheckedChange={() => handleSelect(value)}
+              onSelect={(e) => e.preventDefault()}
+            >
+              {label}
+            </DropdownMenuCheckboxItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -242,8 +243,7 @@ const quillModules = {
   ],
 };
 
-// --- MAIN COMPONENT ---
-
+// --- मुख्य कंपोनेंट ---
 const AddProductPage: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
@@ -259,7 +259,7 @@ const AddProductPage: React.FC = () => {
     reset,
   } = useForm<IProductFormData>();
 
-  // State Management
+  // स्टेट मैनेजमेंट
   const [mainImage, setMainImage] = useState<File | null>(null);
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
   const [planFiles, setPlanFiles] = useState<File[]>([]);
@@ -271,8 +271,9 @@ const AddProductPage: React.FC = () => {
   const [isSale, setIsSale] = useState<boolean>(false);
   const [crossSell, setCrossSell] = useState<string[]>([]);
   const [upSell, setUpSell] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  // Effects
+  // इफेक्ट्स
   useEffect(() => {
     if (!products || products.length === 0) {
       dispatch(fetchProducts({}));
@@ -284,7 +285,6 @@ const AddProductPage: React.FC = () => {
       toast.success("Product created successfully!");
       dispatch(resetProductState());
       reset();
-      // Reset all local state
       setMainImage(null);
       setGalleryImages([]);
       setPlanFiles([]);
@@ -293,6 +293,7 @@ const AddProductPage: React.FC = () => {
       setDirection("");
       setPlanType("");
       setSelectedCountries([]);
+      setSelectedCategories([]); // कैटेगरी को भी रीसेट करें
       setIsSale(false);
       setCrossSell([]);
       setUpSell([]);
@@ -304,10 +305,9 @@ const AddProductPage: React.FC = () => {
     }
   }, [actionStatus, error, dispatch, navigate, reset]);
 
-  // Data processing
   const productOptions = products.map((p) => ({ value: p._id, label: p.name }));
 
-  // Event Handlers
+  // इवेंट हैंडलर्स
   const handleGalleryImagesChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -334,9 +334,14 @@ const AddProductPage: React.FC = () => {
   };
 
   const onSubmit = (data: IProductFormData) => {
-    if (selectedCountries.length === 0 || !propertyType || !planType) {
+    if (
+      selectedCountries.length === 0 ||
+      !propertyType ||
+      !planType ||
+      selectedCategories.length === 0
+    ) {
       toast.error(
-        "Please select at least one Country, a Property Type, and a Plan Type."
+        "Please select at least one Country, Category, a Property Type, and a Plan Type."
       );
       return;
     }
@@ -344,25 +349,34 @@ const AddProductPage: React.FC = () => {
       toast.error("Please upload a main image and at least one plan file.");
       return;
     }
+
     const formData = new FormData();
-    // Append all form data
     Object.keys(data).forEach((key) => {
-      const value = data[key as keyof IProductFormData];
-      if (value !== undefined && value !== null) {
-        formData.append(key, String(value));
+      if (key !== "category") {
+        const value = data[key as keyof IProductFormData];
+        if (value !== undefined && value !== null) {
+          formData.append(key, String(value));
+        }
       }
     });
 
-    // Append state-managed data
+    selectedCategories.forEach((category) => {
+      formData.append("category", category);
+    });
+
     formData.append("country", selectedCountries.join(","));
     formData.append("propertyType", propertyType);
     formData.append("direction", direction);
     formData.append("planType", planType);
     formData.append("isSale", String(isSale));
-    formData.append("crossSellProducts", crossSell.join(","));
-    formData.append("upSellProducts", upSell.join(","));
 
-    // Append files
+    if (crossSell.length > 0) {
+      formData.append("crossSellProducts", crossSell.join(","));
+    }
+    if (upSell.length > 0) {
+      formData.append("upSellProducts", upSell.join(","));
+    }
+
     if (mainImage) formData.append("mainImage", mainImage);
     if (headerImage) formData.append("headerImage", headerImage);
     galleryImages.forEach((file) => formData.append("galleryImages", file));
@@ -389,7 +403,6 @@ const AddProductPage: React.FC = () => {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           <div className="lg:col-span-2 space-y-6">
-            {/* Card for Product Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Product Information</CardTitle>
@@ -445,7 +458,6 @@ const AddProductPage: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Card for Product Specifications */}
             <Card>
               <CardHeader>
                 <CardTitle>Product Specifications</CardTitle>
@@ -568,17 +580,17 @@ const AddProductPage: React.FC = () => {
                 </div>
                 <div className="md:col-span-3">
                   <Label htmlFor="country">Country*</Label>
-                  <MultiSelectCountry
+                  <MultiSelectDropdown
                     selected={selectedCountries}
                     setSelected={setSelectedCountries}
                     options={countries}
                     placeholder="Select countries..."
+                    isObject={true}
                   />
                 </div>
               </CardContent>
             </Card>
 
-            {/* Other cards remain the same */}
             <Card>
               <CardHeader>
                 <CardTitle>SEO & Marketing</CardTitle>
@@ -623,7 +635,7 @@ const AddProductPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4 pt-2">
                   <div>
                     <Label htmlFor="crossSellProducts">
-                      Cross-Sell Products
+                      Cross-Sell Products (Optional)
                     </Label>
                     <MultiSelectForProducts
                       options={productOptions}
@@ -634,7 +646,9 @@ const AddProductPage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="upSellProducts">Up-Sell Products</Label>
+                    <Label htmlFor="upSellProducts">
+                      Up-Sell Products (Optional)
+                    </Label>
                     <MultiSelectForProducts
                       options={productOptions}
                       selected={upSell}
@@ -646,6 +660,7 @@ const AddProductPage: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+
             {planType === "Construction Products" && (
               <Card>
                 <CardHeader>
@@ -675,6 +690,7 @@ const AddProductPage: React.FC = () => {
                 </CardContent>
               </Card>
             )}
+
             <Card>
               <CardHeader>
                 <CardTitle>Files</CardTitle>
@@ -807,7 +823,6 @@ const AddProductPage: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Organization Card remains the same */}
             <Card>
               <CardHeader>
                 <CardTitle>Organization</CardTitle>
@@ -835,33 +850,12 @@ const AddProductPage: React.FC = () => {
                 </div>
                 <div>
                   <Label>Category*</Label>
-                  <Controller
-                    name="category"
-                    control={control}
-                    rules={{ required: "Category is required" }}
-                    render={({ field }) => (
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-60 overflow-y-auto">
-                          {categories.map((cat, index) => (
-                            <SelectItem key={index} value={cat}>
-                              {cat}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
+                  <MultiSelectDropdown
+                    selected={selectedCategories}
+                    setSelected={setSelectedCategories}
+                    options={categories}
+                    placeholder="Select categories..."
                   />
-                  {errors.category && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.category.message}
-                    </p>
-                  )}
                 </div>
                 <div>
                   <Label>Property Type*</Label>

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState, store } from "@/lib/store";
+import { RootState, AppDispatch } from "@/lib/store";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -15,12 +15,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWishlist } from "@/contexts/WishlistContext";
-import { fetchProducts, Product } from "@/lib/features/products/productSlice"; // Import Product type
+import { Product, fetchProducts } from "@/lib/features/products/productSlice";
 import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
 import { useToast } from "@/components/ui/use-toast";
+import house3 from "@/assets/house-3.jpg"; // एक फॉलबैक इमेज
 
 const FeaturedProducts = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -33,13 +34,11 @@ const FeaturedProducts = () => {
   const { orders } = useSelector((state: RootState) => state.orders);
 
   useEffect(() => {
-    // Fetch products if they are not already loaded
     if (!products || products.length === 0) {
-      (dispatch as typeof store.dispatch)(fetchProducts({}));
+      dispatch(fetchProducts({}));
     }
-    // Fetch user's orders if they are logged in
     if (userInfo) {
-      (dispatch as typeof store.dispatch)(fetchMyOrders());
+      dispatch(fetchMyOrders());
     }
   }, [dispatch, products, userInfo]);
 
@@ -47,7 +46,6 @@ const FeaturedProducts = () => {
     return (Array.isArray(products) ? products : []).slice(0, 8);
   }, [products]);
 
-  // Create a set of purchased product IDs for quick and efficient lookup
   const purchasedProductIds = useMemo(() => {
     if (!userInfo || !Array.isArray(orders)) {
       return new Set();
@@ -83,10 +81,10 @@ const FeaturedProducts = () => {
       return;
     }
 
-    // Your model shows planFile is an array, so we take the first file.
-    const fileToDownload = Array.isArray(product.planFile)
-      ? product.planFile[0]
-      : product.planFile;
+    const fileToDownload =
+      (Array.isArray(product.planFile)
+        ? product.planFile[0]
+        : product.planFile) || product["Download 1 URL"];
 
     if (!fileToDownload) {
       toast({
@@ -97,8 +95,6 @@ const FeaturedProducts = () => {
     }
 
     let downloadUrl = fileToDownload;
-
-    // Add the Cloudinary flag to force download
     if (downloadUrl.includes("res.cloudinary.com")) {
       const parts = downloadUrl.split("/upload/");
       if (parts.length === 2) {
@@ -107,22 +103,24 @@ const FeaturedProducts = () => {
     }
 
     try {
+      toast({ title: "Success", description: "Your download is starting!" });
       const link = document.createElement("a");
       link.href = downloadUrl;
       const fileExtension =
         downloadUrl.split(".").pop()?.split("?")[0] || "pdf";
       link.setAttribute(
         "download",
-        `ArchHome-${product.name.replace(/\s+/g, "-")}.${fileExtension}`
+        `ArchHome-${(product.name || product.Name).replace(/\s+/g, "-")}.${fileExtension}`
       );
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      toast({ title: "Success", description: "Your download has started!" });
     } catch (error) {
       console.error("Download failed:", error);
-      toast({ title: "Success", description: "Your download has started !." });
+      toast({
+        title: "Download Failed",
+        description: "There was an issue starting your download.",
+      });
     }
   };
 
@@ -138,13 +136,19 @@ const FeaturedProducts = () => {
 
   const handleWishlistToggle = (product: Product) => {
     const isWishlisted = isInWishlist(product._id);
+    const regularPrice = product.price ?? product["Regular price"] ?? 0;
+    const salePrice = product.salePrice ?? product["Sale price"];
+
     const productForWishlist = {
       productId: product._id,
-      name: product.name,
-      price: product.price,
-      salePrice: product.salePrice,
-      image: product.image || product.mainImage,
-      size: product.plotSize,
+      name: product.name || product.Name,
+      price: regularPrice,
+      salePrice: salePrice,
+      image:
+        product.mainImage ||
+        product.image ||
+        product.Images?.split(",")[0].trim(),
+      size: product.plotSize || product["Attribute 1 value(s)"],
     };
     if (isWishlisted) {
       removeFromWishlist(product._id);
@@ -211,6 +215,54 @@ const FeaturedProducts = () => {
                   const isWishlisted = isInWishlist(product._id);
                   const hasPurchased = purchasedProductIds.has(product._id);
 
+                  const getImageSource = () => {
+                    const primaryImage =
+                      product.mainImage || product.image || product.Images;
+                    if (primaryImage && typeof primaryImage === "string") {
+                      return primaryImage.split(",")[0].trim();
+                    }
+                    return house3;
+                  };
+                  const mainImage = getImageSource();
+
+                  const productName =
+                    product.name || product.Name || "Untitled Plan";
+                  const plotSize =
+                    product.plotSize ||
+                    product["Attribute 1 value(s)"] ||
+                    "N/A";
+                  const plotArea =
+                    product.plotArea ||
+                    (product["Attribute 2 value(s)"]
+                      ? parseInt(
+                          String(product["Attribute 2 value(s)"]).replace(
+                            /\D/g,
+                            ""
+                          )
+                        )
+                      : "N/A");
+                  const rooms =
+                    product.rooms || product["Attribute 3 value(s)"] || "N/A";
+                  const direction =
+                    product.direction ||
+                    product["Attribute 4 value(s)"] ||
+                    "N/A";
+
+                  const regularPrice =
+                    product.price !== 0 && product.price
+                      ? product.price
+                      : (product["Regular price"] ?? 0);
+                  const salePrice =
+                    product.salePrice !== 0 && product.salePrice
+                      ? product.salePrice
+                      : product["Sale price"];
+
+                  const isSale =
+                    product.isSale ??
+                    (salePrice != null && salePrice < regularPrice);
+                  const displayPrice =
+                    isSale && salePrice != null ? salePrice : regularPrice;
+
                   return (
                     <motion.div
                       key={product._id}
@@ -227,12 +279,12 @@ const FeaturedProducts = () => {
                           className="block p-4"
                         >
                           <img
-                            src={product.image || product.mainImage}
-                            alt={product.name}
+                            src={mainImage}
+                            alt={productName}
                             className="w-full h-56 object-contain group-hover:scale-105 transition-transform"
                           />
                         </Link>
-                        {product.isSale && (
+                        {isSale && (
                           <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md z-10">
                             Sale!
                           </div>
@@ -271,25 +323,25 @@ const FeaturedProducts = () => {
                           <div className="bg-gray-50 rounded-md p-2">
                             <p className="text-xs text-gray-500">Area</p>
                             <p className="text-sm font-semibold text-gray-800">
-                              {product.plotArea}
+                              {plotArea}
                             </p>
                           </div>
                           <div className="bg-teal-50 rounded-md p-2">
                             <p className="text-xs text-gray-500">BHK</p>
                             <p className="text-sm font-semibold text-gray-800">
-                              {product.rooms}
+                              {rooms}
                             </p>
                           </div>
                           <div className="bg-blue-50 rounded-md p-2">
                             <p className="text-xs text-gray-500">Size</p>
                             <p className="text-sm font-semibold text-gray-800">
-                              {product.plotSize}
+                              {plotSize}
                             </p>
                           </div>
                           <div className="bg-orange-50 rounded-md p-2">
                             <p className="text-xs text-gray-500">Facing</p>
                             <p className="text-sm font-semibold text-gray-800">
-                              {product.direction || "Any"}
+                              {direction || "Any"}
                             </p>
                           </div>
                         </div>
@@ -297,23 +349,23 @@ const FeaturedProducts = () => {
                       <div className="p-4">
                         <div className="mb-4">
                           <p className="text-xs text-gray-500 uppercase font-medium">
-                            {product.category}
+                            {product.category ||
+                              product.Categories?.split(",")[0]}
                           </p>
                           <h3 className="text-xl font-bold text-gray-800 mt-1 truncate">
-                            {product.name}
+                            {productName}
                           </h3>
                           <div className="flex items-baseline gap-2 mt-1">
-                            {product.isSale && (
+                            {isSale && regularPrice > 0 && (
                               <span className="text-sm text-gray-400 line-through">
-                                ₹{product.price.toLocaleString()}
+                                ₹{regularPrice.toLocaleString()}
                               </span>
                             )}
                             <span className="text-xl font-bold text-gray-900">
                               ₹
-                              {(product.isSale
-                                ? product.salePrice
-                                : product.price
-                              ).toLocaleString()}
+                              {displayPrice > 0
+                                ? displayPrice.toLocaleString()
+                                : "N/A"}
                             </span>
                           </div>
                         </div>
@@ -328,7 +380,7 @@ const FeaturedProducts = () => {
                           </Link>
                           <Button
                             size="sm"
-                            className={`w-full text-white text-sm h-10 ${hasPurchased ? "bg-teal-500 hover:bg-teal-600" : "bg-gray-400 hover:bg-gray-500"}`}
+                            className={`w-full text-white text-sm h-10 ${hasPurchased ? "bg-teal-500 hover:bg-teal-600" : "bg-gray-400 cursor-not-allowed"}`}
                             onClick={() => handleDownload(product)}
                             disabled={!hasPurchased}
                           >
@@ -338,8 +390,7 @@ const FeaturedProducts = () => {
                               </>
                             ) : (
                               <>
-                                <Lock className="mr-2 h-4 w-4" />
-                                Download
+                                <Lock className="mr-2 h-4 w-4" /> Download
                               </>
                             )}
                           </Button>
