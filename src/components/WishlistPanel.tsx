@@ -10,14 +10,13 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { X, HeartCrack, ShoppingCart, Loader2 } from "lucide-react";
-import house3 from "@/assets/house-3.jpg"; // एक फॉलबैक इमेज
+import house3 from "@/assets/house-3.jpg"; 
 
 type WishlistPanelProps = {
   isOpen: boolean;
   onClose: () => void;
 };
 
-// WishlistItem interface को दोनों तरह के डेटा को सपोर्ट करने के लिए अपडेट करें
 interface WishlistItem {
   productId: string;
   name?: string; // UI से
@@ -30,7 +29,7 @@ interface WishlistItem {
   Images?: string;
   size?: string;
   "Attribute 1 value(s)"?: string;
-  [key: string]: any; // किसी भी अन्य फील्ड के लिए
+  [key: string]: any;
 }
 
 const WishlistPanel: React.FC<WishlistPanelProps> = ({ isOpen, onClose }) => {
@@ -39,7 +38,6 @@ const WishlistPanel: React.FC<WishlistPanelProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
 
   const handleAddToCart = async (item: WishlistItem) => {
-    // कार्ट में भेजने से पहले डेटा को नॉर्मलाइज करें
     const itemName = item.name || item.Name || "Untitled Plan";
     const regularPrice = item.price ?? item["Regular price"] ?? 0;
     const itemSalePrice = item.salePrice ?? item["Sale price"];
@@ -83,7 +81,6 @@ const WishlistPanel: React.FC<WishlistPanelProps> = ({ isOpen, onClose }) => {
         ) : (
           <div className="flex-grow overflow-y-auto p-6 space-y-4">
             {wishlistItems.map((item) => {
-              // हर आइटम के लिए डेटा को सही से पढ़ें
               const itemName = item.name || item.Name || "Untitled Plan";
               const regularPrice = item.price ?? item["Regular price"] ?? 0;
               const itemSalePrice = item.salePrice ?? item["Sale price"];
