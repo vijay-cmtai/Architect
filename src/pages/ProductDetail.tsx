@@ -170,18 +170,45 @@ const DetailPage = () => {
     displayData?.Description ||
     "No description available.";
 
-  // FIX: Price को सही से पढ़ें
+  // FIXED: Same sale detection logic as other components
   const regularPrice =
     displayData?.price !== 0 && displayData?.price
       ? displayData.price
       : (displayData?.["Regular price"] ?? 0);
+
   const salePrice =
     displayData?.salePrice !== 0 && displayData?.salePrice
       ? displayData.salePrice
       : displayData?.["Sale price"];
 
-  const isSale =
-    displayData?.isSale ?? (salePrice != null && salePrice < regularPrice);
+  // FIXED: Sale detection with proper priority
+  const isSale = (() => {
+    if (!displayData) return false;
+
+    // JSON data के लिए Sale price field check करें FIRST (priority)
+    if (
+      displayData["Sale price"] !== undefined &&
+      displayData["Sale price"] !== null
+    ) {
+      const jsonSalePrice = parseFloat(displayData["Sale price"]);
+      const jsonRegularPrice = parseFloat(displayData["Regular price"] || 0);
+      // अगर sale price valid है और regular price से कम है तो sale है
+      return jsonSalePrice > 0 && jsonSalePrice < jsonRegularPrice;
+    }
+
+    // Database data के लिए salePrice field check करें
+    if (salePrice !== undefined && salePrice !== null) {
+      return salePrice > 0 && salePrice < regularPrice;
+    }
+
+    // Last में product.isSale check करें (क्योंकि ये unreliable हो सकता है)
+    if (displayData.isSale !== undefined) {
+      return displayData.isSale;
+    }
+
+    return false;
+  })();
+
   const currentPrice = isSale && salePrice != null ? salePrice : regularPrice;
 
   const plotSize =
@@ -357,7 +384,44 @@ const DetailPage = () => {
         return pCategory === currentCategory && p._id !== id;
       })
       .slice(0, 2)
-      .map((p) => ({ ...p, source: "product" }));
+      .map((p) => ({
+        ...p,
+        source: "product",
+        // FIXED: Apply same sale logic to related products
+        isSaleCalculated: (() => {
+          if (p["Sale price"] !== undefined && p["Sale price"] !== null) {
+            const jsonSalePrice = parseFloat(p["Sale price"]);
+            const jsonRegularPrice = parseFloat(p["Regular price"] || 0);
+            return jsonSalePrice > 0 && jsonSalePrice < jsonRegularPrice;
+          }
+          if (p.salePrice !== undefined && p.salePrice !== null) {
+            const regPrice =
+              p.price !== 0 && p.price ? p.price : (p["Regular price"] ?? 0);
+            return p.salePrice > 0 && p.salePrice < regPrice;
+          }
+          if (p.isSale !== undefined) return p.isSale;
+          return false;
+        })(),
+        displayPrice: (() => {
+          const regPrice =
+            p.price !== 0 && p.price ? p.price : (p["Regular price"] ?? 0);
+          const salePrice =
+            p.salePrice !== 0 && p.salePrice ? p.salePrice : p["Sale price"];
+          const isSale = (() => {
+            if (p["Sale price"] !== undefined && p["Sale price"] !== null) {
+              const jsonSalePrice = parseFloat(p["Sale price"]);
+              const jsonRegularPrice = parseFloat(p["Regular price"] || 0);
+              return jsonSalePrice > 0 && jsonSalePrice < jsonRegularPrice;
+            }
+            if (salePrice !== undefined && salePrice !== null) {
+              return salePrice > 0 && salePrice < regPrice;
+            }
+            if (p.isSale !== undefined) return p.isSale;
+            return false;
+          })();
+          return isSale && salePrice != null ? salePrice : regPrice;
+        })(),
+      }));
   }, [adminProducts, displayData, id]);
 
   const isLoading =
@@ -482,8 +546,9 @@ const DetailPage = () => {
                     text={`${displayData.numReviews || 0} reviews`}
                   />
                 </div>
-                <div className="flex items-baseline gap-4 mb-6">
-                  {isSale && (
+                {/* FIXED: Price display with sale indication */}
+                <div className="flex items-baseline gap-4 mb-6 flex-wrap">
+                  {isSale && regularPrice > 0 && (
                     <span className="text-xl text-gray-500 line-through">
                       ₹{regularPrice?.toLocaleString()}
                     </span>
@@ -491,6 +556,11 @@ const DetailPage = () => {
                   <span className="text-4xl font-bold text-primary">
                     ₹{currentPrice?.toLocaleString()}
                   </span>
+                  {isSale && regularPrice > 0 && currentPrice > 0 && (
+                    <span className="text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full font-semibold">
+                      SAVE ₹{(regularPrice - currentPrice).toLocaleString()}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -751,15 +821,9 @@ const DetailPage = () => {
                       {relatedProd.plotSize ||
                         relatedProd["Attribute 1 value(s)"]}
                     </p>
+                    {/* FIXED: Use the calculated display price for related products */}
                     <div className="text-2xl font-bold text-primary">
-                      ₹
-                      {(relatedProd.salePrice ?? relatedProd["Sale price"])
-                        ? (
-                            relatedProd.salePrice ?? relatedProd["Sale price"]
-                          ).toLocaleString()
-                        : (
-                            relatedProd.price ?? relatedProd["Regular price"]
-                          )?.toLocaleString()}
+                      ₹{relatedProd.displayPrice?.toLocaleString()}
                     </div>
                   </div>
                 </Link>

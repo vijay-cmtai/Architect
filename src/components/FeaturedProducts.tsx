@@ -227,22 +227,27 @@ const FeaturedProducts = () => {
 
                   const productName =
                     product.name || product.Name || "Untitled Plan";
+
+                  // FIXED: Proper field mapping
                   const plotSize =
                     product.plotSize ||
                     product["Attribute 1 value(s)"] ||
                     "N/A";
+
                   const plotArea =
                     product.plotArea ||
                     (product["Attribute 2 value(s)"]
                       ? parseInt(
                           String(product["Attribute 2 value(s)"]).replace(
-                            /\D/g,
+                            /[^0-9]/g,
                             ""
                           )
                         )
                       : "N/A");
+
                   const rooms =
                     product.rooms || product["Attribute 3 value(s)"] || "N/A";
+
                   const direction =
                     product.direction ||
                     product["Attribute 4 value(s)"] ||
@@ -252,14 +257,42 @@ const FeaturedProducts = () => {
                     product.price !== 0 && product.price
                       ? product.price
                       : (product["Regular price"] ?? 0);
+
                   const salePrice =
                     product.salePrice !== 0 && product.salePrice
                       ? product.salePrice
                       : product["Sale price"];
 
-                  const isSale =
-                    product.isSale ??
-                    (salePrice != null && salePrice < regularPrice);
+                  // FIXED: Same sale detection logic as Products component
+                  const isSale = (() => {
+                    // JSON data के लिए Sale price field check करें FIRST (priority)
+                    if (
+                      product["Sale price"] !== undefined &&
+                      product["Sale price"] !== null
+                    ) {
+                      const jsonSalePrice = parseFloat(product["Sale price"]);
+                      const jsonRegularPrice = parseFloat(
+                        product["Regular price"] || 0
+                      );
+                      // अगर sale price valid है और regular price से कम है तो sale है
+                      return (
+                        jsonSalePrice > 0 && jsonSalePrice < jsonRegularPrice
+                      );
+                    }
+
+                    // Database data के लिए salePrice field check करें
+                    if (salePrice !== undefined && salePrice !== null) {
+                      return salePrice > 0 && salePrice < regularPrice;
+                    }
+
+                    // Last में product.isSale check करें (क्योंकि ये unreliable हो सकता है)
+                    if (product.isSale !== undefined) {
+                      return product.isSale;
+                    }
+
+                    return false;
+                  })();
+
                   const displayPrice =
                     isSale && salePrice != null ? salePrice : regularPrice;
 
@@ -284,6 +317,7 @@ const FeaturedProducts = () => {
                             className="w-full h-56 object-contain group-hover:scale-105 transition-transform"
                           />
                         </Link>
+                        {/* FIXED: Sale badge with proper detection */}
                         {isSale && (
                           <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md z-10">
                             Sale!
@@ -319,11 +353,12 @@ const FeaturedProducts = () => {
                         </div>
                       </div>
                       <div className="p-4 border-b">
+                        {/* FIXED: Proper field mapping in display grid */}
                         <div className="grid grid-cols-4 gap-2 text-center">
                           <div className="bg-gray-50 rounded-md p-2">
                             <p className="text-xs text-gray-500">Area</p>
                             <p className="text-sm font-semibold text-gray-800">
-                              {plotArea}
+                              {plotArea} {plotArea !== "N/A" ? "sqft" : ""}
                             </p>
                           </div>
                           <div className="bg-teal-50 rounded-md p-2">
@@ -349,13 +384,17 @@ const FeaturedProducts = () => {
                       <div className="p-4">
                         <div className="mb-4">
                           <p className="text-xs text-gray-500 uppercase font-medium">
-                            {product.category ||
-                              product.Categories?.split(",")[0]}
+                            {(Array.isArray(product.category)
+                              ? product.category[0]
+                              : product.category) ||
+                              product.Categories?.split(",")[0]?.trim() ||
+                              "House Plan"}
                           </p>
                           <h3 className="text-xl font-bold text-gray-800 mt-1 truncate">
                             {productName}
                           </h3>
-                          <div className="flex items-baseline gap-2 mt-1">
+                          {/* FIXED: Price display with save amount */}
+                          <div className="flex items-baseline gap-2 mt-1 flex-wrap">
                             {isSale && regularPrice > 0 && (
                               <span className="text-sm text-gray-400 line-through">
                                 ₹{regularPrice.toLocaleString()}
@@ -367,6 +406,12 @@ const FeaturedProducts = () => {
                                 ? displayPrice.toLocaleString()
                                 : "N/A"}
                             </span>
+                            {isSale && regularPrice > 0 && displayPrice > 0 && (
+                              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-semibold">
+                                SAVE ₹
+                                {(regularPrice - displayPrice).toLocaleString()}
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-2">

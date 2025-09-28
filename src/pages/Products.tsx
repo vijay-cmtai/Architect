@@ -277,18 +277,39 @@ const ProductCard = ({ product, userOrders }) => {
     product.direction || product["Attribute 4 value(s)"] || "N/A";
   const floors = product.floors || product["Attribute 5 value(s)"] || "N/A";
 
-  // FIX: Price को सही से पढ़ें (यह मुख्य बदलाव है)
   const regularPrice =
     product.price !== 0 && product.price
       ? product.price
       : (product["Regular price"] ?? 0);
+
   const salePrice =
     product.salePrice !== 0 && product.salePrice
       ? product.salePrice
       : product["Sale price"];
 
-  const isSale =
-    product.isSale ?? (salePrice != null && salePrice < regularPrice);
+  // FIXED: बेहतर sale detection logic for JSON data
+  const isSale = (() => {
+    // JSON data के लिए Sale price field check करें FIRST (priority)
+    if (product["Sale price"] !== undefined && product["Sale price"] !== null) {
+      const jsonSalePrice = parseFloat(product["Sale price"]);
+      const jsonRegularPrice = parseFloat(product["Regular price"] || 0);
+      // अगर sale price valid है और regular price से कम है तो sale है
+      return jsonSalePrice > 0 && jsonSalePrice < jsonRegularPrice;
+    }
+
+    // Database data के लिए salePrice field check करें
+    if (salePrice !== undefined && salePrice !== null) {
+      return salePrice > 0 && salePrice < regularPrice;
+    }
+
+    // Last में product.isSale check करें (क्योंकि ये unreliable हो सकता है)
+    if (product.isSale !== undefined) {
+      return product.isSale;
+    }
+
+    return false;
+  })();
+
   const displayPrice = isSale && salePrice != null ? salePrice : regularPrice;
 
   const category =
@@ -400,8 +421,9 @@ const ProductCard = ({ product, userOrders }) => {
             </p>
           </div>
         </Link>
+        {/* FIXED: Sale badge अब properly show होगा */}
         {isSale && (
-          <div className="absolute top-4 left-4 bg-white text-gray-800 text-xs font-bold px-3 py-1 rounded-md shadow">
+          <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-md shadow">
             Sale!
           </div>
         )}
@@ -481,7 +503,8 @@ const ProductCard = ({ product, userOrders }) => {
         <h3 className="text-lg font-bold text-teal-800 mt-1 truncate">
           {productName}
         </h3>
-        <div className="flex items-baseline gap-2 mt-1">
+        {/* FIXED: Price section with better sale display */}
+        <div className="flex items-baseline gap-2 mt-1 flex-wrap">
           {isSale && regularPrice > 0 && (
             <s className="text-md text-gray-400">
               ₹{regularPrice.toLocaleString()}
@@ -490,6 +513,11 @@ const ProductCard = ({ product, userOrders }) => {
           <span className="text-xl font-bold text-gray-800">
             ₹{displayPrice > 0 ? displayPrice.toLocaleString() : "N/A"}
           </span>
+          {isSale && regularPrice > 0 && displayPrice > 0 && (
+            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-semibold">
+              SAVE ₹{(regularPrice - displayPrice).toLocaleString()}
+            </span>
+          )}
         </div>
       </div>
       <div className="p-4 pt-0 mt-auto space-y-2">
@@ -525,7 +553,195 @@ const ProductCard = ({ product, userOrders }) => {
 
 // --- हेल्पर कंपोनेंट 3: CountryCustomizationForm ---
 const CountryCustomizationForm = ({ countryName }) => {
-  // ... इसमें कोई बदलाव नहीं ...
+  const dispatch = useDispatch<AppDispatch>();
+  const { actionStatus } = useSelector(
+    (state: RootState) => state.customization
+  );
+  const [formData, setFormData] = useState({
+    country: countryName || "",
+    name: "",
+    email: "",
+    whatsappNumber: "",
+    width: "",
+    length: "",
+    description: "",
+  });
+  const [referenceFile, setReferenceFile] = useState<File | null>(null);
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setReferenceFile(e.target.files[0]);
+    }
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const submitData = new FormData();
+    Object.keys(formData).forEach((key) => {
+      submitData.append(key, formData[key as keyof typeof formData]);
+    });
+    if (referenceFile) {
+      submitData.append("referenceFile", referenceFile);
+    }
+    submitData.append("requestType", "Floor Plan Customization");
+    try {
+      await dispatch(submitCustomizationRequest(submitData)).unwrap();
+      toast.success(
+        `Customization request for ${countryName || "your location"} sent successfully!`
+      );
+      setFormData({
+        country: countryName || "",
+        name: "",
+        email: "",
+        whatsappNumber: "",
+        width: "",
+        length: "",
+        description: "",
+      });
+      setReferenceFile(null);
+    } catch (rejectedError) {
+      toast.error(
+        String(rejectedError) || "Failed to submit customization request"
+      );
+    }
+  };
+
+  return (
+    <div className="bg-gray-50 py-16 mb-12">
+      <div className="container mx-auto px-4">
+        <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl p-8 md:p-12 flex flex-col lg:flex-row items-center gap-12">
+          <div className="w-full lg:w-1/2">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              Customize a Plan for {countryName || "Your Location"}
+            </h2>
+            <form onSubmit={handleFormSubmit} className="space-y-5">
+              <div>
+                <Label htmlFor="country">Country</Label>
+                <Input
+                  id="country"
+                  name="country"
+                  value={formData.country}
+                  onChange={handleInputChange}
+                  className="mt-1 bg-gray-200 border-gray-300 text-gray-500"
+                  readOnly={!!countryName}
+                />
+              </div>
+              <div>
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="mt-1 bg-gray-100 border-transparent"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="mt-1 bg-gray-100 border-transparent"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="whatsappNumber">WhatsApp Number *</Label>
+                <Input
+                  type="tel"
+                  id="whatsappNumber"
+                  name="whatsappNumber"
+                  value={formData.whatsappNumber}
+                  onChange={handleInputChange}
+                  className="mt-1 bg-gray-100 border-transparent"
+                  required
+                />
+              </div>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="width">Width (ft)</Label>
+                  <Input
+                    id="width"
+                    name="width"
+                    value={formData.width}
+                    onChange={handleInputChange}
+                    className="mt-1 bg-gray-100 border-transparent"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor="length">Length (ft)</Label>
+                  <Input
+                    id="length"
+                    name="length"
+                    value={formData.length}
+                    onChange={handleInputChange}
+                    className="mt-1 bg-gray-100 border-transparent"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Your message..."
+                  className="mt-1 bg-gray-100 border-transparent"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label htmlFor="referenceFile">
+                  Upload Reference (Image or PDF)
+                </Label>
+                <Input
+                  id="referenceFile"
+                  name="referenceFile"
+                  type="file"
+                  onChange={handleFileChange}
+                  accept="image/*,.pdf"
+                  className="mt-1"
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={actionStatus === "loading"}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-12 text-base disabled:opacity-50"
+              >
+                {actionStatus === "loading" ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Request"
+                )}
+              </Button>
+            </form>
+          </div>
+          <div className="w-full lg:w-1/2 hidden lg:block">
+            <img
+              src="/threeDfloor.jpg"
+              alt="Beautiful modern house"
+              className="w-full h-full object-cover rounded-xl"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 // --- मुख्य Products कंपोनेंट ---
@@ -596,8 +812,12 @@ const Products = () => {
   const combinedProducts = useMemo(() => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
     const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
+
+    // FIX: Reverse the admin products array to show newest first
+    const reversedAdminProducts = adminArray.slice().reverse();
+
     return [
-      ...adminArray.map((p) => ({ ...p, source: "admin" })),
+      ...reversedAdminProducts.map((p) => ({ ...p, source: "admin" })),
       ...profArray.map((p) => ({
         ...p,
         name: p.planName,
@@ -637,8 +857,33 @@ const Products = () => {
         product.salePrice !== 0 && product.salePrice
           ? product.salePrice
           : product["Sale price"];
-      const isSale =
-        product.isSale ?? (salePrice != null && salePrice < regularPrice);
+
+      // FIXED: Use same sale logic as in ProductCard - priority to price comparison
+      const isSale = (() => {
+        // JSON data के लिए Sale price field check करें FIRST (priority)
+        if (
+          product["Sale price"] !== undefined &&
+          product["Sale price"] !== null
+        ) {
+          const jsonSalePrice = parseFloat(product["Sale price"]);
+          const jsonRegularPrice = parseFloat(product["Regular price"] || 0);
+          // अगर sale price valid है और regular price से कम है तो sale है
+          return jsonSalePrice > 0 && jsonSalePrice < jsonRegularPrice;
+        }
+
+        // Database data के लिए salePrice field check करें
+        if (salePrice !== undefined && salePrice !== null) {
+          return salePrice > 0 && salePrice < regularPrice;
+        }
+
+        // Last में product.isSale check करें (क्योंकि ये unreliable हो सकता है)
+        if (product.isSale !== undefined) {
+          return product.isSale;
+        }
+
+        return false;
+      })();
+
       const displayPrice =
         isSale && salePrice != null ? salePrice : regularPrice;
 
@@ -717,39 +962,78 @@ const Products = () => {
 
     if (sortBy === "price-low") {
       products.sort((a, b) => {
-        const priceA =
-          (a.isSale ??
-          (a["Sale price"] != null && a["Sale price"] < a["Regular price"]))
-            ? (a.salePrice ?? a["Sale price"])
-            : (a.price ?? a["Regular price"]);
-        const priceB =
-          (b.isSale ??
-          (b["Sale price"] != null && b["Sale price"] < b["Regular price"]))
-            ? (b.salePrice ?? b["Sale price"])
-            : (b.price ?? b["Regular price"]);
-        return (priceA ?? 0) - (priceB ?? 0);
+        const getPrice = (product) => {
+          const regularPrice =
+            product.price !== 0 && product.price
+              ? product.price
+              : (product["Regular price"] ?? 0);
+          const salePrice =
+            product.salePrice !== 0 && product.salePrice
+              ? product.salePrice
+              : product["Sale price"];
+
+          const isSale = (() => {
+            // JSON data के लिए Sale price field check करें FIRST (priority)
+            if (
+              product["Sale price"] !== undefined &&
+              product["Sale price"] !== null
+            ) {
+              const jsonSalePrice = parseFloat(product["Sale price"]);
+              const jsonRegularPrice = parseFloat(
+                product["Regular price"] || 0
+              );
+              return jsonSalePrice > 0 && jsonSalePrice < jsonRegularPrice;
+            }
+            // Database data के लिए salePrice field check करें
+            if (salePrice !== undefined && salePrice !== null) {
+              return salePrice > 0 && salePrice < regularPrice;
+            }
+            // Last में product.isSale check करें
+            if (product.isSale !== undefined) return product.isSale;
+            return false;
+          })();
+
+          return isSale && salePrice != null ? salePrice : regularPrice;
+        };
+        return getPrice(a) - getPrice(b);
       });
     } else if (sortBy === "price-high") {
       products.sort((a, b) => {
-        const priceA =
-          (a.isSale ??
-          (a["Sale price"] != null && a["Sale price"] < a["Regular price"]))
-            ? (a.salePrice ?? a["Sale price"])
-            : (a.price ?? a["Regular price"]);
-        const priceB =
-          (b.isSale ??
-          (b["Sale price"] != null && b["Sale price"] < b["Regular price"]))
-            ? (b.salePrice ?? b["Sale price"])
-            : (b.price ?? b["Regular price"]);
-        return (priceB ?? 0) - (priceA ?? 0);
-      });
-    } else {
-      products.sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
+        const getPrice = (product) => {
+          const regularPrice =
+            product.price !== 0 && product.price
+              ? product.price
+              : (product["Regular price"] ?? 0);
+          const salePrice =
+            product.salePrice !== 0 && product.salePrice
+              ? product.salePrice
+              : product["Sale price"];
+
+          const isSale = (() => {
+            if (product.isSale !== undefined) return product.isSale;
+            if (
+              product["Sale price"] !== undefined &&
+              product["Sale price"] !== null
+            ) {
+              const jsonSalePrice = parseFloat(product["Sale price"]);
+              const jsonRegularPrice = parseFloat(
+                product["Regular price"] || 0
+              );
+              return jsonSalePrice > 0 && jsonSalePrice < jsonRegularPrice;
+            }
+            if (salePrice !== undefined && salePrice !== null) {
+              return salePrice > 0 && salePrice < regularPrice;
+            }
+            return false;
+          })();
+
+          return isSale && salePrice != null ? salePrice : regularPrice;
+        };
+        return getPrice(b) - getPrice(a);
       });
     }
+    // "newest" के लिए अब सॉर्टिंग की जरूरत नहीं क्योंकि हमने combinedProducts को ही reverse कर दिया है
+
     return products;
   }, [combinedProducts, filters, countryQuery, sortBy]);
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -23,7 +23,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, ArrowLeft } from "lucide-react";
 
-// Define a type for window to include Razorpay
 declare global {
   interface Window {
     Razorpay: any;
@@ -63,32 +62,35 @@ const CheckoutPage = () => {
       };
     }
 
-    const shipping = 0;
     let subtotalBeforeDiscount = 0;
     let totalDiscount = 0;
     let subtotalAfterDiscount = 0;
     let totalTax = 0;
+    const shipping = 0;
 
     cartState.items.forEach((item) => {
-      // --- NEW SIMPLIFIED LOGIC ---
-      const originalPrice = item.productId?.price ?? item.price;
-      const salePrice = item.productId?.salePrice ?? 0;
-      const isSale = item.productId?.isSale ?? false;
-      const quantity = item.quantity ?? 1;
-      const taxRate = (item.productId?.taxRate ?? 0) / 100;
+      const regularPrice =
+        item.price !== 0 && item.price
+          ? item.price
+          : (item["Regular price"] ?? 0);
+      const salePrice =
+        item.salePrice !== 0 && item.salePrice
+          ? item.salePrice
+          : item["Sale price"];
+      const isSale =
+        item.isSale ??
+        (salePrice != null && salePrice > 0 && salePrice < regularPrice);
+      const displayPrice =
+        isSale && salePrice != null ? salePrice : regularPrice;
+      const taxRate = (item.taxRate || item.productId?.taxRate || 0) / 100;
 
-      const finalEffectivePrice =
-        isSale && salePrice > 0 ? salePrice : originalPrice;
+      const itemSubtotal = displayPrice * item.quantity;
+      const originalItemSubtotal = regularPrice * item.quantity;
 
-      // --- CALCULATE TOTALS ---
-      subtotalBeforeDiscount += originalPrice * quantity;
-      const itemSubtotalAfterDiscount = finalEffectivePrice * quantity;
-      subtotalAfterDiscount += itemSubtotalAfterDiscount;
-      const totalDiscountForItem =
-        (originalPrice - finalEffectivePrice) * quantity;
-      totalDiscount += totalDiscountForItem;
-      const itemTax = itemSubtotalAfterDiscount * taxRate;
-      totalTax += itemTax;
+      subtotalAfterDiscount += itemSubtotal;
+      subtotalBeforeDiscount += originalItemSubtotal;
+      totalDiscount += originalItemSubtotal - itemSubtotal;
+      totalTax += itemSubtotal * taxRate;
     });
 
     const finalTotal = subtotalAfterDiscount + totalTax + shipping;
@@ -111,7 +113,6 @@ const CheckoutPage = () => {
             `${import.meta.env.VITE_BACKEND_URL}/api/orders/paypal/client-id`,
             { headers: { Authorization: `Bearer ${userInfo.token}` } }
           );
-
           if (data.clientId && data.clientId !== "your_paypal_client_id") {
             setPaypalClientId(data.clientId);
             setIsPaypalSdkReady(true);
@@ -158,9 +159,7 @@ const CheckoutPage = () => {
     }
     try {
       const { data: razorpayOrderData } = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/orders/${
-          order._id
-        }/create-razorpay-order`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/orders/${order._id}/create-razorpay-order`,
         {},
         { headers: { Authorization: `Bearer ${userInfo.token}` } }
       );
@@ -173,9 +172,7 @@ const CheckoutPage = () => {
         handler: async (response: any) => {
           try {
             await axios.post(
-              `${import.meta.env.VITE_BACKEND_URL}/api/orders/${
-                order._id
-              }/verify-payment`,
+              `${import.meta.env.VITE_BACKEND_URL}/api/orders/${order._id}/verify-payment`,
               response,
               { headers: { Authorization: `Bearer ${userInfo.token}` } }
             );
@@ -200,9 +197,7 @@ const CheckoutPage = () => {
   const handlePhonePePayment = async (order: any) => {
     try {
       const { data } = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/orders/${
-          order._id
-        }/pay-with-phonepe`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/orders/${order._id}/pay-with-phonepe`,
         {},
         { headers: { Authorization: `Bearer ${userInfo.token}` } }
       );
@@ -257,10 +252,7 @@ const CheckoutPage = () => {
           typeof item.productId === "object"
             ? item.productId._id
             : item.productId;
-        return {
-          ...item,
-          productId: itemKey,
-        };
+        return { ...item, productId: itemKey };
       }),
       shippingAddress: data,
       paymentMethod: paymentMethod,
@@ -273,11 +265,9 @@ const CheckoutPage = () => {
     dispatch(createOrder(orderData)).then((res) => {
       if (createOrder.fulfilled.match(res)) {
         const createdOrder = res.payload;
-        if (paymentMethod === "Razorpay") {
-          handleRazorpayPayment(createdOrder);
-        } else if (paymentMethod === "PhonePe") {
+        if (paymentMethod === "Razorpay") handleRazorpayPayment(createdOrder);
+        else if (paymentMethod === "PhonePe")
           handlePhonePePayment(createdOrder);
-        }
       } else {
         toast.error(String(orderError) || "Could not create order.");
       }
@@ -341,11 +331,7 @@ const CheckoutPage = () => {
                 {["Razorpay", "PayPal", "PhonePe"].map((method) => (
                   <label
                     key={method}
-                    className={`flex items-center p-3 border rounded-lg cursor-pointer ${
-                      paymentMethod === method
-                        ? "border-primary bg-primary/5"
-                        : "hover:border-gray-300"
-                    }`}
+                    className={`flex items-center p-3 border rounded-lg cursor-pointer ${paymentMethod === method ? "border-primary bg-primary/5" : "hover:border-gray-300"}`}
                   >
                     <input
                       type="radio"
@@ -365,19 +351,26 @@ const CheckoutPage = () => {
             <h2 className="text-xl font-semibold mb-4">Your Order</h2>
             <div className="space-y-2">
               {cartState.items.map((item) => {
-                const originalPrice = item.productId?.price ?? item.price;
-                const salePrice = item.productId?.salePrice ?? 0;
-                const isSale = item.productId?.isSale ?? false;
-
-                const finalEffectivePrice =
-                  isSale && salePrice > 0 ? salePrice : originalPrice;
-
-                const hasDiscount = finalEffectivePrice < originalPrice;
+                const regularPrice =
+                  item.price !== 0 && item.price
+                    ? item.price
+                    : (item["Regular price"] ?? 0);
+                const salePrice =
+                  item.salePrice !== 0 && item.salePrice
+                    ? item.salePrice
+                    : item["Sale price"];
+                const isSale =
+                  item.isSale ??
+                  (salePrice != null &&
+                    salePrice > 0 &&
+                    salePrice < regularPrice);
+                const displayPrice =
+                  isSale && salePrice != null ? salePrice : regularPrice;
+                const hasDiscount = displayPrice < regularPrice;
                 const itemKey =
                   typeof item.productId === "object"
                     ? item.productId._id
                     : item.productId;
-
                 return (
                   <div
                     key={itemKey}
@@ -399,12 +392,11 @@ const CheckoutPage = () => {
                     <div className="text-right">
                       {hasDiscount && (
                         <div className="line-through text-gray-500 text-xs">
-                          ₹{(originalPrice * item.quantity).toLocaleString()}
+                          ₹{(regularPrice * item.quantity).toLocaleString()}
                         </div>
                       )}
                       <div className="font-semibold">
-                        ₹
-                        {(finalEffectivePrice * item.quantity).toLocaleString()}
+                        ₹{(displayPrice * item.quantity).toLocaleString()}
                       </div>
                     </div>
                   </div>
@@ -414,18 +406,20 @@ const CheckoutPage = () => {
             <div className="border-t my-4"></div>
             <div className="space-y-2 font-medium">
               {orderSummary.totalDiscount > 0 && (
-                <div className="flex justify-between">
-                  <span>Original Price</span>
-                  <span>
-                    ₹{orderSummary.subtotalBeforeDiscount.toLocaleString()}
-                  </span>
-                </div>
-              )}
-              {orderSummary.totalDiscount > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span>Total Discount</span>
-                  <span>- ₹{orderSummary.totalDiscount.toLocaleString()}</span>
-                </div>
+                <>
+                  <div className="flex justify-between">
+                    <span>Original Price</span>
+                    <span>
+                      ₹{orderSummary.subtotalBeforeDiscount.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-green-600">
+                    <span>Total Discount</span>
+                    <span>
+                      - ₹{orderSummary.totalDiscount.toLocaleString()}
+                    </span>
+                  </div>
+                </>
               )}
               <div className="flex justify-between">
                 <span>Subtotal</span>

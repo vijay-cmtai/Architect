@@ -1,6 +1,6 @@
-// src/pages/Cart.tsx (Updated)
-
+import React from "react";
 import { Link } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import {
   Plus,
   Minus,
@@ -13,28 +13,14 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
+import { RootState, AppDispatch } from "@/lib/store";
 
 const Cart = () => {
   const { state, updateQuantity, removeItem } = useCart();
+  const { items, status } = useSelector((state: RootState) => state.cart);
 
-  // Loading spinner while cart data is being fetched
-  if (state.loading && state.items.length === 0) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <Navbar />
-        <div className="flex-grow flex items-center justify-center">
-          <Loader2 className="w-16 h-16 animate-spin text-primary" />
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  // Calculate order summary with the new, simplified logic
   const calculateOrderSummary = () => {
-    // Filter out any null/undefined items before calculation
-    const validItems = state.items.filter((item) => item && item.productId);
-
+    const validItems = items.filter((item) => item && item.productId);
     if (validItems.length === 0) {
       return {
         subtotalBeforeDiscount: 0,
@@ -46,73 +32,79 @@ const Cart = () => {
       };
     }
 
-    const shipping = 0;
     let subtotalBeforeDiscount = 0;
     let totalDiscount = 0;
     let subtotalAfterDiscount = 0;
     let totalTax = 0;
 
     validItems.forEach((item) => {
-      // --- NEW SIMPLIFIED LOGIC ---
-      const originalPrice = item.productId?.price ?? item.price;
-      const salePrice = item.productId?.salePrice ?? 0;
-      const isSale = item.productId?.isSale ?? false;
-      const quantity = item.quantity ?? 1;
-      const taxRate = (item.productId?.taxRate ?? 0) / 100;
+      // FIX: Price और Tax को सही से पढ़ें
+      const regularPrice =
+        item.price !== 0 && item.price
+          ? item.price
+          : (item["Regular price"] ?? 0);
+      const salePrice =
+        item.salePrice !== 0 && item.salePrice
+          ? item.salePrice
+          : item["Sale price"];
+      const isSale =
+        item.isSale ??
+        (salePrice != null && salePrice > 0 && salePrice < regularPrice);
+      const displayPrice =
+        isSale && salePrice != null ? salePrice : regularPrice;
 
-      const finalEffectivePrice =
-        isSale && salePrice > 0 ? salePrice : originalPrice;
+      const taxRate = (item.taxRate || item.productId?.taxRate || 0) / 100;
 
-      // --- CALCULATE TOTALS ---
-      subtotalBeforeDiscount += originalPrice * quantity;
-      const itemSubtotalAfterDiscount = finalEffectivePrice * quantity;
-      subtotalAfterDiscount += itemSubtotalAfterDiscount;
-      const totalDiscountForItem =
-        (originalPrice - finalEffectivePrice) * quantity;
-      totalDiscount += totalDiscountForItem;
-      const itemTax = itemSubtotalAfterDiscount * taxRate;
-      totalTax += itemTax;
+      const itemSubtotal = displayPrice * item.quantity;
+      const originalItemSubtotal = regularPrice * item.quantity;
+
+      subtotalAfterDiscount += itemSubtotal;
+      subtotalBeforeDiscount += originalItemSubtotal;
+      totalDiscount += originalItemSubtotal - itemSubtotal;
+      totalTax += itemSubtotal * taxRate;
     });
 
-    const finalTotal = subtotalAfterDiscount + totalTax + shipping;
+    const finalTotal = subtotalAfterDiscount + totalTax;
 
     return {
       subtotalBeforeDiscount: Math.round(subtotalBeforeDiscount),
       totalDiscount: Math.round(totalDiscount),
       subtotalAfterDiscount: Math.round(subtotalAfterDiscount),
       totalTax: Math.round(totalTax),
-      shipping,
+      shipping: 0,
       finalTotal: Math.round(finalTotal),
     };
   };
 
   const orderSummary = calculateOrderSummary();
 
-  // Filter valid items for rendering
-  const validItemsToRender = state.items.filter(
-    (item) => item && item.productId
-  );
+  if (status === "loading" && items.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Navbar />
+        <div className="flex-grow flex items-center justify-center">
+          <Loader2 className="w-16 h-16 animate-spin text-primary" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
-  // Empty cart display
-  if (validItemsToRender.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center">
-            <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-8" />
-            <h1 className="text-3xl font-bold text-gray-800 mb-4">
-              Your Cart is Empty
-            </h1>
-            <p className="text-xl text-gray-600 mb-8">
-              Looks like you haven't added any plans to your cart yet.
-            </p>
-            <Link to="/products">
-              <Button className="btn-primary px-8 py-3 text-lg">
-                Browse House Plans
-              </Button>
-            </Link>
-          </div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+          <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-8" />
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">
+            Your Cart is Empty
+          </h1>
+          <p className="text-xl text-gray-600 mb-8">
+            Looks like you haven't added any plans yet.
+          </p>
+          <Button asChild className="btn-primary px-8 py-3 text-lg">
+            <Link to="/products">Browse House Plans</Link>
+          </Button>
         </div>
         <Footer />
       </div>
@@ -131,35 +123,42 @@ const Cart = () => {
             </Link>
           </Button>
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
-            Shopping Cart ({validItemsToRender.length}{" "}
-            {validItemsToRender.length === 1 ? "item" : "items"})
+            Shopping Cart ({items.length}{" "}
+            {items.length === 1 ? "item" : "items"})
           </h1>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-soft overflow-hidden">
-              {validItemsToRender.map((item) => {
-                // Safely get the product ID for the key
+              {items.map((item) => {
                 const itemKey =
                   typeof item.productId === "object" && item.productId !== null
                     ? item.productId._id
                     : item.productId;
 
-                // --- Replicate the same simplified logic for display ---
-                const originalPrice = item.productId?.price ?? item.price;
-                const salePrice = item.productId?.salePrice ?? 0;
-                const isSale = item.productId?.isSale ?? false;
+                const regularPrice =
+                  item.price !== 0 && item.price
+                    ? item.price
+                    : (item["Regular price"] ?? 0);
+                const salePrice =
+                  item.salePrice !== 0 && item.salePrice
+                    ? item.salePrice
+                    : item["Sale price"];
+                const isSale =
+                  item.isSale ??
+                  (salePrice != null &&
+                    salePrice > 0 &&
+                    salePrice < regularPrice);
+                const displayPrice =
+                  isSale && salePrice != null ? salePrice : regularPrice;
 
-                const finalEffectivePrice =
-                  isSale && salePrice > 0 ? salePrice : originalPrice;
-
+                const hasDiscount = displayPrice < regularPrice;
                 const totalDiscountAmount =
-                  (originalPrice - finalEffectivePrice) * item.quantity;
-                const hasDiscount = finalEffectivePrice < originalPrice;
+                  (regularPrice - displayPrice) * item.quantity;
 
                 return (
                   <div
-                    key={itemKey} // Safely using itemKey
+                    key={itemKey}
                     className="flex flex-col sm:flex-row items-start sm:items-center p-6 border-b border-gray-100 last:border-b-0"
                   >
                     <div className="w-full sm:w-32 h-32 rounded-xl overflow-hidden flex-shrink-0 mb-4 sm:mb-0 sm:mr-6">
@@ -174,15 +173,12 @@ const Cart = () => {
                         {item.name}
                       </h3>
                       <p className="text-gray-600 mb-2">{item.size}</p>
-
                       {isSale && (
                         <p className="text-xs text-red-600 font-semibold mb-4">
                           On Sale!
                         </p>
                       )}
-
                       <div className="flex items-center justify-between sm:justify-start">
-                        {/* Quantity Controls */}
                         <div className="flex items-center border border-gray-300 rounded-lg">
                           <button
                             onClick={() =>
@@ -207,7 +203,6 @@ const Cart = () => {
                             <Plus className="w-4 h-4" />
                           </button>
                         </div>
-                        {/* Remove Button */}
                         <button
                           onClick={() => removeItem(itemKey)}
                           className="ml-4 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
@@ -218,17 +213,17 @@ const Cart = () => {
                     </div>
                     <div className="hidden sm:block text-right ml-6 w-48">
                       <div className="text-lg font-semibold text-gray-800 mb-2">
-                        ₹{Math.round(finalEffectivePrice).toLocaleString()} each
+                        ₹{Math.round(displayPrice).toLocaleString()} each
                       </div>
                       {hasDiscount && (
                         <div className="line-through text-gray-500 text-sm mb-1">
-                          ₹{originalPrice.toLocaleString()} each
+                          ₹{regularPrice.toLocaleString()} each
                         </div>
                       )}
                       <div className="text-xl font-bold text-primary">
                         ₹
                         {Math.round(
-                          finalEffectivePrice * item.quantity
+                          displayPrice * item.quantity
                         ).toLocaleString()}
                       </div>
                       {hasDiscount && (
@@ -243,7 +238,6 @@ const Cart = () => {
               })}
             </div>
           </div>
-          {/* Order Summary Section */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-soft p-6 sticky top-24">
               <h2 className="text-xl font-bold text-gray-800 mb-6">
@@ -251,20 +245,20 @@ const Cart = () => {
               </h2>
               <div className="space-y-4 mb-6">
                 {orderSummary.totalDiscount > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Original Price</span>
-                    <span className="font-semibold">
-                      ₹{orderSummary.subtotalBeforeDiscount.toLocaleString()}
-                    </span>
-                  </div>
-                )}
-                {orderSummary.totalDiscount > 0 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Total Discount</span>
-                    <span className="font-semibold">
-                      - ₹{orderSummary.totalDiscount.toLocaleString()}
-                    </span>
-                  </div>
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Original Price</span>
+                      <span className="font-semibold">
+                        ₹{orderSummary.subtotalBeforeDiscount.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-green-600">
+                      <span>Total Discount</span>
+                      <span className="font-semibold">
+                        - ₹{orderSummary.totalDiscount.toLocaleString()}
+                      </span>
+                    </div>
+                  </>
                 )}
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>

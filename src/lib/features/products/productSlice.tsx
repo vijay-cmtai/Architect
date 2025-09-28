@@ -31,7 +31,7 @@ interface SeoData {
   altText?: string;
 }
 
-// --- HYBRID PRODUCT INTERFACE (JSON + NEW DATA) ---
+// --- हाइब्रिड प्रोडक्ट इंटरफेस (JSON + नया UI डेटा) ---
 export interface Product {
   _id: string;
   user?: string;
