@@ -11,6 +11,7 @@ import {
 import { Link } from "react-router-dom";
 import { AppDispatch, RootState } from "@/lib/store";
 import { fetchAllPackages } from "@/lib/features/packages/packageSlice";
+import { Button } from "@/components/ui/button"; 
 
 const PremiumPackageCard = ({ pkg, index }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -27,10 +28,10 @@ const PremiumPackageCard = ({ pkg, index }) => {
       key={pkg._id}
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      className={`bg-card border-2 rounded-xl p-8 text-center transition-all duration-300 relative flex flex-col h-full
-        ${pkg.isPopular ? "border-primary shadow-lg scale-105" : "border-gray-200 hover:border-primary"}`}
+      className={`bg-card border-2 rounded-xl p-6 sm:p-8 text-center transition-all duration-300 relative flex flex-col h-full
+        ${pkg.isPopular ? "border-primary shadow-lg lg:scale-105" : "border-gray-200 hover:border-primary"}`}
     >
       {pkg.isPopular && (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-4 py-1 rounded-full flex items-center gap-1">
@@ -45,8 +46,8 @@ const PremiumPackageCard = ({ pkg, index }) => {
           <p className="text-muted-foreground">{pkg.unit}</p>
         </div>
         <div className="text-left mt-6 mb-8 text-base space-y-3">
-          {itemsToRender.map((feature) => (
-            <div key={feature} className="flex items-center gap-3">
+          {itemsToRender.map((feature, idx) => (
+            <div key={`${feature}-${idx}`} className="flex items-center gap-3">
               <CheckCircle size={18} className="text-green-500" />
               <span className="text-foreground">{feature}</span>
             </div>
@@ -70,17 +71,21 @@ const PremiumPackageCard = ({ pkg, index }) => {
         )}
       </div>
 
-      <Link
-        to="/premium-booking-form"
-        state={{
-          packageName: pkg.title,
-          packageUnit: pkg.unit,
-          packagePrice: pkg.price,
-        }}
-        className="w-full btn-primary text-center block mt-auto"
+      <Button
+        asChild
+        className="w-full btn-primary text-center block mt-auto py-6 text-lg"
       >
-        Select Premium Plan
-      </Link>
+        <Link
+          to="/premium-booking-form"
+          state={{
+            packageName: pkg.title,
+            packageUnit: pkg.unit,
+            packagePrice: pkg.price,
+          }}
+        >
+          Select Premium Plan
+        </Link>
+      </Button>
     </motion.div>
   );
 };
@@ -138,9 +143,18 @@ const PremiumPackagesSection = () => {
             Upgrade to a premium experience with more features.
           </p>
         </motion.div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+
+        <div className="flex overflow-x-auto lg:grid lg:grid-cols-3 gap-6 lg:gap-8 -mx-4 px-4 lg:mx-auto lg:px-0 pb-4 lg:pb-0 max-w-5xl">
+          {/* Hide scrollbar */}
+          <style>{`.overflow-x-auto::-webkit-scrollbar { display: none; } .overflow-x-auto { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
+
           {premiumPackages.map((pkg, index) => (
-            <PremiumPackageCard key={pkg._id} pkg={pkg} index={index} />
+            <div
+              key={pkg._id}
+              className="flex-shrink-0 w-4/5 sm:w-2/3 md:w-1/2 lg:w-auto"
+            >
+              <PremiumPackageCard pkg={pkg} index={index} />
+            </div>
           ))}
         </div>
       </div>
