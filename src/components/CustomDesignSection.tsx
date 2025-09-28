@@ -1,9 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-// Se han importado todos los iconos necesarios
 import { LayoutTemplate, Building2, Sofa, Video } from "lucide-react";
 
-// FIX 1: Se ha mantenido la propiedad 'image' y se ha añadido 'icon', 'bgColor', y 'iconColor'.
 const customServices = [
   {
     name: "Customize Floor Plans",
@@ -26,7 +24,7 @@ const customServices = [
     href: "/customize/3d-elevation",
   },
   {
-    name: "Complete House Plan File",
+    name: "Complete House Plan File",
     description:
       "Personalize your living spaces with our expert interior designers.",
     image: "/completehouse.jpg",
@@ -64,27 +62,28 @@ const CustomDesignSection = () => {
           <div className="mt-4 h-1 w-24 bg-primary mx-auto rounded-full"></div>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+        {/* --- मुख्य बदलाव यहाँ है --- */}
+        <div className="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 -mx-4 px-4 md:mx-0 md:px-0 pb-4 md:pb-0 max-w-7xl mx-auto">
+          {/* Hide scrollbar */}
+          <style>{`.overflow-x-auto::-webkit-scrollbar { display: none; } .overflow-x-auto { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
+
           {customServices.map((service, index) => (
             <motion.div
               key={service.name}
+              className="flex-shrink-0 w-3/4 sm:w-2/5 md:w-auto" // मोबाइल के लिए कार्ड की चौड़ाई
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="group"
             >
-              <Link to={service.href}>
-                <div className="bg-card rounded-2xl shadow-soft overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
-                  {/* FIX 2: El contenedor de la imagen ahora es 'relative' para superponer el icono. */}
+              <Link to={service.href} className="group block h-full">
+                <div className="bg-card rounded-2xl shadow-soft overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2 h-full flex flex-col">
                   <div className="relative overflow-hidden">
                     <img
                       src={service.image}
                       alt={service.name}
                       className="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-
-                    {/* FIX 3: Se ha añadido una capa para el icono superpuesto. */}
                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 transition-colors duration-300 group-hover:bg-black/30">
                       <div
                         className={`p-4 rounded-full ${service.bgColor} transition-transform duration-300 group-hover:scale-110`}
@@ -96,9 +95,7 @@ const CustomDesignSection = () => {
                       </div>
                     </div>
                   </div>
-
-                  <div className="p-6 text-center">
-                    {/* FIX 4: Se ha eliminado el icono pequeño que estaba aquí antes. */}
+                  <div className="p-6 text-center flex-grow flex flex-col justify-center">
                     <h3 className="text-xl font-bold text-foreground mb-2">
                       {service.name}
                     </h3>
