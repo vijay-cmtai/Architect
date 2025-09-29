@@ -249,7 +249,7 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
   </aside>
 );
 
-// --- हेल्पर कंपोनेंट 2: ProductCard (FIXED IMAGE) ---
+// --- हेल्पर कंपोनेंट 2: ProductCard (FIXED IMAGE & DOWNLOAD) ---
 const ProductCard = ({ product, userOrders }) => {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -309,10 +309,7 @@ const ProductCard = ({ product, userOrders }) => {
       : product.category) ||
     product.Categories?.split(",")[0].trim() ||
     "House Plan";
-  const downloadFile =
-    (Array.isArray(product.planFile)
-      ? product.planFile[0]
-      : product.planFile) || product["Download 1 URL"];
+
   const city = product.city
     ? Array.isArray(product.city)
       ? product.city.join(", ")
@@ -352,6 +349,7 @@ const ProductCard = ({ product, userOrders }) => {
     }
   };
 
+  // --- ✨ अपडेटेड डाउनलोड लॉजिक यहाँ है ---
   const handleDownload = async () => {
     if (!userInfo) {
       toast.error("Please log in to download.");
@@ -363,12 +361,23 @@ const ProductCard = ({ product, userOrders }) => {
       navigate(linkTo);
       return;
     }
-    if (!downloadFile) {
-      toast.error("Download file is not available for this plan.");
+
+    // 1. सबसे पहले PDF/Plan फ़ाइल का URL ढूंढें
+    const planFileUrl =
+      (Array.isArray(product.planFile)
+        ? product.planFile[0]
+        : product.planFile) || product["Download 1 URL"];
+
+    // 2. अगर प्लान फ़ाइल नहीं है, तो मेन इमेज को फॉलबैक के रूप में उपयोग करें
+    let downloadUrl = planFileUrl || mainImage;
+
+    // 3. अगर कोई भी डाउनलोड करने योग्य लिंक नहीं है, तो एरर दिखाएं
+    if (!downloadUrl) {
+      toast.error("No downloadable file or image found for this product.");
       return;
     }
 
-    let downloadUrl = downloadFile;
+    // 4. (वैकल्पिक) Cloudinary URL को डाउनलोड के लिए फ़ोर्स करें
     if (downloadUrl.includes("res.cloudinary.com")) {
       const parts = downloadUrl.split("/upload/");
       if (parts.length === 2) {
@@ -380,12 +389,14 @@ const ProductCard = ({ product, userOrders }) => {
       toast.success("Your download is starting...");
       const link = document.createElement("a");
       link.href = downloadUrl;
+
+      // 5. URL से फ़ाइल का एक्सटेंशन और नाम सेट करें
       const fileExtension =
-        downloadUrl.split(".").pop()?.split("?")[0] || "pdf";
-      link.setAttribute(
-        "download",
-        `ArchHome-${productName.replace(/\s+/g, "-")}.${fileExtension}`
-      );
+        downloadUrl.split(".").pop()?.split("?")[0] ||
+        (planFileUrl ? "pdf" : "jpg");
+      const fileName = `ArchHome-${productName.replace(/\s+/g, "-")}.${fileExtension}`;
+
+      link.setAttribute("download", fileName);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -399,7 +410,6 @@ const ProductCard = ({ product, userOrders }) => {
     <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
       <div className="relative p-2">
         <Link to={linkTo}>
-          {/* === IMAGE FIX STARTS HERE === */}
           <div className="aspect-square w-full bg-gray-100 rounded-md overflow-hidden">
             <img
               src={mainImage}
@@ -407,12 +417,11 @@ const ProductCard = ({ product, userOrders }) => {
               className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
             />
           </div>
-          {/* === IMAGE FIX ENDS HERE === */}
           <div className="absolute inset-2 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md"></div>
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-gray-900/80 text-white text-xs font-bold px-4 py-2 rounded-md shadow-lg text-center">
             <p>{plotSize}</p>
             <p className="text-xs font-normal">
-              {hasPurchased ? "Download pdf file" : "Purchase to download"}
+              {hasPurchased ? "Download now" : "Purchase to download"}
             </p>
           </div>
         </Link>
@@ -538,7 +547,7 @@ const ProductCard = ({ product, userOrders }) => {
           {hasPurchased ? (
             <>
               <Download className="mr-2 h-4 w-4" />
-              Download PDF
+              Download
             </>
           ) : (
             <>
@@ -555,9 +564,7 @@ const ProductCard = ({ product, userOrders }) => {
 // --- हेल्पर कंपोनेंट 3: CountryCustomizationForm ---
 const CountryCustomizationForm = ({ countryName }) => {
   const dispatch = useDispatch();
-  const { actionStatus } = useSelector(
-    (state) => state.customization
-  );
+  const { actionStatus } = useSelector((state) => state.customization);
   const [formData, setFormData] = useState({
     country: countryName || "",
     name: "",
@@ -569,9 +576,7 @@ const CountryCustomizationForm = ({ countryName }) => {
   });
   const [referenceFile, setReferenceFile] = useState(null);
 
-  const handleInputChange = (
-    e
-  ) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -767,9 +772,7 @@ const Products = () => {
     listStatus: profListStatus,
     error: profError,
   } = useSelector((state) => state.professionalPlans);
-  const { orders: userOrders } = useSelector(
-    (state) => state.orders
-  );
+  const { orders: userOrders } = useSelector((state) => state.orders);
 
   const [viewMode, setViewMode] = useState("grid");
   const [filters, setFilters] = useState({
@@ -1059,7 +1062,7 @@ const Products = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
-        <title>READYMADE HOME DESIGNS</title>
+        <title>READYMADE HOME DESIGns</title>
         <meta
           name="description"
           content="Browse readymade house plans and modern home designs with detailed layouts. Find affordable 2BHK, 3BHK, and duplex plans ready for instant download"
