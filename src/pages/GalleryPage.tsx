@@ -23,8 +23,8 @@ const GalleryImageCard = ({ item }: { item: GalleryItem }) => {
   const hasProductLink = item.productLink && item.productLink.trim() !== "";
 
   return (
-    <Card className="rounded-xl overflow-hidden group relative border-2 border-transparent hover:border-orange-500/50 transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col">
-      <div className="relative aspect-w-1 aspect-h-1 flex-grow">
+    <Card className="rounded-xl overflow-hidden group relative border-2 border-transparent hover:border-orange-500/50 transition-all duration-300 shadow-sm hover:shadow-xl">
+      <div className="aspect-w-1 aspect-h-1 w-full">
         {hasProductLink ? (
           <Link to={item.productLink}>
             <img
@@ -43,33 +43,35 @@ const GalleryImageCard = ({ item }: { item: GalleryItem }) => {
           </a>
         )}
         
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 pointer-events-none">
-          <h3 className="text-white font-bold text-lg drop-shadow-md">
-            {item.title}
-          </h3>
-          <p className="text-orange-300 text-sm font-semibold">
-            {item.category}
-          </p>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col justify-end p-4">
+          <div className="transition-transform duration-300 transform group-hover:-translate-y-12">
+            <h3 className="text-white font-bold text-lg drop-shadow-md">
+              {item.title}
+            </h3>
+            <p className="text-orange-300 text-sm font-semibold">
+              {item.category}
+            </p>
+          </div>
         </div>
+        
+        {hasProductLink && (
+          <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
+            <Link to={item.productLink} className="w-full">
+              <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold">
+                <ShoppingCart className="mr-2 h-4 w-4" />
+                Buy Now
+              </Button>
+            </Link>
+          </div>
+        )}
       </div>
-      
-      {hasProductLink && (
-        <div className="p-4 bg-white border-t">
-          <Link to={item.productLink} className="w-full">
-            <Button className="w-full bg-orange-500 hover:bg-orange-600">
-              <ShoppingCart className="mr-2 h-4 w-4" />
-              Buy Now
-            </Button>
-          </Link>
-        </div>
-      )}
     </Card>
   );
 };
 
 const GalleryPage: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const { items, status, error } = useSelector(
     (state: RootState) => state.gallery
   );
@@ -170,7 +172,7 @@ const GalleryPage: React.FC = () => {
             </label>
             <Select
               value={selectedCategory}
-              onValueChange={handleCategoryChange} 
+              onValueChange={handleCategoryChange}
             >
               <SelectTrigger className="h-12 text-base bg-white shadow-sm border-slate-300 focus:ring-orange-500">
                 <SelectValue placeholder="Select category..." />
