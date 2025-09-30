@@ -19,12 +19,15 @@ import {
   Lock,
 } from "lucide-react";
 import { fetchProducts } from "@/lib/features/products/productSlice";
+import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice";
 import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
+import { submitCustomizationRequest } from "@/lib/features/customization/customizationSlice";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -37,17 +40,7 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import house3 from "@/assets/house-3.jpg";
 import { toast } from "sonner";
 
-const slugify = (text) => {
-  if (!text) return "";
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w\-]+/g, "")
-    .replace(/\-\-+/g, "-");
-};
-
+// --- ✨ यहाँ हार्डकोडेड कैटेगरी लिस्ट है ---
 const staticCategories = [
   "Modern Home Design",
   "Duplex House Plans",
@@ -71,7 +64,7 @@ const staticCategories = [
   "Temple & Mosque",
 ];
 
-const FilterSidebar = ({ filters, setFilters }) => (
+const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
   <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-white rounded-xl shadow-lg h-fit border border-gray-200">
     <h3 className="text-xl font-bold mb-4 flex items-center text-gray-800">
       <Filter className="w-5 h-5 mr-2 text-gray-500" />
@@ -113,7 +106,8 @@ const FilterSidebar = ({ filters, setFilters }) => (
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            {staticCategories.map((cat) => (
+            {/* ✨ डायनामिक लिस्ट की जगह अब `uniqueCategories` (जो अब static है) का उपयोग हो रहा है */}
+            {uniqueCategories.map((cat) => (
               <SelectItem key={cat} value={cat}>
                 {cat}
               </SelectItem>
@@ -147,6 +141,102 @@ const FilterSidebar = ({ filters, setFilters }) => (
         </Select>
       </div>
       <div>
+        <Label htmlFor="plotArea" className="font-semibold text-gray-600">
+          Plot Area (sqft)
+        </Label>
+        <Select
+          value={filters.plotArea}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, plotArea: value }))
+          }
+        >
+          <SelectTrigger
+            id="plotArea"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Area" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Areas</SelectItem>
+            <SelectItem value="500-1000">500-1000</SelectItem>
+            <SelectItem value="1000-2000">1000-2000</SelectItem>
+            <SelectItem value="2000+">2000+</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label htmlFor="direction" className="font-semibold text-gray-600">
+          Direction
+        </Label>
+        <Select
+          value={filters.direction}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, direction: value }))
+          }
+        >
+          <SelectTrigger
+            id="direction"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Direction" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Directions</SelectItem>
+            <SelectItem value="East">East</SelectItem>
+            <SelectItem value="West">West</SelectItem>
+            <SelectItem value="North">North</SelectItem>
+            <SelectItem value="South">South</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label htmlFor="floors" className="font-semibold text-gray-600">
+          Floors
+        </Label>
+        <Select
+          value={filters.floors}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, floors: value }))
+          }
+        >
+          <SelectTrigger
+            id="floors"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Floors" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Floors</SelectItem>
+            <SelectItem value="1">1</SelectItem>
+            <SelectItem value="2">2</SelectItem>
+            <SelectItem value="3">3+</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label htmlFor="propertyType" className="font-semibold text-gray-600">
+          Property Type
+        </Label>
+        <Select
+          value={filters.propertyType}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, propertyType: value }))
+          }
+        >
+          <SelectTrigger
+            id="propertyType"
+            className="mt-2 bg-gray-100 border-transparent h-12"
+          >
+            <SelectValue placeholder="Select Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="Residential">Residential</SelectItem>
+            <SelectItem value="Commercial">Commercial</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
         <Label className="font-semibold text-gray-600">
           Budget: ₹{filters.budget[0].toLocaleString()} - ₹
           {filters.budget[1].toLocaleString()}
@@ -168,6 +258,10 @@ const FilterSidebar = ({ filters, setFilters }) => (
             category: "all",
             searchTerm: "",
             plotSize: "all",
+            plotArea: "all",
+            direction: "all",
+            floors: "all",
+            propertyType: "all",
             budget: [0, 50000],
           })
         }
@@ -183,7 +277,7 @@ const FilterSidebar = ({ filters, setFilters }) => (
 const ProductCard = ({ product, userOrders }) => {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-  const { userInfo } = useSelector((state: RootState) => state.user);
+  const { userInfo } = useSelector((state) => state.user);
 
   const getImageSource = () => {
     const primaryImage = product.mainImage || product.image || product.Images;
@@ -247,7 +341,7 @@ const ProductCard = ({ product, userOrders }) => {
     : null;
 
   const isWishlisted = isInWishlist(product._id);
-  const linkTo = `/product/${slugify(productName)}-${product._id}`;
+  const linkTo = `/product/${product._id}`;
 
   const hasPurchased = useMemo(() => {
     if (!userInfo || !userOrders || userOrders.length === 0) return false;
@@ -485,60 +579,312 @@ const ProductCard = ({ product, userOrders }) => {
   );
 };
 
+const CountryCustomizationForm = ({ countryName }) => {
+  const dispatch: AppDispatch = useDispatch();
+  const { actionStatus } = useSelector(
+    (state: RootState) => state.customization
+  );
+  const [formData, setFormData] = useState({
+    country: countryName || "",
+    name: "",
+    email: "",
+    whatsappNumber: "",
+    width: "",
+    length: "",
+    description: "",
+  });
+  const [referenceFile, setReferenceFile] = useState(null);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setReferenceFile(e.target.files[0]);
+    }
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    const submitData = new FormData();
+    Object.keys(formData).forEach((key) => {
+      submitData.append(key, formData[key]);
+    });
+    if (referenceFile) {
+      submitData.append("referenceFile", referenceFile);
+    }
+    submitData.append("requestType", "Floor Plan Customization");
+    try {
+      await dispatch(submitCustomizationRequest(submitData)).unwrap();
+      toast.success(
+        `Customization request for ${
+          countryName || "your location"
+        } sent successfully!`
+      );
+      setFormData({
+        country: countryName || "",
+        name: "",
+        email: "",
+        whatsappNumber: "",
+        width: "",
+        length: "",
+        description: "",
+      });
+      setReferenceFile(null);
+    } catch (rejectedError) {
+      toast.error(
+        String(rejectedError) || "Failed to submit customization request"
+      );
+    }
+  };
+
+  return (
+    <div className="bg-gray-50 py-16 mb-12">
+      <div className="container mx-auto px-4">
+        <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl p-8 md:p-12 flex flex-col lg:flex-row items-center gap-12">
+          <div className="w-full lg:w-1/2">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              Customize a Plan for {countryName || "Your Location"}
+            </h2>
+            <form onSubmit={handleFormSubmit} className="space-y-5">
+              <div>
+                <Label htmlFor="country">Country</Label>
+                <Input
+                  id="country"
+                  name="country"
+                  value={formData.country}
+                  onChange={handleInputChange}
+                  className="mt-1 bg-gray-200 border-gray-300 text-gray-500"
+                  readOnly={!!countryName}
+                />
+              </div>
+              <div>
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="mt-1 bg-gray-100 border-transparent"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="mt-1 bg-gray-100 border-transparent"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="whatsappNumber">WhatsApp Number *</Label>
+                <Input
+                  type="tel"
+                  id="whatsappNumber"
+                  name="whatsappNumber"
+                  value={formData.whatsappNumber}
+                  onChange={handleInputChange}
+                  className="mt-1 bg-gray-100 border-transparent"
+                  required
+                />
+              </div>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="width">Width (ft)</Label>
+                  <Input
+                    id="width"
+                    name="width"
+                    value={formData.width}
+                    onChange={handleInputChange}
+                    className="mt-1 bg-gray-100 border-transparent"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor="length">Length (ft)</Label>
+                  <Input
+                    id="length"
+                    name="length"
+                    value={formData.length}
+                    onChange={handleInputChange}
+                    className="mt-1 bg-gray-100 border-transparent"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Your message..."
+                  className="mt-1 bg-gray-100 border-transparent"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label htmlFor="referenceFile">
+                  Upload Reference (Image or PDF)
+                </Label>
+                <Input
+                  id="referenceFile"
+                  name="referenceFile"
+                  type="file"
+                  onChange={handleFileChange}
+                  accept="image/*,.pdf"
+                  className="mt-1"
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={actionStatus === "loading"}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-12 text-base disabled:opacity-50"
+              >
+                {actionStatus === "loading" ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Request"
+                )}
+              </Button>
+            </form>
+          </div>
+          <div className="w-full lg:w-1/2 hidden lg:block">
+            <img
+              src="/threeDfloor.jpg"
+              alt="Beautiful modern house"
+              className="w-full h-full object-cover rounded-xl"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Products = () => {
   const dispatch: AppDispatch = useDispatch();
-  const [searchParams, setSearchParams] = useSearchParams();
-
+  const [searchParams] = useSearchParams();
   const { userInfo } = useSelector((state: RootState) => state.user);
-  const { products, page, pages, listStatus, error } = useSelector(
-    (state: RootState) => state.products
-  );
+
+  const categoryQuery = searchParams.get("category");
+  const searchQuery = searchParams.get("search");
+  const countryQuery = searchParams.get("country");
+
+  const {
+    products: adminProducts,
+    listStatus: adminListStatus,
+    error: adminError,
+  } = useSelector((state: RootState) => state.products);
+  const {
+    plans: professionalPlans,
+    listStatus: profListStatus,
+    error: profError,
+  } = useSelector((state: RootState) => state.professionalPlans);
   const { orders: userOrders } = useSelector(
     (state: RootState) => state.orders
   );
 
-  const pageNumberFromURL = Number(searchParams.get("page")) || 1;
-  const searchTermFromURL = searchParams.get("search") || "";
-
-  const [currentPage, setCurrentPage] = useState(pageNumberFromURL);
   const [viewMode, setViewMode] = useState("grid");
   const [filters, setFilters] = useState({
-    category: searchParams.get("category") || "all",
-    searchTerm: searchTermFromURL,
-    plotSize: searchParams.get("plotSize") || "all",
+    category: categoryQuery || "all",
+    searchTerm: searchQuery || "",
+    plotSize: "all",
+    plotArea: "all",
+    direction: "all",
+    floors: "all",
+    propertyType: "all",
     budget: [0, 50000],
   });
   const [sortBy, setSortBy] = useState("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const CARDS_PER_PAGE = 9;
 
   useEffect(() => {
-    dispatch(
-      fetchProducts({ pageNumber: currentPage, keyword: filters.searchTerm })
-    );
+    // ✨ Fetch all products once for client-side filtering and pagination
+    dispatch(fetchProducts({}));
+    dispatch(fetchAllApprovedPlans({}));
     if (userInfo) {
       dispatch(fetchMyOrders());
     }
-  }, [dispatch, currentPage, filters.searchTerm, userInfo]);
+  }, [dispatch, userInfo]);
 
   useEffect(() => {
-    const params = {};
-    if (currentPage > 1) params.page = currentPage.toString();
-    if (filters.searchTerm) params.search = filters.searchTerm;
-    if (filters.category !== "all") params.category = filters.category;
-    if (filters.plotSize !== "all") params.plotSize = filters.plotSize;
-    setSearchParams(params, { replace: true });
-  }, [currentPage, filters, setSearchParams]);
+    setFilters((prev) => ({
+      ...prev,
+      category: categoryQuery || "all",
+      searchTerm: searchQuery || "",
+    }));
+  }, [categoryQuery, searchQuery]);
+
+  const combinedProducts = useMemo(() => {
+    const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
+    const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
+
+    const reversedAdminProducts = adminArray.slice().reverse();
+
+    return [
+      ...reversedAdminProducts.map((p) => ({ ...p, source: "admin" })),
+      ...profArray.map((p) => ({
+        ...p,
+        name: p.planName,
+        image: p.mainImage,
+        source: "professional",
+      })),
+    ];
+  }, [adminProducts, professionalPlans]);
 
   const filteredAndSortedProducts = useMemo(() => {
-    let productsToDisplay = [...(products || [])].reverse();
+    let products = combinedProducts.filter((product) => {
+      if (
+        !product ||
+        (product.price === undefined && product["Regular price"] === undefined)
+      )
+        return false;
 
-    productsToDisplay = productsToDisplay.filter((product) => {
-      if (!product) return false;
+      const regularPrice =
+        product.price !== 0 && product.price
+          ? product.price
+          : (product["Regular price"] ?? 0);
+      const salePrice =
+        product.salePrice !== 0 && product.salePrice
+          ? product.salePrice
+          : product["Sale price"];
 
-      const regularPrice = product.price ?? product["Regular price"] ?? 0;
-      const salePrice = product.salePrice ?? product["Sale price"];
+      const isSale = (() => {
+        if (
+          product["Sale price"] !== undefined &&
+          product["Sale price"] !== null
+        ) {
+          const jsonSalePrice = parseFloat(product["Sale price"]);
+          const jsonRegularPrice = parseFloat(product["Regular price"] || 0);
+          return jsonSalePrice > 0 && jsonSalePrice < jsonRegularPrice;
+        }
+
+        if (salePrice !== undefined && salePrice !== null) {
+          return salePrice > 0 && salePrice < regularPrice;
+        }
+
+        if (product.isSale !== undefined) {
+          return product.isSale;
+        }
+
+        return false;
+      })();
+
       const displayPrice =
-        product.isSale && salePrice != null ? salePrice : regularPrice;
+        isSale && salePrice != null ? salePrice : regularPrice;
 
+      const productName = product.name || product.Name || "";
       const productCategory =
         (Array.isArray(product.category)
           ? product.category.join(" ")
@@ -547,7 +893,28 @@ const Products = () => {
         "";
       const plotSize =
         product.plotSize || product["Attribute 1 value(s)"] || "";
+      const plotArea =
+        product.plotArea ||
+        (product["Attribute 2 value(s)"]
+          ? parseInt(
+              String(product["Attribute 2 value(s)"]).replace(/[^0-9]/g, "")
+            )
+          : 0);
+      const direction =
+        product.direction || product["Attribute 4 value(s)"] || "";
+      const floors =
+        product.floors ||
+        (product["Attribute 5 value(s)"]
+          ? parseInt(String(product["Attribute 5 value(s)"]))
+          : 0);
+      const propertyType = product.propertyType || "";
+      const country = product.country || [];
 
+      const matchesSearch =
+        productName.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        productCategory
+          .toLowerCase()
+          .includes(filters.searchTerm.toLowerCase());
       const matchesBudget =
         displayPrice >= filters.budget[0] && displayPrice <= filters.budget[1];
       const matchesCategory =
@@ -555,66 +922,134 @@ const Products = () => {
         productCategory.includes(filters.category);
       const matchesPlotSize =
         filters.plotSize === "all" || plotSize === filters.plotSize;
+      const matchesPlotArea =
+        filters.plotArea === "all" ||
+        (filters.plotArea === "500-1000"
+          ? plotArea >= 500 && plotArea <= 1000
+          : filters.plotArea === "1000-2000"
+            ? plotArea > 1000 && plotArea <= 2000
+            : filters.plotArea === "2000+"
+              ? plotArea > 2000
+              : true);
+      const matchesDirection =
+        filters.direction === "all" || direction === filters.direction;
+      const matchesFloors =
+        filters.floors === "all" ||
+        (filters.floors === "3+"
+          ? floors >= 3
+          : String(floors) === filters.floors); // Ensure comparison is safe
+      const matchesPropertyType =
+        filters.propertyType === "all" || propertyType === filters.propertyType;
+      const matchesCountryQuery =
+        !countryQuery ||
+        (Array.isArray(country) && country.includes(countryQuery));
 
-      return matchesBudget && matchesCategory && matchesPlotSize;
+      return (
+        matchesSearch &&
+        matchesBudget &&
+        matchesCategory &&
+        matchesPlotSize &&
+        matchesPlotArea &&
+        matchesDirection &&
+        matchesFloors &&
+        matchesPropertyType &&
+        matchesCountryQuery
+      );
     });
 
     if (sortBy === "price-low") {
-      productsToDisplay.sort((a, b) => {
-        const priceA =
-          a.isSale && a.salePrice != null ? a.salePrice : (a.price ?? 0);
-        const priceB =
-          b.isSale && b.salePrice != null ? b.salePrice : (b.price ?? 0);
-        return priceA - priceB;
+      products.sort((a, b) => {
+        const getPrice = (p) =>
+          p.salePrice && p.salePrice > 0 ? p.salePrice : (p.price ?? 0);
+        return getPrice(a) - getPrice(b);
       });
     } else if (sortBy === "price-high") {
-      productsToDisplay.sort((a, b) => {
-        const priceA =
-          a.isSale && a.salePrice != null ? a.salePrice : (a.price ?? 0);
-        const priceB =
-          b.isSale && b.salePrice != null ? b.salePrice : (b.price ?? 0);
-        return priceB - priceA;
+      products.sort((a, b) => {
+        const getPrice = (p) =>
+          p.salePrice && p.salePrice > 0 ? p.salePrice : (p.price ?? 0);
+        return getPrice(b) - getPrice(a);
       });
     }
 
-    return productsToDisplay;
-  }, [products, filters, sortBy]);
+    return products;
+  }, [combinedProducts, filters, countryQuery, sortBy]);
 
-  const isLoading = listStatus === "loading";
-  const isError = listStatus === "failed";
+  const totalPages = Math.ceil(
+    filteredAndSortedProducts.length / CARDS_PER_PAGE
+  );
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage > 0 && newPage <= pages) {
-      setCurrentPage(newPage);
-    }
-  };
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
+    return filteredAndSortedProducts.slice(
+      startIndex,
+      startIndex + CARDS_PER_PAGE
+    );
+  }, [currentPage, filteredAndSortedProducts]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredAndSortedProducts.length]);
+
+  const pageTitle = countryQuery
+    ? `${countryQuery} House Plans`
+    : "House Plans & Designs";
+  const pageDescription = countryQuery
+    ? `Browse plans available in ${countryQuery}`
+    : "Discover our complete collection of architectural masterpieces";
+  const isLoading =
+    adminListStatus === "loading" || profListStatus === "loading";
+  const isError = adminListStatus === "failed" || profListStatus === "failed";
+  const errorMessage = String(adminError || profError);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
-        <title>House Plans & Designs</title>
+        <title>READYMADE HOME DESIGNS</title>
         <meta
           name="description"
-          content="Browse our collection of house plans."
+          content="Browse readymade house plans and modern home designs with detailed layouts. Find affordable 2BHK, 3BHK, and duplex plans ready for instant download"
         />
       </Helmet>
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">House Plans & Designs</h1>
-          <p className="text-xl text-muted-foreground">
-            Discover our collection
-          </p>
+          <h1 className="text-3xl font-bold">{pageTitle}</h1>
+          <p className="text-xl text-muted-foreground">{pageDescription}</p>
+          {(countryQuery || categoryQuery || searchQuery) && (
+            <div className="mt-4">
+              <Link to="/products">
+                <Button variant="destructive" size="sm">
+                  <X className="w-4 h-4 mr-2" />
+                  Clear Filters
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-12">
-          <FilterSidebar filters={filters} setFilters={setFilters} />
+        {countryQuery && (
+          <CountryCustomizationForm countryName={countryQuery} />
+        )}
+
+        <div
+          className={`flex flex-col lg:flex-row gap-12 ${
+            countryQuery ? "pt-0 lg:pt-8" : "pt-0"
+          }`}
+        >
+          <FilterSidebar
+            filters={filters}
+            setFilters={setFilters}
+            uniqueCategories={staticCategories} // Pass the static list here
+          />
           <div className="w-full lg:w-3/4 xl:w-4/5">
             <div className="flex flex-wrap gap-4 justify-between items-center mb-6 border-b pb-4">
-              <p className="text-gray-500 text-sm">
-                Showing {filteredAndSortedProducts.length} results on page{" "}
-                {page} of {pages}
-              </p>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">All Plans</h2>
+                <p className="text-gray-500 text-sm">
+                  Showing {paginatedProducts.length} of{" "}
+                  {filteredAndSortedProducts.length} results
+                </p>
+              </div>
               <div className="flex items-center gap-4">
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="w-48 bg-white">
@@ -654,59 +1089,71 @@ const Products = () => {
                 <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
               </div>
             )}
-
             {isError && (
               <div className="text-center py-20">
                 <ServerCrash className="mx-auto h-12 w-12 text-red-500" />
                 <h3 className="mt-4 text-xl font-semibold text-red-500">
                   Failed to Load Products
                 </h3>
-                <p className="mt-2 text-gray-500">{String(error)}</p>
+                <p className="mt-2 text-gray-500">{errorMessage}</p>
               </div>
             )}
-
             {!isLoading &&
               !isError &&
               filteredAndSortedProducts.length === 0 && (
                 <div className="text-center py-20">
                   <h3 className="text-xl font-semibold">No Plans Found</h3>
                   <p className="mt-2 text-gray-500">
-                    Try adjusting your search or filters.
+                    Try adjusting your filters to see more results.
                   </p>
                 </div>
               )}
 
             {!isLoading && !isError && (
               <div
-                className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}
+                className={`grid gap-6 ${
+                  viewMode === "grid"
+                    ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                    : "grid-cols-1"
+                }`}
               >
-                {filteredAndSortedProducts.map((product) => (
-                  <ProductCard
-                    key={product._id}
-                    product={product}
-                    userOrders={userOrders}
-                  />
-                ))}
+                {paginatedProducts.length > 0 ? (
+                  paginatedProducts.map((product) => (
+                    <ProductCard
+                      key={`${product.source || "prod"}-${product._id}`}
+                      product={product}
+                      userOrders={userOrders}
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-20">
+                    <h3 className="text-xl font-semibold">No Products Found</h3>
+                  </div>
+                )}
               </div>
             )}
 
-            {pages > 1 && !isLoading && (
+            {totalPages > 1 && (
               <div className="mt-12 flex justify-center items-center gap-4">
                 <Button
                   variant="outline"
-                  onClick={() => handlePageChange(currentPage - 1)}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
                   disabled={currentPage === 1}
                 >
                   <ChevronLeft className="w-4 h-4 mr-2" />
                   Previous
                 </Button>
                 <span className="font-medium text-gray-700">
-                  Page {currentPage} of {pages}
+                  Page {currentPage} of {totalPages}
                 </span>
                 <Button
                   variant="outline"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === pages}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages}
                 >
                   Next
                   <ChevronRight className="w-4 h-4 ml-2" />
