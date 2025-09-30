@@ -40,7 +40,6 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import house3 from "@/assets/house-3.jpg";
 import { toast } from "sonner";
 
-// --- ✨ यहाँ हार्डकोडेड कैटेगरी लिस्ट है ---
 const staticCategories = [
   "Modern Home Design",
   "Duplex House Plans",
@@ -65,211 +64,212 @@ const staticCategories = [
 ];
 
 const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
-  <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-white rounded-xl shadow-lg h-fit border border-gray-200">
+  <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-white rounded-xl shadow-lg border border-gray-200 lg:sticky lg:top-24 h-fit">
     <h3 className="text-xl font-bold mb-4 flex items-center text-gray-800">
       <Filter className="w-5 h-5 mr-2 text-gray-500" />
       Filters
     </h3>
-    <div className="space-y-6">
-      <div>
-        <Label htmlFor="searchTerm" className="font-semibold text-gray-600">
-          Search
-        </Label>
-        <div className="relative mt-2">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            id="searchTerm"
-            placeholder="Search products..."
-            value={filters.searchTerm}
-            onChange={(e) =>
-              setFilters((prev) => ({ ...prev, searchTerm: e.target.value }))
+    <div className="max-h-[calc(100vh-280px)] overflow-y-auto pr-2 -mr-2">
+      <div className="space-y-6">
+        <div>
+          <Label htmlFor="searchTerm" className="font-semibold text-gray-600">
+            Search
+          </Label>
+          <div className="relative mt-2">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              id="searchTerm"
+              placeholder="Search products..."
+              value={filters.searchTerm}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, searchTerm: e.target.value }))
+              }
+              className="pl-10 bg-gray-100 border-transparent h-12"
+            />
+          </div>
+        </div>
+        <div>
+          <Label htmlFor="category" className="font-semibold text-gray-600">
+            Category
+          </Label>
+          <Select
+            value={filters.category}
+            onValueChange={(value) =>
+              setFilters((prev) => ({ ...prev, category: value }))
             }
-            className="pl-10 bg-gray-100 border-transparent h-12"
+          >
+            <SelectTrigger
+              id="category"
+              className="mt-2 bg-gray-100 border-transparent h-12"
+            >
+              <SelectValue placeholder="Select Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {uniqueCategories.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="plotSize" className="font-semibold text-gray-600">
+            Plot Size
+          </Label>
+          <Select
+            value={filters.plotSize}
+            onValueChange={(value) =>
+              setFilters((prev) => ({ ...prev, plotSize: value }))
+            }
+          >
+            <SelectTrigger
+              id="plotSize"
+              className="mt-2 bg-gray-100 border-transparent h-12"
+            >
+              <SelectValue placeholder="Select Size" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Sizes</SelectItem>
+              <SelectItem value="26X45 SQFT">26X45 SQFT</SelectItem>
+              <SelectItem value="30x40">30x40</SelectItem>
+              <SelectItem value="40x60">40x60</SelectItem>
+              <SelectItem value="50x80">50x80</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="plotArea" className="font-semibold text-gray-600">
+            Plot Area (sqft)
+          </Label>
+          <Select
+            value={filters.plotArea}
+            onValueChange={(value) =>
+              setFilters((prev) => ({ ...prev, plotArea: value }))
+            }
+          >
+            <SelectTrigger
+              id="plotArea"
+              className="mt-2 bg-gray-100 border-transparent h-12"
+            >
+              <SelectValue placeholder="Select Area" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Areas</SelectItem>
+              <SelectItem value="500-1000">500-1000</SelectItem>
+              <SelectItem value="1000-2000">1000-2000</SelectItem>
+              <SelectItem value="2000+">2000+</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="direction" className="font-semibold text-gray-600">
+            Direction
+          </Label>
+          <Select
+            value={filters.direction}
+            onValueChange={(value) =>
+              setFilters((prev) => ({ ...prev, direction: value }))
+            }
+          >
+            <SelectTrigger
+              id="direction"
+              className="mt-2 bg-gray-100 border-transparent h-12"
+            >
+              <SelectValue placeholder="Select Direction" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Directions</SelectItem>
+              <SelectItem value="East">East</SelectItem>
+              <SelectItem value="West">West</SelectItem>
+              <SelectItem value="North">North</SelectItem>
+              <SelectItem value="South">South</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="floors" className="font-semibold text-gray-600">
+            Floors
+          </Label>
+          <Select
+            value={filters.floors}
+            onValueChange={(value) =>
+              setFilters((prev) => ({ ...prev, floors: value }))
+            }
+          >
+            <SelectTrigger
+              id="floors"
+              className="mt-2 bg-gray-100 border-transparent h-12"
+            >
+              <SelectValue placeholder="Select Floors" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Floors</SelectItem>
+              <SelectItem value="1">1</SelectItem>
+              <SelectItem value="2">2</SelectItem>
+              <SelectItem value="3">3+</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="propertyType" className="font-semibold text-gray-600">
+            Property Type
+          </Label>
+          <Select
+            value={filters.propertyType}
+            onValueChange={(value) =>
+              setFilters((prev) => ({ ...prev, propertyType: value }))
+            }
+          >
+            <SelectTrigger
+              id="propertyType"
+              className="mt-2 bg-gray-100 border-transparent h-12"
+            >
+              <SelectValue placeholder="Select Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="Residential">Residential</SelectItem>
+              <SelectItem value="Commercial">Commercial</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="font-semibold text-gray-600">
+            Budget: ₹{filters.budget[0].toLocaleString()} - ₹
+            {filters.budget[1].toLocaleString()}
+          </Label>
+          <Slider
+            value={filters.budget}
+            onValueChange={(value) =>
+              setFilters((prev) => ({ ...prev, budget: value }))
+            }
+            max={50000}
+            min={0}
+            step={500}
+            className="mt-3"
           />
         </div>
-      </div>
-      <div>
-        <Label htmlFor="category" className="font-semibold text-gray-600">
-          Category
-        </Label>
-        <Select
-          value={filters.category}
-          onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, category: value }))
+        <Button
+          onClick={() =>
+            setFilters({
+              category: "all",
+              searchTerm: "",
+              plotSize: "all",
+              plotArea: "all",
+              direction: "all",
+              floors: "all",
+              propertyType: "all",
+              budget: [0, 50000],
+            })
           }
+          variant="outline"
+          className="w-full"
         >
-          <SelectTrigger
-            id="category"
-            className="mt-2 bg-gray-100 border-transparent h-12"
-          >
-            <SelectValue placeholder="Select Category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            {/* ✨ डायनामिक लिस्ट की जगह अब `uniqueCategories` (जो अब static है) का उपयोग हो रहा है */}
-            {uniqueCategories.map((cat) => (
-              <SelectItem key={cat} value={cat}>
-                {cat}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          Clear Filters
+        </Button>
       </div>
-      <div>
-        <Label htmlFor="plotSize" className="font-semibold text-gray-600">
-          Plot Size
-        </Label>
-        <Select
-          value={filters.plotSize}
-          onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, plotSize: value }))
-          }
-        >
-          <SelectTrigger
-            id="plotSize"
-            className="mt-2 bg-gray-100 border-transparent h-12"
-          >
-            <SelectValue placeholder="Select Size" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Sizes</SelectItem>
-            <SelectItem value="26X45 SQFT">26X45 SQFT</SelectItem>
-            <SelectItem value="30x40">30x40</SelectItem>
-            <SelectItem value="40x60">40x60</SelectItem>
-            <SelectItem value="50x80">50x80</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label htmlFor="plotArea" className="font-semibold text-gray-600">
-          Plot Area (sqft)
-        </Label>
-        <Select
-          value={filters.plotArea}
-          onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, plotArea: value }))
-          }
-        >
-          <SelectTrigger
-            id="plotArea"
-            className="mt-2 bg-gray-100 border-transparent h-12"
-          >
-            <SelectValue placeholder="Select Area" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Areas</SelectItem>
-            <SelectItem value="500-1000">500-1000</SelectItem>
-            <SelectItem value="1000-2000">1000-2000</SelectItem>
-            <SelectItem value="2000+">2000+</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label htmlFor="direction" className="font-semibold text-gray-600">
-          Direction
-        </Label>
-        <Select
-          value={filters.direction}
-          onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, direction: value }))
-          }
-        >
-          <SelectTrigger
-            id="direction"
-            className="mt-2 bg-gray-100 border-transparent h-12"
-          >
-            <SelectValue placeholder="Select Direction" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Directions</SelectItem>
-            <SelectItem value="East">East</SelectItem>
-            <SelectItem value="West">West</SelectItem>
-            <SelectItem value="North">North</SelectItem>
-            <SelectItem value="South">South</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label htmlFor="floors" className="font-semibold text-gray-600">
-          Floors
-        </Label>
-        <Select
-          value={filters.floors}
-          onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, floors: value }))
-          }
-        >
-          <SelectTrigger
-            id="floors"
-            className="mt-2 bg-gray-100 border-transparent h-12"
-          >
-            <SelectValue placeholder="Select Floors" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Floors</SelectItem>
-            <SelectItem value="1">1</SelectItem>
-            <SelectItem value="2">2</SelectItem>
-            <SelectItem value="3">3+</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label htmlFor="propertyType" className="font-semibold text-gray-600">
-          Property Type
-        </Label>
-        <Select
-          value={filters.propertyType}
-          onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, propertyType: value }))
-          }
-        >
-          <SelectTrigger
-            id="propertyType"
-            className="mt-2 bg-gray-100 border-transparent h-12"
-          >
-            <SelectValue placeholder="Select Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="Residential">Residential</SelectItem>
-            <SelectItem value="Commercial">Commercial</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label className="font-semibold text-gray-600">
-          Budget: ₹{filters.budget[0].toLocaleString()} - ₹
-          {filters.budget[1].toLocaleString()}
-        </Label>
-        <Slider
-          value={filters.budget}
-          onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, budget: value }))
-          }
-          max={50000}
-          min={0}
-          step={500}
-          className="mt-3"
-        />
-      </div>
-      <Button
-        onClick={() =>
-          setFilters({
-            category: "all",
-            searchTerm: "",
-            plotSize: "all",
-            plotArea: "all",
-            direction: "all",
-            floors: "all",
-            propertyType: "all",
-            budget: [0, 50000],
-          })
-        }
-        variant="outline"
-        className="w-full"
-      >
-        Clear Filters
-      </Button>
     </div>
   </aside>
 );
@@ -277,7 +277,7 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
 const ProductCard = ({ product, userOrders }) => {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-  const { userInfo } = useSelector((state) => state.user);
+  const { userInfo } = useSelector((state: RootState) => state.user);
 
   const getImageSource = () => {
     const primaryImage = product.mainImage || product.image || product.Images;
@@ -773,23 +773,30 @@ const CountryCustomizationForm = ({ countryName }) => {
 
 const Products = () => {
   const dispatch: AppDispatch = useDispatch();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { userInfo } = useSelector((state: RootState) => state.user);
 
   const categoryQuery = searchParams.get("category");
   const searchQuery = searchParams.get("search");
   const countryQuery = searchParams.get("country");
+  const pageQuery = Number(searchParams.get("page")) || 1;
 
   const {
     products: adminProducts,
+    page: adminPage,
+    pages: adminPages,
     listStatus: adminListStatus,
     error: adminError,
   } = useSelector((state: RootState) => state.products);
+
   const {
     plans: professionalPlans,
+    page: profPage,
+    pages: profPages,
     listStatus: profListStatus,
     error: profError,
   } = useSelector((state: RootState) => state.professionalPlans);
+
   const { orders: userOrders } = useSelector(
     (state: RootState) => state.orders
   );
@@ -804,36 +811,59 @@ const Products = () => {
     floors: "all",
     propertyType: "all",
     budget: [0, 50000],
+    sortBy: "newest",
   });
-  const [sortBy, setSortBy] = useState("newest");
-  const [currentPage, setCurrentPage] = useState(1);
-  const CARDS_PER_PAGE = 9;
+
+  const [currentPage, setCurrentPage] = useState(pageQuery);
+  const CARDS_PER_PAGE = 12;
 
   useEffect(() => {
-    // ✨ Fetch all products once for client-side filtering and pagination
-    dispatch(fetchProducts({}));
-    dispatch(fetchAllApprovedPlans({}));
+    // Set current page from URL on initial load
+    setCurrentPage(pageQuery);
+  }, [pageQuery]);
+
+  useEffect(() => {
+    // This effect runs when filters or currentPage changes
+    const apiParams = {
+      pageNumber: currentPage,
+      limit: CARDS_PER_PAGE,
+      keyword: filters.searchTerm,
+      ...Object.fromEntries(
+        Object.entries(filters).filter(
+          ([key, value]) => value !== "all" && key !== "searchTerm"
+        )
+      ),
+    };
+
+    // Convert budget array to string for API
+    if (filters.budget[0] !== 0 || filters.budget[1] !== 50000) {
+      apiParams.budget = filters.budget.join("-");
+    }
+
+    dispatch(fetchProducts(apiParams));
+    dispatch(fetchAllApprovedPlans(apiParams));
+
     if (userInfo) {
       dispatch(fetchMyOrders());
     }
-  }, [dispatch, userInfo]);
 
-  useEffect(() => {
-    setFilters((prev) => ({
-      ...prev,
-      category: categoryQuery || "all",
-      searchTerm: searchQuery || "",
-    }));
-  }, [categoryQuery, searchQuery]);
+    // Update URL search params
+    const searchParamsToSet = new URLSearchParams();
+    if (currentPage > 1) searchParamsToSet.set("page", String(currentPage));
+    if (filters.searchTerm) searchParamsToSet.set("search", filters.searchTerm);
+    if (filters.category !== "all")
+      searchParamsToSet.set("category", filters.category);
+
+    setSearchParams(searchParamsToSet, { replace: true });
+  }, [dispatch, userInfo, filters, currentPage, setSearchParams]);
 
   const combinedProducts = useMemo(() => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
     const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
 
-    const reversedAdminProducts = adminArray.slice().reverse();
-
-    return [
-      ...reversedAdminProducts.map((p) => ({ ...p, source: "admin" })),
+    // Simple merge as sorting is now handled by backend
+    const combined = [
+      ...adminArray.map((p) => ({ ...p, source: "admin" })),
       ...profArray.map((p) => ({
         ...p,
         name: p.planName,
@@ -841,154 +871,25 @@ const Products = () => {
         source: "professional",
       })),
     ];
-  }, [adminProducts, professionalPlans]);
 
-  const filteredAndSortedProducts = useMemo(() => {
-    let products = combinedProducts.filter((product) => {
-      if (
-        !product ||
-        (product.price === undefined && product["Regular price"] === undefined)
-      )
-        return false;
-
-      const regularPrice =
-        product.price !== 0 && product.price
-          ? product.price
-          : (product["Regular price"] ?? 0);
-      const salePrice =
-        product.salePrice !== 0 && product.salePrice
-          ? product.salePrice
-          : product["Sale price"];
-
-      const isSale = (() => {
-        if (
-          product["Sale price"] !== undefined &&
-          product["Sale price"] !== null
-        ) {
-          const jsonSalePrice = parseFloat(product["Sale price"]);
-          const jsonRegularPrice = parseFloat(product["Regular price"] || 0);
-          return jsonSalePrice > 0 && jsonSalePrice < jsonRegularPrice;
-        }
-
-        if (salePrice !== undefined && salePrice !== null) {
-          return salePrice > 0 && salePrice < regularPrice;
-        }
-
-        if (product.isSale !== undefined) {
-          return product.isSale;
-        }
-
-        return false;
-      })();
-
-      const displayPrice =
-        isSale && salePrice != null ? salePrice : regularPrice;
-
-      const productName = product.name || product.Name || "";
-      const productCategory =
-        (Array.isArray(product.category)
-          ? product.category.join(" ")
-          : product.category) ||
-        product.Categories ||
-        "";
-      const plotSize =
-        product.plotSize || product["Attribute 1 value(s)"] || "";
-      const plotArea =
-        product.plotArea ||
-        (product["Attribute 2 value(s)"]
-          ? parseInt(
-              String(product["Attribute 2 value(s)"]).replace(/[^0-9]/g, "")
-            )
-          : 0);
-      const direction =
-        product.direction || product["Attribute 4 value(s)"] || "";
-      const floors =
-        product.floors ||
-        (product["Attribute 5 value(s)"]
-          ? parseInt(String(product["Attribute 5 value(s)"]))
-          : 0);
-      const propertyType = product.propertyType || "";
-      const country = product.country || [];
-
-      const matchesSearch =
-        productName.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-        productCategory
-          .toLowerCase()
-          .includes(filters.searchTerm.toLowerCase());
-      const matchesBudget =
-        displayPrice >= filters.budget[0] && displayPrice <= filters.budget[1];
-      const matchesCategory =
-        filters.category === "all" ||
-        productCategory.includes(filters.category);
-      const matchesPlotSize =
-        filters.plotSize === "all" || plotSize === filters.plotSize;
-      const matchesPlotArea =
-        filters.plotArea === "all" ||
-        (filters.plotArea === "500-1000"
-          ? plotArea >= 500 && plotArea <= 1000
-          : filters.plotArea === "1000-2000"
-            ? plotArea > 1000 && plotArea <= 2000
-            : filters.plotArea === "2000+"
-              ? plotArea > 2000
-              : true);
-      const matchesDirection =
-        filters.direction === "all" || direction === filters.direction;
-      const matchesFloors =
-        filters.floors === "all" ||
-        (filters.floors === "3+"
-          ? floors >= 3
-          : String(floors) === filters.floors); // Ensure comparison is safe
-      const matchesPropertyType =
-        filters.propertyType === "all" || propertyType === filters.propertyType;
-      const matchesCountryQuery =
-        !countryQuery ||
-        (Array.isArray(country) && country.includes(countryQuery));
-
-      return (
-        matchesSearch &&
-        matchesBudget &&
-        matchesCategory &&
-        matchesPlotSize &&
-        matchesPlotArea &&
-        matchesDirection &&
-        matchesFloors &&
-        matchesPropertyType &&
-        matchesCountryQuery
+    // Sort based on filter if needed (though backend should handle it)
+    if (filters.sortBy === "newest") {
+      return combined.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
-    });
-
-    if (sortBy === "price-low") {
-      products.sort((a, b) => {
-        const getPrice = (p) =>
-          p.salePrice && p.salePrice > 0 ? p.salePrice : (p.price ?? 0);
-        return getPrice(a) - getPrice(b);
-      });
-    } else if (sortBy === "price-high") {
-      products.sort((a, b) => {
-        const getPrice = (p) =>
-          p.salePrice && p.salePrice > 0 ? p.salePrice : (p.price ?? 0);
-        return getPrice(b) - getPrice(a);
-      });
     }
 
-    return products;
-  }, [combinedProducts, filters, countryQuery, sortBy]);
+    return combined;
+  }, [adminProducts, professionalPlans, filters.sortBy]);
 
-  const totalPages = Math.ceil(
-    filteredAndSortedProducts.length / CARDS_PER_PAGE
-  );
+  const totalPages = Math.max(adminPages || 1, profPages || 1);
 
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
-    return filteredAndSortedProducts.slice(
-      startIndex,
-      startIndex + CARDS_PER_PAGE
-    );
-  }, [currentPage, filteredAndSortedProducts]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filteredAndSortedProducts.length]);
+  const handlePageChange = (newPage) => {
+    if (newPage > 0 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      window.scrollTo(0, 0); // Scroll to top on page change
+    }
+  };
 
   const pageTitle = countryQuery
     ? `${countryQuery} House Plans`
@@ -1046,12 +947,17 @@ const Products = () => {
               <div>
                 <h2 className="text-2xl font-bold text-gray-800">All Plans</h2>
                 <p className="text-gray-500 text-sm">
-                  Showing {paginatedProducts.length} of{" "}
-                  {filteredAndSortedProducts.length} results
+                  Showing {combinedProducts.length} results on page{" "}
+                  {currentPage} of {totalPages}
                 </p>
               </div>
               <div className="flex items-center gap-4">
-                <Select value={sortBy} onValueChange={setSortBy}>
+                <Select
+                  value={filters.sortBy}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({ ...prev, sortBy: value }))
+                  }
+                >
                   <SelectTrigger className="w-48 bg-white">
                     <SelectValue />
                   </SelectTrigger>
@@ -1098,16 +1004,14 @@ const Products = () => {
                 <p className="mt-2 text-gray-500">{errorMessage}</p>
               </div>
             )}
-            {!isLoading &&
-              !isError &&
-              filteredAndSortedProducts.length === 0 && (
-                <div className="text-center py-20">
-                  <h3 className="text-xl font-semibold">No Plans Found</h3>
-                  <p className="mt-2 text-gray-500">
-                    Try adjusting your filters to see more results.
-                  </p>
-                </div>
-              )}
+            {!isLoading && !isError && combinedProducts.length === 0 && (
+              <div className="text-center py-20">
+                <h3 className="text-xl font-semibold">No Plans Found</h3>
+                <p className="mt-2 text-gray-500">
+                  Try adjusting your filters to see more results.
+                </p>
+              </div>
+            )}
 
             {!isLoading && !isError && (
               <div
@@ -1117,8 +1021,8 @@ const Products = () => {
                     : "grid-cols-1"
                 }`}
               >
-                {paginatedProducts.length > 0 ? (
-                  paginatedProducts.map((product) => (
+                {combinedProducts.length > 0 ? (
+                  combinedProducts.map((product) => (
                     <ProductCard
                       key={`${product.source || "prod"}-${product._id}`}
                       product={product}
@@ -1137,9 +1041,7 @@ const Products = () => {
               <div className="mt-12 flex justify-center items-center gap-4">
                 <Button
                   variant="outline"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
-                  }
+                  onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
                 >
                   <ChevronLeft className="w-4 h-4 mr-2" />
@@ -1150,9 +1052,7 @@ const Products = () => {
                 </span>
                 <Button
                   variant="outline"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
+                  onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
                 >
                   Next
