@@ -51,6 +51,30 @@ const slugify = (text) => {
     .replace(/\-\-+/g, "-");
 };
 
+// Static list of categories as requested
+const staticCategories = [
+  "Modern Home Design",
+  "Duplex House Plans",
+  "Single Storey House Plan",
+  "Bungalow / Villa House Plans",
+  "Apartment / Flat Plans",
+  "Farmhouse",
+  "Cottage Plans",
+  "Row House / Twin House Plans",
+  "Village House Plans",
+  "Contemporary / Modern House Plans",
+  "Colonial / Heritage House Plans",
+  "Classic House Plan",
+  "Kerala House Plans",
+  "Kashmiri House Plan",
+  "Marriage Garden",
+  "Hospitals",
+  "Shops and Showrooms",
+  "Highway Resorts and Hotels",
+  "Schools and Colleges Plans",
+  "Temple & Mosque",
+];
+
 const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
   <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-white rounded-xl shadow-lg h-fit border border-gray-200">
     <h3 className="text-xl font-bold mb-4 flex items-center text-gray-800">
@@ -838,20 +862,6 @@ const Products = () => {
     ];
   }, [adminProducts, professionalPlans]);
 
-  const uniqueCategories = useMemo(() => {
-    if (!combinedProducts) return [];
-    const categoriesSet = new Set();
-    combinedProducts.forEach((p) => {
-      const category =
-        (Array.isArray(p.category) ? p.category.join(",") : p.category) ||
-        p.Categories;
-      if (category) {
-        category.split(",").forEach((cat) => categoriesSet.add(cat.trim()));
-      }
-    });
-    return Array.from(categoriesSet).sort();
-  }, [combinedProducts]);
-
   const filteredAndSortedProducts = useMemo(() => {
     let products = combinedProducts.filter((product) => {
       if (
@@ -1103,7 +1113,7 @@ const Products = () => {
           <FilterSidebar
             filters={filters}
             setFilters={setFilters}
-            uniqueCategories={uniqueCategories}
+            uniqueCategories={staticCategories}
           />
           <div className="w-full lg:w-3/4 xl:w-4/5">
             <div className="flex flex-wrap gap-4 justify-between items-center mb-6 border-b pb-4">
