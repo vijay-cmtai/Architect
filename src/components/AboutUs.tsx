@@ -1,220 +1,252 @@
 import React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  faAward,
-  faHeart,
-  faFileLines,
-  faUsers,
-} from "@fortawesome/free-solid-svg-icons";
-import Footer from "./Footer";
-import Navbar from "./Navbar";
+  Globe,
+  Target,
+  Building,
+  Users,
+  Handshake,
+  Lightbulb,
+  Bot,
+  Construction,
+  Store,
+  ArrowRight,
+  TrendingUp,
+  Group,
+} from "lucide-react";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
-// Team member images - no change needed here
-const teamMember1 =
-  "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=2787&auto=format&fit=crop";
-const teamMember2 =
-  "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=2788&auto=format&fit=crop";
-const teamMember3 =
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=2787&auto=format&fit=crop";
+const teamMembers = [
+  {
+    name: "Himanshu Vyas",
+    title: "Founder & CEO",
+    image: "/founder.jpg",
+  },
+  // आप चाहें तो भविष्य में और टीम मेंबर्स यहाँ जोड़ सकते हैं
+  // {
+  //   name: "Priya Verma",
+  //   title: "Head of Sales",
+  //   image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=2788&auto=format&fit=crop",
+  // },
+];
 
-// Hero background image
-const heroBgImage =
-  "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=3174&auto=format&fit=crop";
+const corePillars = [
+  {
+    icon: Lightbulb,
+    title: "Design Innovation",
+    description:
+      "Thousands of readymade house plans, AI-powered customization, and immersive VR/3D walkthroughs.",
+    bgColor: "bg-blue-100",
+    iconColor: "text-blue-500",
+  },
+  {
+    icon: Construction,
+    title: "Construction Integration",
+    description:
+      "Verified local contractors, turnkey solutions from foundation to finishing, and transparent quality checks.",
+    bgColor: "bg-purple-100",
+    iconColor: "text-purple-500",
+  },
+  {
+    icon: Store,
+    title: "Marketplace & Services",
+    description:
+      "Partnered material suppliers, interior designers, landscape experts, and financing assistance.",
+    bgColor: "bg-teal-100",
+    iconColor: "text-teal-500",
+  },
+  {
+    icon: Bot,
+    title: "Technology Backbone",
+    description:
+      "A mobile-first platform integrating AI, AR/VR & BIM for modern, accessible home solutions.",
+    bgColor: "bg-yellow-100",
+    iconColor: "text-yellow-500",
+  },
+];
+
+const vision2030Goals = [
+  { icon: Users, text: "Serve 10M+ homeowners across 50+ countries." },
+  {
+    icon: Handshake,
+    text: "Onboard 100K+ architects, engineers, and contractors.",
+  },
+  {
+    icon: Store,
+    text: "Become the world’s largest digital home design-to-construction marketplace.",
+  },
+  {
+    icon: Group,
+    text: "Create trusted communities for transparent collaboration.",
+  },
+];
 
 const AboutUs = () => {
   return (
-    // Main container using theme colors from your config
     <>
       <Navbar />
-      <div className="bg-background text-foreground font-poppins w-full overflow-x-hidden">
-        {/* 1. Hero Section */}
-        <section className="relative h-[60vh] w-full">
-          {/* Background Image */}
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${heroBgImage})` }}
-          />
-          {/* Dark Overlay */}
-          <div className="absolute inset-0 bg-black/50" />
-          {/* Content */}
-          <div className="relative z-10 flex h-full flex-col items-center justify-center text-center text-white p-5">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Our Story: Building Dreams, One Home at a Time
+      <div className="min-h-screen bg-background text-foreground">
+        {/* Hero Section */}
+        <section className="bg-gradient-to-br from-primary/10 via-background to-background py-24 text-center">
+          <div className="container mx-auto px-4 animate-fade-in">
+            <Globe
+              className="w-16 h-16 text-primary mx-auto mb-4"
+              strokeWidth={1.5}
+            />
+            <h1 className="text-4xl md:text-6xl font-extrabold mb-4 tracking-tight">
+              Our Vision
             </h1>
-            <p className="text-lg md:text-xl max-w-3xl">
-              Our passion is turning your vision of a perfect home into an
-              architectural reality.
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+              “To build a global ecosystem where home designing and home
+              construction come together on a single digital platform —
+              empowering people worldwide to design, customize, and construct
+              their dream homes seamlessly, affordably, and with trust.”
             </p>
           </div>
         </section>
 
-        {/* Wrapper for main content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* 2. Our Journey Section */}
-          <section className="py-16 md:py-24 text-center">
-            <h2 className="section-title">Who We Are</h2>
-            <p className="mt-12 max-w-4xl mx-auto text-lg leading-relaxed text-muted-foreground">
-              Our journey began with a simple but powerful idea: to make
-              exceptional home design accessible to everyone. We saw that many
-              people struggled to find architectural plans that were both
-              beautiful and practical. To solve this, we brought together a
-              dedicated team of expert architects, engineers, and designers who
-              share a commitment to quality, innovation, and client happiness.
-              Today, with{" "}
-              <strong className="text-foreground">
-                15+ years of industry experience
-              </strong>{" "}
-              and the trust of over{" "}
-              <strong className="text-foreground">
-                50,000 happy customers
-              </strong>
-              , we have grown into a leading name for house plans and
-              architectural services.
-            </p>
-          </section>
-
-          {/* 3. Why Choose Us Section */}
-          <section className="py-16 md:py-24">
-            <h2 className="section-title text-center">What Sets Us Apart</h2>
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <div className="feature-card">
-                <FontAwesomeIcon
-                  icon={faAward}
-                  className="text-primary text-5xl mb-4"
-                />
-                <h3 className="text-xl font-semibold text-card-foreground mb-2">
-                  15+ Years of Experience
-                </h3>
-                <p className="text-muted-foreground">
-                  Our deep industry knowledge ensures every design is timeless,
-                  functional, and built to the highest standards.
-                </p>
-              </div>
-              <div className="feature-card">
-                <FontAwesomeIcon
-                  icon={faHeart}
-                  className="text-primary text-5xl mb-4"
-                />
-                <h3 className="text-xl font-semibold text-card-foreground mb-2">
-                  50k+ Happy Customers
-                </h3>
-                <p className="text-muted-foreground">
-                  The satisfaction of our clients is our biggest achievement. We
-                  are proud to have helped over 50,000 families.
-                </p>
-              </div>
-              <div className="feature-card">
-                <FontAwesomeIcon
-                  icon={faFileLines}
-                  className="text-primary text-5xl mb-4"
-                />
-                <h3 className="text-xl font-semibold text-card-foreground mb-2">
-                  500+ Unique House Plans
-                </h3>
-                <p className="text-muted-foreground">
-                  Our extensive library offers a diverse range of styles and
-                  sizes, ensuring you’ll find a design that feels like home.
-                </p>
-              </div>
-              <div className="feature-card">
-                <FontAwesomeIcon
-                  icon={faUsers}
-                  className="text-primary text-5xl mb-4"
-                />
-                <h3 className="text-xl font-semibold text-card-foreground mb-2">
-                  An Expert Team
-                </h3>
-                <p className="text-muted-foreground">
-                  Our team is our greatest asset. We are passionate
-                  professionals dedicated to providing you with the best design
-                  expertise.
-                </p>
-              </div>
+        {/* The Big Picture Section */}
+        <section className="py-20">
+          <div className="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+            <div className="animate-fade-in-right">
+              <Target className="w-12 h-12 text-primary mb-4" />
+              <h2 className="text-3xl font-bold mb-4">The Big Picture</h2>
+              <p className="text-muted-foreground text-lg mb-6">
+                HousePlanFiles.com is more than just a house plan store. We aim
+                to become the “Amazon of Home Designing & Construction”, where
+                anyone, anywhere can:
+              </p>
+              <ul className="space-y-3 text-lg">
+                <li className="flex items-center gap-3">
+                  <ArrowRight className="w-5 h-5 text-primary" /> Explore
+                  ready-made plans.
+                </li>
+                <li className="flex items-center gap-3">
+                  <ArrowRight className="w-5 h-5 text-primary" /> Customize
+                  layouts & interiors.
+                </li>
+                <li className="flex items-center gap-3">
+                  <ArrowRight className="w-5 h-5 text-primary" /> Hire verified
+                  professionals.
+                </li>
+                <li className="flex items-center gap-3">
+                  <ArrowRight className="w-5 h-5 text-primary" /> Buy building
+                  materials.
+                </li>
+                <li className="flex items-center gap-3">
+                  <ArrowRight className="w-5 h-5 text-primary" /> Track their
+                  project digitally.
+                </li>
+              </ul>
             </div>
-          </section>
-
-          {/* 4. Mission & Vision Section */}
-          <section className="py-16 md:py-24">
-            <div className="mt-12 flex flex-col md:flex-row gap-8">
-              <div className="flex-1 bg-card p-8 rounded-lg border-l-4 border-primary shadow-md">
-                <h3 className="text-2xl font-bold mb-3">Our Mission</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  To simplify the process of building a home by providing
-                  inspiring, high-quality, and customizable architectural plans
-                  that empower our clients to create a space that truly reflects
-                  their personality and lifestyle.
-                </p>
-              </div>
-              <div className="flex-1 bg-card p-8 rounded-lg border-l-4 border-primary shadow-md">
-                <h3 className="text-2xl font-bold mb-3">Our Vision</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  To be the most trusted and customer-centric platform for
-                  architectural design, known for our creativity, integrity, and
-                  unwavering commitment to bringing dream homes to life across
-                  the nation.
-                </p>
-              </div>
+            <div className="animate-fade-in-left">
+              <img
+                src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=500"
+                alt="A modern architectural home"
+                className="rounded-xl shadow-lg w-full"
+              />
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* 5. Meet The Team Section */}
-          <section className="py-16 md:py-24 text-center">
-            <h2 className="section-title">The Minds Behind the Designs</h2>
-            <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
-              <div className="team-member">
-                <img
-                  src={teamMember1}
-                  alt="Lead Architect"
-                  className="w-40 h-40 rounded-full object-cover mx-auto border-4 border-white shadow-lg"
-                />
-                <h4 className="text-xl font-bold mt-6 mb-1">Johnathan Doe</h4>
-                <span className="text-primary font-medium">Lead Architect</span>
-              </div>
-              <div className="team-member">
-                <img
-                  src={teamMember2}
-                  alt="Head of Interior Design"
-                  className="w-40 h-40 rounded-full object-cover mx-auto border-4 border-white shadow-lg"
-                />
-                <h4 className="text-xl font-bold mt-6 mb-1">Jane Smith</h4>
-                <span className="text-primary font-medium">
-                  Head of Interior Design
-                </span>
-              </div>
-              <div className="team-member">
-                <img
-                  src={teamMember3}
-                  alt="Client Relations Manager"
-                  className="w-40 h-40 rounded-full object-cover mx-auto border-4 border-white shadow-lg"
-                />
-                <h4 className="text-xl font-bold mt-6 mb-1">David Chen</h4>
-                <span className="text-primary font-medium">
-                  Client Relations Manager
-                </span>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        {/* 6. Call to Action Section */}
-        <section className="bg-primary text-primary-foreground py-20 text-center">
-          <div className="max-w-4xl mx-auto px-4">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Ready to Start Your Journey?
+        {/* Core Pillars Section */}
+        <section className="py-20 bg-muted/30">
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="text-3xl font-bold mb-12">
+              Core Pillars of Our Ecosystem
             </h2>
-            <p className="text-lg mb-8">
-              Let's build something amazing together. Explore our plans or
-              contact our team.
-            </p>
-            <div className="flex justify-center gap-4 flex-wrap">
-              {/* Note: If you have a Button component from a library, use it here. */}
-              <button className="px-8 py-3 rounded-md font-semibold bg-primary-foreground text-primary hover:bg-primary-foreground/90 transition-colors">
-                Browse House Plans
-              </button>
-              <button className="px-8 py-3 rounded-md font-semibold border-2 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary transition-colors">
-                Contact Us
-              </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {corePillars.map((pillar, index) => (
+                <Card
+                  key={index}
+                  className="text-left p-6 group hover:shadow-card-hover transition-shadow duration-300 animate-fade-in border-0 shadow-soft"
+                  style={{ animationDelay: `${index * 0.15}s` }}
+                >
+                  <CardContent className="p-0">
+                    <div
+                      className={`w-16 h-16 ${pillar.bgColor} rounded-lg flex items-center justify-center mb-5`}
+                    >
+                      <pillar.icon
+                        className={`w-8 h-8 ${pillar.iconColor}`}
+                        strokeWidth={1.5}
+                      />
+                    </div>
+                    <h3 className="text-xl font-bold mb-2">{pillar.title}</h3>
+                    <p className="text-muted-foreground text-sm">
+                      {pillar.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
+          </div>
+        </section>
+
+        {/* --- Meet Our Leadership Section (Founder Centered) --- */}
+        <section className="py-20">
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="text-3xl font-bold mb-12">Meet Our Leadership</h2>
+            <div className="grid grid-cols-1 max-w-4xl mx-auto justify-center">
+              {teamMembers.map((member, index) => (
+                <Card
+                  key={index}
+                  className="text-center group hover:shadow-card-hover transition-shadow duration-300 animate-fade-in border-0 shadow-soft"
+                  style={{ animationDelay: `${index * 0.15}s` }}
+                >
+                  <CardContent className="p-6">
+                    <img
+                      src={member.image}
+                      alt={member.name}
+                      className="w-40 h-40 rounded-full object-cover mx-auto mb-4 border-4 border-primary/20"
+                    />
+                    <h3 className="text-2xl font-bold">{member.name}</h3>
+                    <p className="text-primary font-semibold text-lg">
+                      {member.title}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Global Vision 2030 Section */}
+        <section className="py-20 bg-muted/30">
+          <div className="container mx-auto px-4 text-center">
+            <TrendingUp className="w-12 h-12 text-primary mx-auto mb-4" />
+            <h2 className="text-3xl font-bold mb-4">Global Vision 2030</h2>
+            <p className="text-muted-foreground text-lg max-w-3xl mx-auto mb-12">
+              By 2030, HousePlanFiles.com will achieve the following milestones:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {vision2030Goals.map((goal, index) => (
+                <div
+                  key={index}
+                  className="bg-card p-6 rounded-lg shadow-sm text-center animate-fade-in"
+                  style={{ animationDelay: `${index * 0.15}s` }}
+                >
+                  <goal.icon
+                    className="w-10 h-10 text-primary mx-auto mb-4"
+                    strokeWidth={1.5}
+                  />
+                  <p className="font-semibold text-foreground">{goal.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Why This Matters Section */}
+        <section className="py-20">
+          <div className="container mx-auto px-4 text-center">
+            <Building className="w-12 h-12 text-primary mx-auto mb-4" />
+            <h2 className="text-3xl font-bold mb-4">Why This Matters</h2>
+            <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
+              Today, homeowners face fragmented services. HousePlanFiles.com is
+              solving this gap by creating a one-stop global hub, reducing
+              complexity, saving costs, and building homes with trust.
+            </p>
           </div>
         </section>
       </div>

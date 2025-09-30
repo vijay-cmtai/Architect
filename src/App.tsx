@@ -97,10 +97,9 @@ const App = () => (
               <Sonner />
               <ScrollToTop />
               <Routes>
-                {/* --- सार्वजनिक मार्ग --- */}
                 <Route path="/" element={<Index />} />
                 <Route path="/products" element={<Products />} />
-                <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/product/:slug" element={<ProductDetail />} />
                 <Route
                   path="/professional-plan/:id"
                   element={<ProfessionalProductDetail />}
@@ -172,7 +171,6 @@ const App = () => (
                 />
                 <Route path="/gallery" element={<GalleryPage />} />
 
-                {/* --- उपयोगकर्ता डैशबोर्ड मार्ग --- */}
                 <Route
                   element={<ProtectedRoute allowedRoles={["user", "admin"]} />}
                 >
@@ -188,7 +186,6 @@ const App = () => (
                   </Route>
                 </Route>
 
-                {/* --- पेशेवर डैशबोर्ड मार्ग --- */}
                 <Route
                   element={
                     <ProtectedRoute allowedRoles={["professional", "admin"]} />
@@ -209,7 +206,6 @@ const App = () => (
                   </Route>
                 </Route>
 
-                {/* --- एडमिन डैशबोर्ड मार्ग --- */}
                 <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<AdminDashboardPage />} />
@@ -264,7 +260,7 @@ const App = () => (
                 </Route>
 
                 {/* --- 404 Not Found Route --- */}
-                <Route path="*" element={<NotFound />} />
+                <Route path="*" element={<AllProductsPage />} />
               </Routes>
             </TooltipProvider>
           </WishlistProvider>

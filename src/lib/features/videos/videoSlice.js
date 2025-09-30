@@ -1,8 +1,7 @@
-// src/lib/features/videos/videoSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { fetchProducts } from "@/lib/features/products/productSlice";
 
-// Helper function to get token from state
 const getToken = (getState) => {
   const { user } = getState();
   return user.userInfo?.token;
@@ -11,8 +10,6 @@ const getToken = (getState) => {
 const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/videos`;
 
 // --- ASYNC THUNKS ---
-
-// 1. Fetch all videos (can be filtered by topic)
 export const fetchVideos = createAsyncThunk(
   "videos/fetchAll",
   async (topic = null, { rejectWithValue }) => {
@@ -28,7 +25,6 @@ export const fetchVideos = createAsyncThunk(
   }
 );
 
-// 2. Fetch all unique topics
 export const fetchTopics = createAsyncThunk(
   "videos/fetchTopics",
   async (_, { rejectWithValue }) => {
@@ -43,20 +39,21 @@ export const fetchTopics = createAsyncThunk(
   }
 );
 
-// 3. Upload a new video
 export const addVideoLink = createAsyncThunk(
-  // Renamed for clarity
   "videos/addLink",
-  async ({ title, youtubeLink, topic }, { getState, rejectWithValue }) => {
+  async (
+    { title, youtubeLink, topic, productLink },
+    { getState, rejectWithValue }
+  ) => {
     try {
       const token = getToken(getState);
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      // Send title, youtubeLink, and topic in the request body
-      const { data } = await axios.post(
-        API_URL,
-        { title, youtubeLink, topic },
-        config
-      );
+      const payload = { title, youtubeLink, topic };
+      // सिर्फ तभी productLink भेजें जब वह मौजूद हो
+      if (productLink && productLink !== "none") {
+        payload.productLink = productLink;
+      }
+      const { data } = await axios.post(API_URL, payload, config);
       return data;
     } catch (error) {
       return rejectWithValue(
@@ -66,7 +63,6 @@ export const addVideoLink = createAsyncThunk(
   }
 );
 
-// 4. Delete a video
 export const deleteVideo = createAsyncThunk(
   "videos/delete",
   async (videoId, { getState, rejectWithValue }) => {
@@ -74,7 +70,7 @@ export const deleteVideo = createAsyncThunk(
       const token = getToken(getState);
       const config = { headers: { Authorization: `Bearer ${token}` } };
       await axios.delete(`${API_URL}/${videoId}`, config);
-      return videoId; // Return the ID for removal from state
+      return videoId;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to delete video"
@@ -86,8 +82,8 @@ export const deleteVideo = createAsyncThunk(
 const initialState = {
   videos: [],
   topics: [],
-  listStatus: "idle", // 'idle' | 'loading' | 'succeeded' | 'failed'
-  actionStatus: "idle", // For create/delete actions
+  listStatus: "idle",
+  actionStatus: "idle",
   error: null,
 };
 
@@ -101,7 +97,6 @@ const videoSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Fetch Videos
     builder
       .addCase(fetchVideos.pending, (state) => {
         state.listStatus = "loading";
@@ -115,34 +110,27 @@ const videoSlice = createSlice({
         state.error = action.payload;
       });
 
-    // Fetch Topics
     builder
-      .addCase(fetchTopics.pending, (state) => {
-        state.listStatus = "loading";
-      })
       .addCase(fetchTopics.fulfilled, (state, action) => {
-        state.listStatus = "succeeded";
         state.topics = action.payload;
       })
       .addCase(fetchTopics.rejected, (state, action) => {
-        state.listStatus = "failed";
-        state.error = action.payload;
+        console.error("Failed to fetch topics:", action.payload);
       });
 
-    // Upload Video
     builder
       .addCase(addVideoLink.pending, (state) => {
         state.actionStatus = "loading";
       })
       .addCase(addVideoLink.fulfilled, (state, action) => {
         state.actionStatus = "succeeded";
-        state.videos.unshift(action.payload); // Add new video to the top
+        state.videos.unshift(action.payload);
       })
       .addCase(addVideoLink.rejected, (state, action) => {
         state.actionStatus = "failed";
         state.error = action.payload;
       });
-    // Delete Video
+
     builder
       .addCase(deleteVideo.pending, (state) => {
         state.actionStatus = "loading";
@@ -158,5 +146,6 @@ const videoSlice = createSlice({
   },
 });
 
+export { fetchProducts as fetchAllProductsForDropdown };
 export const { resetActionStatus } = videoSlice.actions;
 export default videoSlice.reducer;

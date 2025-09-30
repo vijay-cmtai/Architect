@@ -40,7 +40,17 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import house3 from "@/assets/house-3.jpg";
 import { toast } from "sonner";
 
-// --- हेल्पर कंपोनेंट 1: FilterSidebar ---
+const slugify = (text) => {
+  if (!text) return "";
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-");
+};
+
 const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
   <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-white rounded-xl shadow-lg h-fit border border-gray-200">
     <h3 className="text-xl font-bold mb-4 flex items-center text-gray-800">
@@ -250,7 +260,6 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
   </aside>
 );
 
-// --- हेल्पर कंपोनेंट 2: ProductCard ---
 const ProductCard = ({ product, userOrders }) => {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -287,26 +296,18 @@ const ProductCard = ({ product, userOrders }) => {
       ? product.salePrice
       : product["Sale price"];
 
-  // FIXED: बेहतर sale detection logic for JSON data
   const isSale = (() => {
-    // JSON data के लिए Sale price field check करें FIRST (priority)
     if (product["Sale price"] !== undefined && product["Sale price"] !== null) {
       const jsonSalePrice = parseFloat(product["Sale price"]);
       const jsonRegularPrice = parseFloat(product["Regular price"] || 0);
-      // अगर sale price valid है और regular price से कम है तो sale है
       return jsonSalePrice > 0 && jsonSalePrice < jsonRegularPrice;
     }
-
-    // Database data के लिए salePrice field check करें
     if (salePrice !== undefined && salePrice !== null) {
       return salePrice > 0 && salePrice < regularPrice;
     }
-
-    // Last में product.isSale check करें (क्योंकि ये unreliable हो सकता है)
     if (product.isSale !== undefined) {
       return product.isSale;
     }
-
     return false;
   })();
 
@@ -318,10 +319,7 @@ const ProductCard = ({ product, userOrders }) => {
       : product.category) ||
     product.Categories?.split(",")[0].trim() ||
     "House Plan";
-  const downloadFile =
-    (Array.isArray(product.planFile)
-      ? product.planFile[0]
-      : product.planFile) || product["Download 1 URL"];
+
   const city = product.city
     ? Array.isArray(product.city)
       ? product.city.join(", ")
@@ -329,7 +327,7 @@ const ProductCard = ({ product, userOrders }) => {
     : null;
 
   const isWishlisted = isInWishlist(product._id);
-  const linkTo = `/product/${product._id}`;
+  const linkTo = `/product/${slugify(productName)}-${product._id}`;
 
   const hasPurchased = useMemo(() => {
     if (!userInfo || !userOrders || userOrders.length === 0) return false;
@@ -372,12 +370,19 @@ const ProductCard = ({ product, userOrders }) => {
       navigate(linkTo);
       return;
     }
-    if (!downloadFile) {
-      toast.error("Download file is not available for this plan.");
+
+    const planFileUrl =
+      (Array.isArray(product.planFile)
+        ? product.planFile[0]
+        : product.planFile) || product["Download 1 URL"];
+
+    let downloadUrl = planFileUrl || mainImage;
+
+    if (!downloadUrl) {
+      toast.error("No downloadable file or image found for this product.");
       return;
     }
 
-    let downloadUrl = downloadFile;
     if (downloadUrl.includes("res.cloudinary.com")) {
       const parts = downloadUrl.split("/upload/");
       if (parts.length === 2) {
@@ -389,12 +394,13 @@ const ProductCard = ({ product, userOrders }) => {
       toast.success("Your download is starting...");
       const link = document.createElement("a");
       link.href = downloadUrl;
+
       const fileExtension =
-        downloadUrl.split(".").pop()?.split("?")[0] || "pdf";
-      link.setAttribute(
-        "download",
-        `ArchHome-${productName.replace(/\s+/g, "-")}.${fileExtension}`
-      );
+        downloadUrl.split(".").pop()?.split("?")[0] ||
+        (planFileUrl ? "pdf" : "jpg");
+      const fileName = `ArchHome-${productName.replace(/\s+/g, "-")}.${fileExtension}`;
+
+      link.setAttribute("download", fileName);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -408,20 +414,21 @@ const ProductCard = ({ product, userOrders }) => {
     <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
       <div className="relative p-2">
         <Link to={linkTo}>
-          <img
-            src={mainImage}
-            alt={productName}
-            className="w-full h-48 object-cover rounded-md group-hover:scale-105 transition-transform duration-500"
-          />
+          <div className="aspect-square w-full bg-gray-100 rounded-md overflow-hidden">
+            <img
+              src={mainImage}
+              alt={productName}
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+            />
+          </div>
           <div className="absolute inset-2 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md"></div>
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-gray-900/80 text-white text-xs font-bold px-4 py-2 rounded-md shadow-lg text-center">
             <p>{plotSize}</p>
             <p className="text-xs font-normal">
-              {hasPurchased ? "Download pdf file" : "Purchase to download"}
+              {hasPurchased ? "Download now" : "Purchase to download"}
             </p>
           </div>
         </Link>
-        {/* FIXED: Sale badge अब properly show होगा */}
         {isSale && (
           <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-md shadow">
             Sale!
@@ -435,7 +442,11 @@ const ProductCard = ({ product, userOrders }) => {
         <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={handleWishlistToggle}
-            className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-gray-600 hover:text-red-500 hover:scale-110"}`}
+            className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${
+              isWishlisted
+                ? "text-red-500 scale-110"
+                : "text-gray-600 hover:text-red-500 hover:scale-110"
+            }`}
             aria-label="Toggle Wishlist"
           >
             <Heart
@@ -503,7 +514,6 @@ const ProductCard = ({ product, userOrders }) => {
         <h3 className="text-lg font-bold text-teal-800 mt-1 truncate">
           {productName}
         </h3>
-        {/* FIXED: Price section with better sale display */}
         <div className="flex items-baseline gap-2 mt-1 flex-wrap">
           {isSale && regularPrice > 0 && (
             <s className="text-md text-gray-400">
@@ -530,14 +540,18 @@ const ProductCard = ({ product, userOrders }) => {
           </Button>
         </Link>
         <Button
-          className={`w-full text-white rounded-md ${hasPurchased ? "bg-teal-500 hover:bg-teal-600" : "bg-gray-400 cursor-not-allowed"}`}
+          className={`w-full text-white rounded-md ${
+            hasPurchased
+              ? "bg-teal-500 hover:bg-teal-600"
+              : "bg-gray-400 cursor-not-allowed"
+          }`}
           onClick={handleDownload}
           disabled={!hasPurchased}
         >
           {hasPurchased ? (
             <>
               <Download className="mr-2 h-4 w-4" />
-              Download PDF
+              Download
             </>
           ) : (
             <>
@@ -551,12 +565,9 @@ const ProductCard = ({ product, userOrders }) => {
   );
 };
 
-// --- हेल्पर कंपोनेंट 3: CountryCustomizationForm ---
 const CountryCustomizationForm = ({ countryName }) => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { actionStatus } = useSelector(
-    (state: RootState) => state.customization
-  );
+  const dispatch = useDispatch();
+  const { actionStatus } = useSelector((state) => state.customization);
   const [formData, setFormData] = useState({
     country: countryName || "",
     name: "",
@@ -566,26 +577,24 @@ const CountryCustomizationForm = ({ countryName }) => {
     length: "",
     description: "",
   });
-  const [referenceFile, setReferenceFile] = useState<File | null>(null);
+  const [referenceFile, setReferenceFile] = useState(null);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       setReferenceFile(e.target.files[0]);
     }
   };
 
-  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     const submitData = new FormData();
     Object.keys(formData).forEach((key) => {
-      submitData.append(key, formData[key as keyof typeof formData]);
+      submitData.append(key, formData[key]);
     });
     if (referenceFile) {
       submitData.append("referenceFile", referenceFile);
@@ -594,7 +603,9 @@ const CountryCustomizationForm = ({ countryName }) => {
     try {
       await dispatch(submitCustomizationRequest(submitData)).unwrap();
       toast.success(
-        `Customization request for ${countryName || "your location"} sent successfully!`
+        `Customization request for ${
+          countryName || "your location"
+        } sent successfully!`
       );
       setFormData({
         country: countryName || "",
@@ -744,9 +755,8 @@ const CountryCustomizationForm = ({ countryName }) => {
   );
 };
 
-// --- मुख्य Products कंपोनेंट ---
 const Products = () => {
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
   const { userInfo } = useSelector((state: RootState) => state.user);
 
@@ -758,15 +768,13 @@ const Products = () => {
     products: adminProducts,
     listStatus: adminListStatus,
     error: adminError,
-  } = useSelector((state: RootState) => state.products);
+  } = useSelector((state) => state.products);
   const {
     plans: professionalPlans,
     listStatus: profListStatus,
     error: profError,
-  } = useSelector((state: RootState) => state.professionalPlans);
-  const { orders: userOrders } = useSelector(
-    (state: RootState) => state.orders
-  );
+  } = useSelector((state) => state.professionalPlans);
+  const { orders: userOrders } = useSelector((state) => state.orders);
 
   const [viewMode, setViewMode] = useState("grid");
   const [filters, setFilters] = useState({
@@ -784,7 +792,7 @@ const Products = () => {
   const CARDS_PER_PAGE = 9;
 
   useEffect(() => {
-    const apiParams: { [key: string]: any } = {};
+    const apiParams = {};
     Object.entries(filters).forEach(([key, value]) => {
       if (key === "budget") {
         if (Array.isArray(value)) apiParams.budget = value.join("-");
@@ -813,7 +821,6 @@ const Products = () => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
     const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
 
-    // FIX: Reverse the admin products array to show newest first
     const reversedAdminProducts = adminArray.slice().reverse();
 
     return [
@@ -829,7 +836,7 @@ const Products = () => {
 
   const uniqueCategories = useMemo(() => {
     if (!combinedProducts) return [];
-    const categoriesSet = new Set<string>();
+    const categoriesSet = new Set();
     combinedProducts.forEach((p) => {
       const category =
         (Array.isArray(p.category) ? p.category.join(",") : p.category) ||
@@ -858,25 +865,20 @@ const Products = () => {
           ? product.salePrice
           : product["Sale price"];
 
-      // FIXED: Use same sale logic as in ProductCard - priority to price comparison
       const isSale = (() => {
-        // JSON data के लिए Sale price field check करें FIRST (priority)
         if (
           product["Sale price"] !== undefined &&
           product["Sale price"] !== null
         ) {
           const jsonSalePrice = parseFloat(product["Sale price"]);
           const jsonRegularPrice = parseFloat(product["Regular price"] || 0);
-          // अगर sale price valid है और regular price से कम है तो sale है
           return jsonSalePrice > 0 && jsonSalePrice < jsonRegularPrice;
         }
 
-        // Database data के लिए salePrice field check करें
         if (salePrice !== undefined && salePrice !== null) {
           return salePrice > 0 && salePrice < regularPrice;
         }
 
-        // Last में product.isSale check करें (क्योंकि ये unreliable हो सकता है)
         if (product.isSale !== undefined) {
           return product.isSale;
         }
@@ -973,7 +975,6 @@ const Products = () => {
               : product["Sale price"];
 
           const isSale = (() => {
-            // JSON data के लिए Sale price field check करें FIRST (priority)
             if (
               product["Sale price"] !== undefined &&
               product["Sale price"] !== null
@@ -984,11 +985,9 @@ const Products = () => {
               );
               return jsonSalePrice > 0 && jsonSalePrice < jsonRegularPrice;
             }
-            // Database data के लिए salePrice field check करें
             if (salePrice !== undefined && salePrice !== null) {
               return salePrice > 0 && salePrice < regularPrice;
             }
-            // Last में product.isSale check करें
             if (product.isSale !== undefined) return product.isSale;
             return false;
           })();
@@ -1032,7 +1031,6 @@ const Products = () => {
         return getPrice(b) - getPrice(a);
       });
     }
-    // "newest" के लिए अब सॉर्टिंग की जरूरत नहीं क्योंकि हमने combinedProducts को ही reverse कर दिया है
 
     return products;
   }, [combinedProducts, filters, countryQuery, sortBy]);
@@ -1066,7 +1064,7 @@ const Products = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
-        <title>READYMADE HOME DESIGNS</title>
+        <title>READYMADE HOME DESIGns</title>
         <meta
           name="description"
           content="Browse readymade house plans and modern home designs with detailed layouts. Find affordable 2BHK, 3BHK, and duplex plans ready for instant download"
@@ -1094,7 +1092,9 @@ const Products = () => {
         )}
 
         <div
-          className={`flex flex-col lg:flex-row gap-12 ${countryQuery ? "pt-0 lg:pt-8" : "pt-0"}`}
+          className={`flex flex-col lg:flex-row gap-12 ${
+            countryQuery ? "pt-0 lg:pt-8" : "pt-0"
+          }`}
         >
           <FilterSidebar
             filters={filters}
@@ -1171,7 +1171,11 @@ const Products = () => {
 
             {!isLoading && !isError && (
               <div
-                className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}
+                className={`grid gap-6 ${
+                  viewMode === "grid"
+                    ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                    : "grid-cols-1"
+                }`}
               >
                 {paginatedProducts.length > 0 ? (
                   paginatedProducts.map((product) => (
@@ -1223,5 +1227,4 @@ const Products = () => {
     </div>
   );
 };
-
 export default Products;

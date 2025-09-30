@@ -5,7 +5,7 @@ import { Helmet } from "react-helmet-async";
 import { RootState, AppDispatch } from "@/lib/store";
 import {
   createReview as createProductReview,
-  fetchProductById,
+  fetchProductBySlug,
 } from "@/lib/features/products/productSlice";
 import { createPlanReview } from "@/lib/features/professional/professionalPlanSlice";
 import {
@@ -27,7 +27,6 @@ import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/components/ui/use-toast";
 import house1 from "@/assets/house-1.jpg";
 
-// --- सोशल मीडिया आइकन्स ---
 const FacebookIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -95,7 +94,6 @@ const PhoneIcon = () => (
   </svg>
 );
 
-// --- Star Rating Component ---
 const StarRating = ({ rating, text }: { rating: number; text?: string }) => (
   <div className="flex items-center gap-2">
     <div className="flex">
@@ -111,7 +109,7 @@ const StarRating = ({ rating, text }: { rating: number; text?: string }) => (
 );
 
 const DetailPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch: AppDispatch = useDispatch();
@@ -140,13 +138,16 @@ const DetailPage = () => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
 
-  const productFromList = adminProducts.find((p) => p._id === id);
+  const productIdFromSlug = slug?.split("-").pop();
+  const productFromList = adminProducts.find(
+    (p) => p._id === productIdFromSlug
+  );
 
   const displayData = useMemo(() => {
     if (isProfessionalPlan) {
-      return professionalPlans.find((p) => p._id === id);
+      return professionalPlans.find((p) => p._id === productIdFromSlug);
     }
-    return singleProduct && singleProduct._id === id
+    return singleProduct && singleProduct._id === productIdFromSlug
       ? singleProduct
       : productFromList;
   }, [
@@ -154,23 +155,21 @@ const DetailPage = () => {
     singleProduct,
     productFromList,
     professionalPlans,
-    id,
+    productIdFromSlug,
   ]);
 
   useEffect(() => {
-    if (id && !isProfessionalPlan) {
-      dispatch(fetchProductById(id));
+    if (slug && !isProfessionalPlan) {
+      dispatch(fetchProductBySlug(slug));
     }
-  }, [id, dispatch, isProfessionalPlan]);
+  }, [slug, dispatch, isProfessionalPlan]);
 
-  // --- डेटा को सही से पढ़ने और दिखाने का लॉजिक ---
   const productName = displayData?.name || displayData?.Name || "Untitled Plan";
   const productDescription =
     displayData?.description ||
     displayData?.Description ||
     "No description available.";
 
-  // FIXED: Same sale detection logic as other components
   const regularPrice =
     displayData?.price !== 0 && displayData?.price
       ? displayData.price
@@ -181,31 +180,22 @@ const DetailPage = () => {
       ? displayData.salePrice
       : displayData?.["Sale price"];
 
-  // FIXED: Sale detection with proper priority
   const isSale = (() => {
     if (!displayData) return false;
-
-    // JSON data के लिए Sale price field check करें FIRST (priority)
     if (
       displayData["Sale price"] !== undefined &&
       displayData["Sale price"] !== null
     ) {
       const jsonSalePrice = parseFloat(displayData["Sale price"]);
       const jsonRegularPrice = parseFloat(displayData["Regular price"] || 0);
-      // अगर sale price valid है और regular price से कम है तो sale है
       return jsonSalePrice > 0 && jsonSalePrice < jsonRegularPrice;
     }
-
-    // Database data के लिए salePrice field check करें
     if (salePrice !== undefined && salePrice !== null) {
       return salePrice > 0 && salePrice < regularPrice;
     }
-
-    // Last में product.isSale check करें (क्योंकि ये unreliable हो सकता है)
     if (displayData.isSale !== undefined) {
       return displayData.isSale;
     }
-
     return false;
   })();
 
@@ -231,24 +221,16 @@ const DetailPage = () => {
 
   const productImages = useMemo(() => {
     if (!displayData) return [house1];
-
     let allImages = [];
-    // पहले mainImage को डालें
     if (displayData.mainImage) allImages.push(displayData.mainImage);
-
-    // फिर JSON की Images फील्ड को डालें
     if (displayData.Images && typeof displayData.Images === "string") {
       const jsonImages = displayData.Images.split(",").map((url) => url.trim());
       allImages.push(...jsonImages);
     }
-
-    // फिर galleryImages को डालें
     if (displayData.galleryImages && Array.isArray(displayData.galleryImages)) {
       allImages.push(...displayData.galleryImages);
     }
-
     const uniqueImages = [...new Set(allImages.filter(Boolean))];
-
     return uniqueImages.length > 0 ? uniqueImages : [house1];
   }, [displayData]);
 
@@ -345,9 +327,9 @@ const DetailPage = () => {
       return;
     }
     const reviewAction = isProfessionalPlan
-      ? createPlanReview({ planId: id!, reviewData: { rating, comment } })
+      ? createPlanReview({ planId: slug!, reviewData: { rating, comment } })
       : createProductReview({
-          productId: id!,
+          productId: slug!,
           reviewData: { rating, comment },
         });
     dispatch(reviewAction)
@@ -359,7 +341,7 @@ const DetailPage = () => {
         });
         setRating(0);
         setComment("");
-        if (!isProfessionalPlan) dispatch(fetchProductById(id!));
+        if (!isProfessionalPlan) dispatch(fetchProductBySlug(slug!));
       })
       .catch((err) => {
         toast({
@@ -381,13 +363,12 @@ const DetailPage = () => {
         const pCategory =
           (Array.isArray(p.category) ? p.category[0] : p.category) ||
           p.Categories?.split(",")[0].trim();
-        return pCategory === currentCategory && p._id !== id;
+        return pCategory === currentCategory && p._id !== productIdFromSlug;
       })
       .slice(0, 2)
       .map((p) => ({
         ...p,
         source: "product",
-        // FIXED: Apply same sale logic to related products
         isSaleCalculated: (() => {
           if (p["Sale price"] !== undefined && p["Sale price"] !== null) {
             const jsonSalePrice = parseFloat(p["Sale price"]);
@@ -422,7 +403,7 @@ const DetailPage = () => {
           return isSale && salePrice != null ? salePrice : regPrice;
         })(),
       }));
-  }, [adminProducts, displayData, id]);
+  }, [adminProducts, displayData, productIdFromSlug]);
 
   const isLoading =
     (adminListStatus === "loading" && !displayData) ||
@@ -546,7 +527,6 @@ const DetailPage = () => {
                     text={`${displayData.numReviews || 0} reviews`}
                   />
                 </div>
-                {/* FIXED: Price display with sale indication */}
                 <div className="flex items-baseline gap-4 mb-6 flex-wrap">
                   {isSale && regularPrice > 0 && (
                     <span className="text-xl text-gray-500 line-through">
@@ -821,7 +801,6 @@ const DetailPage = () => {
                       {relatedProd.plotSize ||
                         relatedProd["Attribute 1 value(s)"]}
                     </p>
-                    {/* FIXED: Use the calculated display price for related products */}
                     <div className="text-2xl font-bold text-primary">
                       ₹{relatedProd.displayPrice?.toLocaleString()}
                     </div>

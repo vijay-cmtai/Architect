@@ -10,11 +10,12 @@ import { fetchVideos, fetchTopics } from "@/lib/features/videos/videoSlice";
 import RequestPageLayout from "../components/RequestPageLayout";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
-import { Loader2, PlayCircle, X, ShoppingCart } from "lucide-react"; // ✨ ShoppingCart आइकन इम्पोर्ट करें
+import { Loader2, PlayCircle, X, ShoppingCart } from "lucide-react";
 import YouTube from "react-youtube";
-import { Link } from "react-router-dom"; // ✨ Link को इम्पोर्ट करें
-import { Button } from "@/components/ui/button"; // ✨ Button को इम्पोर्ट करें
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
+// फॉर्म स्टाइल्स
 export const formStyles = {
   label: "block text-sm font-semibold mb-2 text-gray-700",
   input:
@@ -27,18 +28,14 @@ export const formStyles = {
     "w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100",
 };
 
+// वीडियो मोडल कंपोनेंट
 const VideoModal = ({ videoId, onClose }) => {
   if (!videoId) return null;
-
   const opts = {
     height: "100%",
     width: "100%",
-    playerVars: {
-      autoplay: 1,
-      controls: 1,
-    },
+    playerVars: { autoplay: 1, controls: 1 },
   };
-
   return (
     <div
       className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
@@ -72,7 +69,6 @@ const ThreeDWalkthroughPage = () => {
     listStatus: videoListStatus,
   } = useSelector((state) => state.videos);
   const [selectedTopic, setSelectedTopic] = useState("All");
-
   const [playingVideoId, setPlayingVideoId] = useState(null);
 
   useEffect(() => {
@@ -103,9 +99,7 @@ const ThreeDWalkthroughPage = () => {
 
   const filteredVideos = useMemo(() => {
     if (!videos || videos.length === 0) return [];
-    if (selectedTopic === "All") {
-      return videos;
-    }
+    if (selectedTopic === "All") return videos;
     return videos.filter((video) => video.topic === selectedTopic);
   }, [videos, selectedTopic]);
 
@@ -139,7 +133,6 @@ const ThreeDWalkthroughPage = () => {
         videoId={playingVideoId}
         onClose={() => setPlayingVideoId(null)}
       />
-
       <Navbar />
       <form key={formKey} onSubmit={handleSubmit}>
         <RequestPageLayout
@@ -272,62 +265,71 @@ const ThreeDWalkthroughPage = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredVideos.map((video) => (
-                  <div
-                    key={video._id}
-                    className="group flex flex-col bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-                  >
-                    <div
-                      className="relative aspect-video bg-gray-900 cursor-pointer"
-                      onClick={() => setPlayingVideoId(video.youtubeVideoId)}
-                    >
-                      {video.youtubeVideoId ? (
-                        <>
-                          <YouTube
-                            videoId={video.youtubeVideoId}
-                            opts={thumbnailOptions(video.youtubeVideoId)}
-                            className="absolute top-0 left-0 w-full h-full"
-                            iframeClassName="pointer-events-none"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <PlayCircle className="h-16 w-16 text-white text-opacity-80" />
-                          </div>
-                        </>
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-500">
-                          Invalid Video Link
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4 flex flex-col flex-grow">
-                      <span className="text-xs bg-orange-100 text-orange-800 font-semibold px-2 py-1 rounded-full self-start">
-                        {video.topic}
-                      </span>
-                      <h3
-                        className="font-bold text-base mt-2 truncate text-gray-800"
-                        title={video.title}
-                      >
-                        {video.title}
-                      </h3>
-                      <button
-                        onClick={() => setPlayingVideoId(video.youtubeVideoId)}
-                        className="text-sm text-orange-600 hover:underline mt-1 inline-block text-left"
-                      >
-                        Watch Video
-                      </button>
+                {filteredVideos.map((video) => {
+                  const buyNowLink = video.productLink
+                    ? `/product/${video.productLink._id}`
+                    : "/products";
 
-                      {/* ✨ यहाँ Buy Now का बटन जोड़ा गया है ✨ */}
-                      <div className="mt-auto pt-4">
-                        <Link to="/products" className="w-full block">
-                          <Button className="w-full bg-orange-500 hover:bg-orange-600">
-                            <ShoppingCart className="mr-2 h-4 w-4" />
-                            Buy Now
-                          </Button>
-                        </Link>
+                  return (
+                    <div
+                      key={video._id}
+                      className="group flex flex-col bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                    >
+                      <div
+                        className="relative aspect-video bg-gray-900 cursor-pointer"
+                        onClick={() => setPlayingVideoId(video.youtubeVideoId)}
+                      >
+                        {video.youtubeVideoId ? (
+                          <>
+                            <YouTube
+                              videoId={video.youtubeVideoId}
+                              opts={thumbnailOptions(video.youtubeVideoId)}
+                              className="absolute top-0 left-0 w-full h-full"
+                              iframeClassName="pointer-events-none"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <PlayCircle className="h-16 w-16 text-white text-opacity-80" />
+                            </div>
+                          </>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-500">
+                            Invalid Video Link
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4 flex flex-col flex-grow">
+                        <span className="text-xs bg-orange-100 text-orange-800 font-semibold px-2 py-1 rounded-full self-start">
+                          {video.topic}
+                        </span>
+                        <h3
+                          className="font-bold text-base mt-2 truncate text-gray-800"
+                          title={video.title}
+                        >
+                          {video.title}
+                        </h3>
+                        <button
+                          onClick={() =>
+                            setPlayingVideoId(video.youtubeVideoId)
+                          }
+                          className="text-sm text-orange-600 hover:underline mt-1 inline-block text-left"
+                        >
+                          Watch Video
+                        </button>
+
+                        <div className="mt-auto pt-4">
+                          <Link to={buyNowLink} className="w-full block">
+                            <Button className="w-full bg-orange-500 hover:bg-orange-600">
+                              <ShoppingCart className="mr-2 h-4 w-4" />
+                              {video.productLink
+                                ? "Buy This Plan"
+                                : "Explore Plans"}
+                            </Button>
+                          </Link>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

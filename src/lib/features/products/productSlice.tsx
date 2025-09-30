@@ -14,7 +14,6 @@ const getToken = (getState: () => RootState) => {
   return user.userInfo?.token;
 };
 
-// --- इंटरफेस परिभाषाएं ---
 interface Review {
   _id: string;
   name: string;
@@ -31,27 +30,24 @@ interface SeoData {
   altText?: string;
 }
 
-// --- हाइब्रिड प्रोडक्ट इंटरफेस (JSON + नया UI डेटा) ---
 export interface Product {
   _id: string;
   user?: string;
   createdAt?: string;
   updatedAt?: string;
-
-  // --- UI/नया डेटा वाली फील्ड्स ---
   name: string;
   description: string;
   price: number;
   isSale?: boolean;
   salePrice?: number;
-  category: string | string[]; // UI से array आएगा, JSON से string
+  category: string | string[];
   planType?: string;
   plotSize?: string;
   plotArea?: number;
-  rooms?: number | string; // JSON से '4BHK' जैसा स्ट्रिंग आ सकता है
+  rooms?: number | string;
   bathrooms?: number;
   kitchen?: number;
-  floors?: number | string; // JSON से '2' जैसा स्ट्रिंग आ सकता है
+  floors?: number | string;
   direction?: string;
   country?: string[];
   city?: string | string[];
@@ -67,13 +63,11 @@ export interface Product {
   taxRate?: number;
   crossSellProducts?: Product[];
   upSellProducts?: Product[];
-
-  // --- पुराने JSON डेटा वाली फील्ड्स (Optional) ---
   productNo?: string | number;
   ID?: number;
   Type?: string;
   SKU?: string;
-  Name?: string; // ध्यान दें: यह कैपिटल N है
+  Name?: string;
   Published?: number;
   "Is featured?"?: number;
   "Visibility in catalog"?: string;
@@ -83,14 +77,12 @@ export interface Product {
   "Tax status"?: string;
   "Tax class"?: number;
   "In stock?"?: number;
-  Categories?: string; // ध्यान दें: यह कैपिटल C है
+  Categories?: string;
   Tags?: string;
-  Images?: string; // JSON में यह मेन इमेज है
+  Images?: string;
   Upsells?: string;
   "Cross-sells"?: string;
   Position?: number;
-
-  // JSON के फ्लैट Attributes
   "Attribute 1 name"?: string;
   "Attribute 1 value(s)"?: string;
   "Attribute 2 name"?: string;
@@ -101,13 +93,10 @@ export interface Product {
   "Attribute 4 value(s)"?: string;
   "Attribute 5 name"?: string;
   "Attribute 5 value(s)"?: string;
-
-  // JSON के फ्लैट Downloads
   "Download 1 URL"?: string;
   "Download 2 URL"?: string;
   "Download 3 URL"?: string;
-
-  [key: string]: any; // किसी भी अन्य फील्ड के लिए
+  [key: string]: any;
 }
 
 interface FetchProductsResponse {
@@ -133,8 +122,6 @@ const initialState: ProductState = {
   error: null,
 };
 
-// --- ASYNC THUNKS ---
-
 export const fetchProducts = createAsyncThunk<
   FetchProductsResponse,
   Record<string, any>,
@@ -149,6 +136,21 @@ export const fetchProducts = createAsyncThunk<
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message || "Failed to fetch products"
+    );
+  }
+});
+
+export const fetchProductBySlug = createAsyncThunk<
+  Product,
+  string,
+  { rejectValue: string }
+>("products/fetchBySlug", async (slug, { rejectWithValue }) => {
+  try {
+    const { data } = await axios.get(`${API_URL}/slug/${slug}`);
+    return data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message || "Product not found"
     );
   }
 });
@@ -265,7 +267,6 @@ export const createReview = createAsyncThunk<
   }
 );
 
-// --- SLICE DEFINITION ---
 const productSlice = createSlice({
   name: "products",
   initialState,
@@ -314,6 +315,21 @@ const productSlice = createSlice({
       }
     );
     builder.addCase(fetchProductById.rejected, (state, action: AnyAction) => {
+      state.listStatus = "failed";
+      state.error = action.payload;
+    });
+
+    builder.addCase(fetchProductBySlug.pending, (state) => {
+      state.listStatus = "loading";
+    });
+    builder.addCase(
+      fetchProductBySlug.fulfilled,
+      (state, action: PayloadAction<Product>) => {
+        state.listStatus = "succeeded";
+        state.product = action.payload;
+      }
+    );
+    builder.addCase(fetchProductBySlug.rejected, (state, action: AnyAction) => {
       state.listStatus = "failed";
       state.error = action.payload;
     });

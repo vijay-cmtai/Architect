@@ -1,4 +1,3 @@
-// src/pages/admin/VideoUploadPage.jsx
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
@@ -8,6 +7,7 @@ import {
   addVideoLink,
   deleteVideo,
   resetActionStatus,
+  fetchAllProductsForDropdown,
 } from "@/lib/features/videos/videoSlice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,13 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, Trash2, Youtube, Clapperboard } from "lucide-react";
 
 const VideoUploadPage = () => {
@@ -26,18 +33,24 @@ const VideoUploadPage = () => {
   const { videos, topics, listStatus, actionStatus, error } = useSelector(
     (state) => state.videos
   );
+  const { products: allProducts } = useSelector((state) => state.products);
   const { userInfo } = useSelector((state) => state.user);
 
   const [title, setTitle] = useState("");
   const [youtubeLink, setYoutubeLink] = useState("");
   const [topic, setTopic] = useState("");
+  const [productLink, setProductLink] = useState("");
 
   useEffect(() => {
     if (userInfo?.role === "admin") {
       dispatch(fetchVideos());
       dispatch(fetchTopics());
+      // प्रोडक्ट्स की लिस्ट भी फेच करें (अगर पहले से नहीं है)
+      if (!allProducts || allProducts.length === 0) {
+        dispatch(fetchAllProductsForDropdown({}));
+      }
     }
-  }, [dispatch, userInfo]);
+  }, [dispatch, userInfo, allProducts]);
 
   useEffect(() => {
     if (actionStatus === "succeeded") {
@@ -55,12 +68,20 @@ const VideoUploadPage = () => {
     if (!title || !youtubeLink || !topic) {
       return toast.error("Please provide a Title, YouTube Link, and Topic.");
     }
-    dispatch(addVideoLink({ title, youtubeLink, topic })).then((res) => {
+    dispatch(
+      addVideoLink({
+        title,
+        youtubeLink,
+        topic,
+        productLink: productLink === "none" ? null : productLink, // 'none' को null में बदलें
+      })
+    ).then((res) => {
       if (res.type.endsWith("fulfilled")) {
         setTitle("");
         setYoutubeLink("");
         setTopic("");
-        dispatch(fetchTopics()); // Refresh topics list
+        setProductLink("");
+        dispatch(fetchTopics());
       }
     });
   };
@@ -71,18 +92,22 @@ const VideoUploadPage = () => {
     }
   };
 
+  const productOptions = allProducts.map((p) => ({
+    value: p._id,
+    label: p.name || p.Name,
+  }));
+
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="container mx-auto px-4 py-8 md:py-12">
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-gray-800">
           Manage Videos
         </h1>
-
         <Card className="mb-10">
           <CardHeader>
             <CardTitle className="text-2xl">Add New YouTube Video</CardTitle>
             <CardDescription>
-              Enter the details below to add a new video link to your site.
+              Enter the details below to add a new video link.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -130,6 +155,25 @@ const VideoUploadPage = () => {
                   />
                 </div>
               </div>
+
+              <div>
+                <Label htmlFor="productLink">Link to Product (Optional)</Label>
+                <Select onValueChange={setProductLink} value={productLink}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a product to link..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {/* FIX: value को "none" करें और इसे डिसएबल न करें */}
+                    <SelectItem value="none">None</SelectItem>
+                    {productOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <Button
                 type="submit"
                 className="w-full md:w-auto"
@@ -189,6 +233,14 @@ const VideoUploadPage = () => {
                     >
                       {video.title}
                     </h3>
+                    {video.productLink && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Linked to:{" "}
+                        <span className="font-medium">
+                          {video.productLink.name || video.productLink.Name}
+                        </span>
+                      </p>
+                    )}
                   </CardContent>
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button

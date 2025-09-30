@@ -18,7 +18,7 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import { Product, fetchProducts } from "@/lib/features/products/productSlice";
 import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
 import { useToast } from "@/components/ui/use-toast";
-import house3 from "@/assets/house-3.jpg"; // एक फॉलबैक इमेज
+import house3 from "@/assets/house-3.jpg";
 
 const FeaturedProducts = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -40,16 +40,23 @@ const FeaturedProducts = () => {
     if (userInfo) {
       dispatch(fetchMyOrders());
     }
-  }, [dispatch, products, userInfo]);
+  }, [dispatch, products.length, userInfo]);
 
   const featuredProducts = useMemo(() => {
-    return (Array.isArray(products) ? products : []).slice(0, 8);
+    // FIX: JSON डेटा को reverse करें ताकि सबसे नया पहले दिखे
+    const sortedProducts = (Array.isArray(products) ? products : [])
+      .slice()
+      .sort((a, b) => {
+        // 'productNo' को नंबर में बदलकर सॉर्ट करें, ताकि 10, 9 के बाद आए
+        const numA = Number(String(a.productNo).replace(/[^0-9]/g, ""));
+        const numB = Number(String(b.productNo).replace(/[^0-9]/g, ""));
+        return numB - numA;
+      });
+    return sortedProducts.slice(0, 8);
   }, [products]);
 
   const purchasedProductIds = useMemo(() => {
-    if (!userInfo || !Array.isArray(orders)) {
-      return new Set();
-    }
+    if (!userInfo || !Array.isArray(orders)) return new Set();
     const paidItems = orders
       .filter((order) => order.isPaid)
       .flatMap((order) => order.orderItems);
@@ -62,16 +69,15 @@ const FeaturedProducts = () => {
     if (!userInfo) {
       toast({
         title: "Login Required",
-        description: "Please log in to download purchased products.",
+        description: "Please log in to download.",
         action: <Button onClick={() => navigate("/login")}>Login</Button>,
       });
       return;
     }
-
     if (!purchasedProductIds.has(product._id)) {
       toast({
         title: "Product Not Purchased",
-        description: "You must purchase this plan to download the file.",
+        description: "You must purchase this plan to download.",
         action: (
           <Button onClick={() => navigate(`/product/${product._id}`)}>
             View Product
@@ -80,28 +86,20 @@ const FeaturedProducts = () => {
       });
       return;
     }
-
     const fileToDownload =
       (Array.isArray(product.planFile)
         ? product.planFile[0]
         : product.planFile) || product["Download 1 URL"];
-
     if (!fileToDownload) {
-      toast({
-        title: "Error",
-        description: "Download file is not available for this plan.",
-      });
+      toast({ title: "Error", description: "Download file is not available." });
       return;
     }
-
     let downloadUrl = fileToDownload;
     if (downloadUrl.includes("res.cloudinary.com")) {
       const parts = downloadUrl.split("/upload/");
-      if (parts.length === 2) {
+      if (parts.length === 2)
         downloadUrl = `${parts[0]}/upload/fl_attachment/${parts[1]}`;
-      }
     }
-
     try {
       toast({ title: "Success", description: "Your download is starting!" });
       const link = document.createElement("a");
@@ -135,21 +133,42 @@ const FeaturedProducts = () => {
   };
 
   const handleWishlistToggle = (product: Product) => {
+    if (!userInfo) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to add to wishlist.",
+      });
+      navigate("/login");
+      return;
+    }
     const isWishlisted = isInWishlist(product._id);
-    const regularPrice = product.price ?? product["Regular price"] ?? 0;
-    const salePrice = product.salePrice ?? product["Sale price"];
+
+    // FIX: पूरा और सही डेटा ऑब्जेक्ट बनाएं
+    const regularPrice =
+      product.price !== 0 && product.price
+        ? product.price
+        : (product["Regular price"] ?? 0);
+    const salePrice =
+      product.salePrice !== 0 && product.salePrice
+        ? product.salePrice
+        : product["Sale price"];
+    const productName = product.name || product.Name;
+    const mainImage =
+      product.mainImage ||
+      product.image ||
+      product.Images?.split(",")[0].trim() ||
+      house3;
+    const plotSize = product.plotSize || product["Attribute 1 value(s)"];
 
     const productForWishlist = {
       productId: product._id,
-      name: product.name || product.Name,
+      name: productName,
       price: regularPrice,
       salePrice: salePrice,
-      image:
-        product.mainImage ||
-        product.image ||
-        product.Images?.split(",")[0].trim(),
-      size: product.plotSize || product["Attribute 1 value(s)"],
+      image: mainImage,
+      size: plotSize,
     };
+
     if (isWishlisted) {
       removeFromWishlist(product._id);
     } else {
@@ -180,7 +199,6 @@ const FeaturedProducts = () => {
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
           </div>
         )}
-
         {listStatus === "failed" && (
           <div className="text-center py-12 text-destructive">
             <ServerCrash className="mx-auto h-12 w-12" />
@@ -199,7 +217,6 @@ const FeaturedProducts = () => {
             >
               <ChevronLeft className="h-6 w-6" />
             </Button>
-
             <div
               ref={scrollContainerRef}
               className="flex overflow-x-auto scroll-smooth py-4 -mx-4 px-4"
@@ -214,40 +231,29 @@ const FeaturedProducts = () => {
                 {featuredProducts.map((product: Product, index: number) => {
                   const isWishlisted = isInWishlist(product._id);
                   const hasPurchased = purchasedProductIds.has(product._id);
-
-                  const getImageSource = () => {
-                    const primaryImage =
-                      product.mainImage || product.image || product.Images;
-                    if (primaryImage && typeof primaryImage === "string") {
-                      return primaryImage.split(",")[0].trim();
-                    }
-                    return house3;
-                  };
-                  const mainImage = getImageSource();
-
+                  const mainImage =
+                    product.mainImage ||
+                    product.image ||
+                    product.Images?.split(",")[0].trim() ||
+                    house3;
                   const productName =
                     product.name || product.Name || "Untitled Plan";
-
-                  // FIXED: Proper field mapping
                   const plotSize =
                     product.plotSize ||
                     product["Attribute 1 value(s)"] ||
                     "N/A";
-
                   const plotArea =
                     product.plotArea ||
                     (product["Attribute 2 value(s)"]
                       ? parseInt(
                           String(product["Attribute 2 value(s)"]).replace(
-                            /[^0-9]/g,
+                            /\D/g,
                             ""
                           )
                         )
                       : "N/A");
-
                   const rooms =
                     product.rooms || product["Attribute 3 value(s)"] || "N/A";
-
                   const direction =
                     product.direction ||
                     product["Attribute 4 value(s)"] ||
@@ -257,42 +263,15 @@ const FeaturedProducts = () => {
                     product.price !== 0 && product.price
                       ? product.price
                       : (product["Regular price"] ?? 0);
-
                   const salePrice =
                     product.salePrice !== 0 && product.salePrice
                       ? product.salePrice
                       : product["Sale price"];
-
-                  // FIXED: Same sale detection logic as Products component
-                  const isSale = (() => {
-                    // JSON data के लिए Sale price field check करें FIRST (priority)
-                    if (
-                      product["Sale price"] !== undefined &&
-                      product["Sale price"] !== null
-                    ) {
-                      const jsonSalePrice = parseFloat(product["Sale price"]);
-                      const jsonRegularPrice = parseFloat(
-                        product["Regular price"] || 0
-                      );
-                      // अगर sale price valid है और regular price से कम है तो sale है
-                      return (
-                        jsonSalePrice > 0 && jsonSalePrice < jsonRegularPrice
-                      );
-                    }
-
-                    // Database data के लिए salePrice field check करें
-                    if (salePrice !== undefined && salePrice !== null) {
-                      return salePrice > 0 && salePrice < regularPrice;
-                    }
-
-                    // Last में product.isSale check करें (क्योंकि ये unreliable हो सकता है)
-                    if (product.isSale !== undefined) {
-                      return product.isSale;
-                    }
-
-                    return false;
-                  })();
-
+                  const isSale =
+                    product.isSale ??
+                    (salePrice != null &&
+                      salePrice > 0 &&
+                      salePrice < regularPrice);
                   const displayPrice =
                     isSale && salePrice != null ? salePrice : regularPrice;
 
@@ -317,7 +296,6 @@ const FeaturedProducts = () => {
                             className="w-full h-56 object-contain group-hover:scale-105 transition-transform"
                           />
                         </Link>
-                        {/* FIXED: Sale badge with proper detection */}
                         {isSale && (
                           <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md z-10">
                             Sale!
@@ -353,12 +331,11 @@ const FeaturedProducts = () => {
                         </div>
                       </div>
                       <div className="p-4 border-b">
-                        {/* FIXED: Proper field mapping in display grid */}
                         <div className="grid grid-cols-4 gap-2 text-center">
                           <div className="bg-gray-50 rounded-md p-2">
                             <p className="text-xs text-gray-500">Area</p>
                             <p className="text-sm font-semibold text-gray-800">
-                              {plotArea} {plotArea !== "N/A" ? "sqft" : ""}
+                              {plotArea}
                             </p>
                           </div>
                           <div className="bg-teal-50 rounded-md p-2">
@@ -384,16 +361,12 @@ const FeaturedProducts = () => {
                       <div className="p-4">
                         <div className="mb-4">
                           <p className="text-xs text-gray-500 uppercase font-medium">
-                            {(Array.isArray(product.category)
-                              ? product.category[0]
-                              : product.category) ||
-                              product.Categories?.split(",")[0]?.trim() ||
-                              "House Plan"}
+                            {product.category ||
+                              product.Categories?.split(",")[0]}
                           </p>
                           <h3 className="text-xl font-bold text-gray-800 mt-1 truncate">
                             {productName}
                           </h3>
-                          {/* FIXED: Price display with save amount */}
                           <div className="flex items-baseline gap-2 mt-1 flex-wrap">
                             {isSale && regularPrice > 0 && (
                               <span className="text-sm text-gray-400 line-through">
@@ -467,4 +440,5 @@ const FeaturedProducts = () => {
     </section>
   );
 };
+
 export default FeaturedProducts;

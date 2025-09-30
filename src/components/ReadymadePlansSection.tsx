@@ -8,7 +8,6 @@ import {
   HardHat,
 } from "lucide-react";
 
-// FIX 1: Se han añadido propiedades de color para cada icono.
 const planTypes = [
   {
     name: "Floor Plans",
@@ -48,7 +47,6 @@ const ReadymadePlansSection = () => {
   return (
     <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
-        {/* El título de la sección no ha cambiado */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -62,47 +60,42 @@ const ReadymadePlansSection = () => {
           <div className="mt-4 h-1 w-24 bg-primary mx-auto rounded-full"></div>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="flex overflow-x-auto sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 -mx-4 px-4 sm:mx-0 sm:px-0 pb-4 sm:pb-0">
+          {/* Hide scrollbar */}
+          <style>{`.overflow-x-auto::-webkit-scrollbar { display: none; } .overflow-x-auto { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
+
           {planTypes.map((plan, index) => (
             <motion.div
               key={plan.name}
+              className="flex-shrink-0 w-3/4 sm:w-auto"
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, amount: 0.2 }} 
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
               <Link
                 to={plan.href}
                 className="group block relative rounded-2xl overflow-hidden shadow-soft hover:shadow-xl transition-all duration-300 aspect-[3/4]"
               >
-                {/* Imagen de fondo (sin cambios) */}
                 <img
                   src={plan.image}
                   alt={plan.name}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
-
-                {/* Capa de gradiente (sin cambios) */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
-
-                {/* Contenido (Icono + Texto) */}
                 <div className="relative h-full flex flex-col p-6 text-white">
-                  {/* --- ÁREA DEL ICONO --- */}
                   <div className="flex-grow flex items-center justify-center">
-                    {/* FIX 2: Se ha añadido un 'div' contenedor para el fondo de color del icono. */}
                     <div
-                      className={`p-6 rounded-full ${plan.bgColor} transition-transform duration-300 group-hover:scale-110`}
+                      className={`p-4 sm:p-6 rounded-full ${plan.bgColor} transition-transform duration-300 group-hover:scale-110`}
                     >
                       <plan.icon
-                        className={`h-16 w-16 ${plan.iconColor}`}
+                        className={`h-12 w-12 sm:h-16 sm:w-16 ${plan.iconColor}`}
                         strokeWidth={1.5}
                       />
                     </div>
                   </div>
-
-                  {/* --- ÁREA DEL TEXTO (SIN CAMBIOS) --- */}
                   <div className="relative">
-                    <h3 className="text-2xl font-bold transition-colors duration-300 group-hover:text-primary">
+                    <h3 className="text-xl sm:text-2xl font-bold transition-colors duration-300 group-hover:text-primary">
                       {plan.name}
                     </h3>
                     <div className="flex items-center gap-2 mt-2 text-primary-foreground/80 opacity-0 transform -translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
