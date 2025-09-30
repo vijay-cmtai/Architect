@@ -566,8 +566,10 @@ const ProductCard = ({ product, userOrders }) => {
 };
 
 const CountryCustomizationForm = ({ countryName }) => {
-  const dispatch = useDispatch();
-  const { actionStatus } = useSelector((state) => state.customization);
+  const dispatch: AppDispatch = useDispatch();
+  const { actionStatus } = useSelector(
+    (state: RootState) => state.customization
+  );
   const [formData, setFormData] = useState({
     country: countryName || "",
     name: "",
@@ -756,7 +758,7 @@ const CountryCustomizationForm = ({ countryName }) => {
 };
 
 const Products = () => {
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   const [searchParams] = useSearchParams();
   const { userInfo } = useSelector((state: RootState) => state.user);
 
@@ -768,13 +770,15 @@ const Products = () => {
     products: adminProducts,
     listStatus: adminListStatus,
     error: adminError,
-  } = useSelector((state) => state.products);
+  } = useSelector((state: RootState) => state.products);
   const {
     plans: professionalPlans,
     listStatus: profListStatus,
     error: profError,
-  } = useSelector((state) => state.professionalPlans);
-  const { orders: userOrders } = useSelector((state) => state.orders);
+  } = useSelector((state: RootState) => state.professionalPlans);
+  const { orders: userOrders } = useSelector(
+    (state: RootState) => state.orders
+  );
 
   const [viewMode, setViewMode] = useState("grid");
   const [filters, setFilters] = useState({
