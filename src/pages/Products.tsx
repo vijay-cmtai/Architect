@@ -40,6 +40,18 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import house3 from "@/assets/house-3.jpg";
 import { toast } from "sonner";
 
+// --- ✨ Slugify Helper Function ---
+const slugify = (text) => {
+  if (!text) return "";
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-") // Replace spaces with -
+    .replace(/[^\w\-]+/g, "") // Remove all non-word chars
+    .replace(/\-\-+/g, "-"); // Replace multiple - with single -
+};
+
 const staticCategories = [
   "Modern Home Design",
   "Duplex House Plans",
@@ -262,6 +274,7 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }) => (
               floors: "all",
               propertyType: "all",
               budget: [0, 50000],
+              sortBy: "newest", // Reset sorting as well
             })
           }
           variant="outline"
@@ -341,7 +354,8 @@ const ProductCard = ({ product, userOrders }) => {
     : null;
 
   const isWishlisted = isInWishlist(product._id);
-  const linkTo = `/product/${product._id}`;
+  // --- ✨ Updated Link with Slug ---
+  const linkTo = `/product/${slugify(productName)}-${product._id}`;
 
   const hasPurchased = useMemo(() => {
     if (!userInfo || !userOrders || userOrders.length === 0) return false;
@@ -818,12 +832,10 @@ const Products = () => {
   const CARDS_PER_PAGE = 12;
 
   useEffect(() => {
-    // Set current page from URL on initial load
     setCurrentPage(pageQuery);
   }, [pageQuery]);
 
   useEffect(() => {
-    // This effect runs when filters or currentPage changes
     const apiParams = {
       pageNumber: currentPage,
       limit: CARDS_PER_PAGE,
@@ -835,7 +847,9 @@ const Products = () => {
       ),
     };
 
-    // Convert budget array to string for API
+    // The sortBy filter is already included from the spread of 'filters'
+    // e.g., apiParams.sortBy will be 'price-low', 'price-high', or 'newest'
+
     if (filters.budget[0] !== 0 || filters.budget[1] !== 50000) {
       apiParams.budget = filters.budget.join("-");
     }
@@ -847,12 +861,12 @@ const Products = () => {
       dispatch(fetchMyOrders());
     }
 
-    // Update URL search params
     const searchParamsToSet = new URLSearchParams();
     if (currentPage > 1) searchParamsToSet.set("page", String(currentPage));
     if (filters.searchTerm) searchParamsToSet.set("search", filters.searchTerm);
     if (filters.category !== "all")
       searchParamsToSet.set("category", filters.category);
+    // You could also add other filters to the URL if you wish
 
     setSearchParams(searchParamsToSet, { replace: true });
   }, [dispatch, userInfo, filters, currentPage, setSearchParams]);
@@ -861,8 +875,8 @@ const Products = () => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
     const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
 
-    // Simple merge as sorting is now handled by backend
-    const combined = [
+    // Merging results. Sorting is handled by the backend now.
+    return [
       ...adminArray.map((p) => ({ ...p, source: "admin" })),
       ...profArray.map((p) => ({
         ...p,
@@ -871,23 +885,14 @@ const Products = () => {
         source: "professional",
       })),
     ];
-
-    // Sort based on filter if needed (though backend should handle it)
-    if (filters.sortBy === "newest") {
-      return combined.sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-      );
-    }
-
-    return combined;
-  }, [adminProducts, professionalPlans, filters.sortBy]);
+  }, [adminProducts, professionalPlans]);
 
   const totalPages = Math.max(adminPages || 1, profPages || 1);
 
   const handlePageChange = (newPage) => {
     if (newPage > 0 && newPage <= totalPages) {
       setCurrentPage(newPage);
-      window.scrollTo(0, 0); // Scroll to top on page change
+      window.scrollTo(0, 0);
     }
   };
 
@@ -940,7 +945,7 @@ const Products = () => {
           <FilterSidebar
             filters={filters}
             setFilters={setFilters}
-            uniqueCategories={staticCategories} // Pass the static list here
+            uniqueCategories={staticCategories}
           />
           <div className="w-full lg:w-3/4 xl:w-4/5">
             <div className="flex flex-wrap gap-4 justify-between items-center mb-6 border-b pb-4">
@@ -959,7 +964,7 @@ const Products = () => {
                   }
                 >
                   <SelectTrigger className="w-48 bg-white">
-                    <SelectValue />
+                    <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="newest">Sort by latest</SelectItem>
