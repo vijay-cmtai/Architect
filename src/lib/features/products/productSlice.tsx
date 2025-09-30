@@ -101,13 +101,15 @@ export interface Product {
 
 interface FetchProductsResponse {
   products: Product[];
-  pagination?: any;
+  page: number;
+  pages: number;
 }
 
 interface ProductState {
   products: Product[];
   product: Product | null;
-  pagination: any;
+  page: number;
+  pages: number;
   listStatus: "idle" | "loading" | "succeeded" | "failed";
   actionStatus: "idle" | "loading" | "succeeded" | "failed";
   error: any;
@@ -116,7 +118,8 @@ interface ProductState {
 const initialState: ProductState = {
   products: [],
   product: null,
-  pagination: null,
+  page: 1,
+  pages: 1,
   listStatus: "idle",
   actionStatus: "idle",
   error: null,
@@ -124,21 +127,23 @@ const initialState: ProductState = {
 
 export const fetchProducts = createAsyncThunk<
   FetchProductsResponse,
-  Record<string, any>,
+  { pageNumber?: number; keyword?: string },
   { rejectValue: string }
->("products/fetchAll", async (params = {}, { rejectWithValue }) => {
-  try {
-    const { data } = await axios.get(API_URL, { params });
-    return {
-      products: Array.isArray(data) ? data : data.products || [],
-      pagination: data.pagination || null,
-    };
-  } catch (error: any) {
-    return rejectWithValue(
-      error.response?.data?.message || "Failed to fetch products"
-    );
+>(
+  "products/fetchAll",
+  async ({ pageNumber = 1, keyword = "" }, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get(
+        `${API_URL}?pageNumber=${pageNumber}&keyword=${keyword}`
+      );
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch products"
+      );
+    }
   }
-});
+);
 
 export const fetchProductBySlug = createAsyncThunk<
   Product,
@@ -289,14 +294,14 @@ const productSlice = createSlice({
 
     builder.addCase(fetchProducts.pending, (state) => {
       state.listStatus = "loading";
-      state.error = null;
     });
     builder.addCase(
       fetchProducts.fulfilled,
       (state, action: PayloadAction<FetchProductsResponse>) => {
         state.listStatus = "succeeded";
         state.products = action.payload.products;
-        state.pagination = action.payload.pagination;
+        state.page = action.payload.page;
+        state.pages = action.payload.pages;
       }
     );
     builder.addCase(fetchProducts.rejected, (state, action: AnyAction) => {
