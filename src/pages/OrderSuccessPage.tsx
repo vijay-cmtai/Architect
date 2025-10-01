@@ -14,13 +14,16 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { toast } from "sonner";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import DisplayPrice from "@/components/DisplayPrice";
 
 const OrderSuccessPage = () => {
   const { orderId } = useParams();
-  const [order, setOrder] = useState(null);
+  const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const { symbol, rate } = useCurrency();
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -29,40 +32,39 @@ const OrderSuccessPage = () => {
         setLoading(false);
         return;
       }
-      try {
-        setLoading(true);
-        let attempts = 0;
-        const interval = setInterval(async () => {
-          try {
-            const { data } = await axios.get(
-              `${import.meta.env.VITE_BACKEND_URL}/api/orders/guest/${orderId}`
-            );
-            if (data && data.isPaid && data.downloadableFiles?.length > 0) {
-              setOrder(data);
-              clearInterval(interval);
-              setLoading(false);
-            } else {
-              attempts++;
-              if (attempts >= 5) {
-                setOrder(data);
-                clearInterval(interval);
-                setLoading(false);
-              }
-            }
-          } catch (err) {
-            setError(
-              "Could not find your order. Please check the ID or contact support."
-            );
+      setLoading(true);
+      let attempts = 0;
+      const maxAttempts = 5;
+      const intervalTime = 2000;
+
+      const attemptFetch = async () => {
+        try {
+          const { data } = await axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/api/orders/guest/${orderId}`
+          );
+          attempts++;
+          if (
+            (data && data.isPaid && data.downloadableFiles?.length > 0) ||
+            attempts >= maxAttempts
+          ) {
+            setOrder(data);
             clearInterval(interval);
             setLoading(false);
           }
-        }, 2000);
-      } catch (err) {
-        setError(
-          "An unexpected error occurred while trying to fetch your order."
-        );
-        setLoading(false);
-      }
+        } catch (err) {
+          setError(
+            "Could not find your order. Please check the ID or contact support."
+          );
+          clearInterval(interval);
+          setLoading(false);
+        }
+      };
+
+      const interval = setInterval(attemptFetch, intervalTime);
+      attemptFetch(); // Initial attempt right away
+
+      // Cleanup interval on component unmount
+      return () => clearInterval(interval);
     };
     fetchOrder();
   }, [orderId]);
@@ -78,22 +80,23 @@ const OrderSuccessPage = () => {
     doc.text("Billed To:", 14, 51);
     doc.text(order.shippingAddress.name, 14, 57);
     doc.text(order.shippingAddress.email, 14, 63);
+
     autoTable(doc, {
       startY: 75,
       head: [["Item", "Quantity", "Price"]],
-      body: order.orderItems.map((item) => [
+      body: order.orderItems.map((item: any) => [
         item.name,
         item.quantity,
-        `₹${item.price.toLocaleString()}`,
+        `${symbol}${(item.price * rate).toFixed(2)}`,
       ]),
       foot: [
-        ["", "Subtotal", `₹${order.itemsPrice.toLocaleString()}`],
-        ["", "Tax", `₹${order.taxPrice.toLocaleString()}`],
+        ["", "Subtotal", `${symbol}${(order.itemsPrice * rate).toFixed(2)}`],
+        ["", "Tax", `${symbol}${(order.taxPrice * rate).toFixed(2)}`],
         [
           { content: "Total", styles: { fontStyle: "bold" } },
           "",
           {
-            content: `₹${order.totalPrice.toLocaleString()}`,
+            content: `${symbol}${(order.totalPrice * rate).toFixed(2)}`,
             styles: { fontStyle: "bold" },
           },
         ],
@@ -105,34 +108,26 @@ const OrderSuccessPage = () => {
     doc.save(`receipt-${order.orderId}.pdf`);
   };
 
-  const handleDownloadProduct = async (fileUrl, productName) => {
+  const handleDownloadProduct = async (
+    fileUrl: string,
+    productName: string
+  ) => {
     setDownloading(productName);
     try {
       toast.info(`Starting download for ${productName}...`);
-
       const response = await axios.get(fileUrl, {
-        responseType: "blob", // Important to handle the file data correctly
+        responseType: "blob",
       });
-
-      // Create a URL for the blob
       const url = window.URL.createObjectURL(new Blob([response.data]));
-
-      // Create a temporary link element to trigger the download
       const link = document.createElement("a");
       link.href = url;
-
-      const fileExtension = fileUrl.split(".").pop() || "zip";
+      const fileExtension = fileUrl.split(".").pop()?.split("?")[0] || "zip";
       const fileName = `${productName.replace(/\s+/g, "-")}.${fileExtension}`;
-
       link.setAttribute("download", fileName);
-
       document.body.appendChild(link);
       link.click();
-
-      // Clean up by revoking the object URL and removing the link
-      link.parentNode.removeChild(link);
+      link.parentNode?.removeChild(link);
       window.URL.revokeObjectURL(url);
-
       toast.success(`${productName} downloaded successfully!`);
     } catch (err) {
       console.error("Download failed:", err);
@@ -192,8 +187,8 @@ const OrderSuccessPage = () => {
               <strong>Email:</strong> {order.shippingAddress.email}
             </p>
             <p>
-              <strong>Total Amount:</strong> ₹
-              {order.totalPrice.toLocaleString()}
+              <strong>Total Amount:</strong>{" "}
+              <DisplayPrice inrPrice={order.totalPrice} />
             </p>
             <p>
               <strong>Date:</strong>{" "}
@@ -208,7 +203,7 @@ const OrderSuccessPage = () => {
           order.downloadableFiles &&
           order.downloadableFiles.length > 0 ? (
             <div className="space-y-4">
-              {order.downloadableFiles.map((file, index) => (
+              {order.downloadableFiles.map((file: any, index: number) => (
                 <div
                   key={index}
                   className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border"
@@ -236,7 +231,7 @@ const OrderSuccessPage = () => {
             <div className="text-center p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-yellow-800">
                 Your download links are being prepared. If they don't appear,
-                please refresh the page in a moment or check your email.
+                please refresh the page or check your email.
               </p>
             </div>
           )}

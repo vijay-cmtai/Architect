@@ -15,6 +15,8 @@ import blogReducer from "./features/blog/blogSlice";
 import galleryReducer from "./features/gallery/gallerySlice";
 import videoReducer from "./features/videos/videoSlice";
 import packageReducer from "./features/packages/packageSlice";
+import professionalOrderReducer from "./features/professional/professionalOrderSlice";
+
 export const store = configureStore({
   reducer: {
     user: userReducer,
@@ -33,6 +35,7 @@ export const store = configureStore({
     gallery: galleryReducer,
     videos: videoReducer,
     packages: packageReducer,
+    professionalOrders: professionalOrderReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

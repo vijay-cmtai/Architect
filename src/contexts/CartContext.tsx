@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { toast } from "sonner";
 
-// Add taxRate to the interface
+// Interface for a single item in the cart
 interface CartItem {
   productId: string;
   name: string;
@@ -15,9 +15,11 @@ interface CartItem {
   price: number;
   image?: string;
   size?: string;
-  taxRate?: number; // <-- ADD THIS
+  taxRate?: number;
+  source?: "admin" | "professional"; // <-- ADD THIS FIELD
 }
 
+// Interface for the context value
 interface CartContextType {
   state: { items: CartItem[]; loading: boolean };
   addItem: (item: CartItem) => void;
@@ -32,6 +34,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Load cart from localStorage on initial render
   useEffect(() => {
     try {
       setLoading(true);
@@ -41,12 +44,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error("Failed to load cart from localStorage", error);
-      setItems([]);
+      setItems([]); // Reset to empty array on error
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Save cart to localStorage whenever items change
   useEffect(() => {
     if (!loading) {
       localStorage.setItem("cart", JSON.stringify(items));
@@ -59,24 +63,27 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         (item) => item.productId === newItem.productId
       );
       if (existingItem) {
+        // If item exists, update its quantity
         return prevItems.map((item) =>
           item.productId === newItem.productId
             ? { ...item, quantity: item.quantity + (newItem.quantity || 1) }
             : item
         );
       }
+      // If item is new, add it to the cart
       return [...prevItems, { ...newItem, quantity: newItem.quantity || 1 }];
     });
     toast.success(`${newItem.name} added to cart!`);
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
-    setItems((prevItems) =>
-      prevItems
-        .map((item) =>
-          item.productId === productId ? { ...item, quantity } : item
-        )
-        .filter((item) => item.quantity > 0)
+    setItems(
+      (prevItems) =>
+        prevItems
+          .map((item) =>
+            item.productId === productId ? { ...item, quantity } : item
+          )
+          .filter((item) => item.quantity > 0) // Remove if quantity is 0 or less
     );
   };
 

@@ -82,7 +82,9 @@ async function generateSitemap() {
 
     const productUrls = products
       .map((product) => {
+        // <<< यहाँ बदलाव किया गया है >>>
         const productName = product.name || product.Name || "untitled-plan";
+
         const lastmod = product.updatedAt
           ? product.updatedAt.split("T")[0]
           : today;
