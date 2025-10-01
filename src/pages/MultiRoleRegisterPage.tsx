@@ -64,7 +64,8 @@ const materialTypes = [
   "Other",
 ];
 
-const contractorExperienceLevels = [
+const experienceLevels = [
+  // Common for Professional and Contractor
   "0-2 Years",
   "2-5 Years",
   "5-10 Years",
@@ -95,8 +96,8 @@ const MultiRoleRegisterPage = () => {
     companyName: "",
     experience: "",
     photo: null,
-    businessCertification: null, // Added for Professional & Contractor
-    shopImage: null, // Added for Professional & Contractor
+    businessCertification: null,
+    shopImage: null,
   });
 
   const isLoading = actionStatus === "loading";
@@ -264,7 +265,36 @@ const MultiRoleRegisterPage = () => {
                 </SelectContent>
               </Select>
             </div>
-            {/* New file upload fields for Professional */}
+            {/* --- START: NEW FIELDS FOR PROFESSIONAL --- */}
+            <div>
+              <Label>City*</Label>
+              <Input
+                id="city"
+                required
+                value={formData.city}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <Label>Experience*</Label>
+              <Select
+                onValueChange={(v) => handleSelectChange(v, "experience")}
+                value={formData.experience}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your experience level" />
+                </SelectTrigger>
+                <SelectContent>
+                  {experienceLevels.map((level) => (
+                    <SelectItem key={level} value={level}>
+                      {level}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* --- END: NEW FIELDS FOR PROFESSIONAL --- */}
             <div>
               <Label htmlFor="businessCertification">
                 Business Certification (Optional)
@@ -426,7 +456,7 @@ const MultiRoleRegisterPage = () => {
                   <SelectValue placeholder="Select your experience level" />
                 </SelectTrigger>
                 <SelectContent>
-                  {contractorExperienceLevels.map((level) => (
+                  {experienceLevels.map((level) => (
                     <SelectItem key={level} value={level}>
                       {level}
                     </SelectItem>
@@ -452,7 +482,6 @@ const MultiRoleRegisterPage = () => {
                 onChange={handleChange}
               />
             </div>
-            {/* New file upload fields for Contractor */}
             <div>
               <Label htmlFor="businessCertification">
                 Business Certification (Optional)
@@ -508,11 +537,7 @@ const MultiRoleRegisterPage = () => {
                   />
                   <label
                     htmlFor={`${role.id}-radio`}
-                    className={`flex items-center justify-between w-full p-4 rounded-lg cursor-pointer border-2 transition-all duration-300 ${
-                      selectedRole === role.id
-                        ? "bg-accent text-accent-foreground border-transparent shadow-md"
-                        : "bg-input border-border hover:border-primary/50"
-                    }`}
+                    className={`flex items-center justify-between w-full p-4 rounded-lg cursor-pointer border-2 transition-all duration-300 ${selectedRole === role.id ? "bg-accent text-accent-foreground border-transparent shadow-md" : "bg-input border-border hover:border-primary/50"}`}
                   >
                     <span className="font-semibold">{role.label}</span>
                     {selectedRole === role.id && <CheckCircle size={20} />}
