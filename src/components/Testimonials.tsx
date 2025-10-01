@@ -64,14 +64,13 @@ const Testimonials = () => {
           </p>
         </div>
 
-        {/* CHANGE IS ON THIS LINE: Changed mt-16 to pt-16 to give the image space */}
         <div className="relative max-w-3xl mx-auto pt-16">
           <Card className="rounded-2xl shadow-xl overflow-visible border-2 border-transparent hover:border-orange-200 transition-colors relative">
             <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg bg-white">
               <img
                 src={activeTestimonial.image}
                 alt={activeTestimonial.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-top" // <-- THE CHANGE IS HERE
               />
             </div>
 
