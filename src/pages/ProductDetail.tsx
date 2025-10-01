@@ -149,7 +149,6 @@ const StarRating = ({ rating, text }: { rating: number; text?: string }) => (
   </div>
 );
 
-// --- START: SLUGIFY FUNCTION ADD KAREIN ---
 const slugify = (text: any) => {
   if (!text) return "";
   return text
@@ -160,7 +159,6 @@ const slugify = (text: any) => {
     .replace(/[^\w\-]+/g, "")
     .replace(/\-\-+/g, "-");
 };
-// --- END: SLUGIFY FUNCTION ADD KAREIN ---
 
 const DetailPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -514,6 +512,7 @@ const DetailPage = () => {
       onContextMenu={(e) => e.preventDefault()}
     >
       <Helmet>
+        {/* --- Standard SEO Tags --- */}
         <title>{displayData.seo?.title || `${productName} | House Plan`}</title>
         <meta
           name="description"
@@ -522,7 +521,36 @@ const DetailPage = () => {
           }
         />
         <link rel="canonical" href={canonicalUrl} />
+        {/* --- Open Graph Tags (Facebook, WhatsApp, LinkedIn, etc. ke liye) --- */}
+        <meta
+          property="og:title"
+          content={displayData.seo?.title || productName}
+        />
+        <meta
+          property="og:description"
+          content={
+            displayData.seo?.description || productDescription.substring(0, 160)
+          }
+        />
+        <meta property="og:image" content={productImages[0]} />{" "}
+        {/* Yeh sabse important hai image ke liye */}
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:type" content="product" />
+        {/* --- Twitter Card Tags (Twitter par behtar preview ke liye) --- */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content={displayData.seo?.title || productName}
+        />
+        <meta
+          name="twitter:description"
+          content={
+            displayData.seo?.description || productDescription.substring(0, 160)
+          }
+        />
+        <meta name="twitter:image" content={productImages[0]} />
       </Helmet>
+
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-8">
@@ -710,6 +738,7 @@ const DetailPage = () => {
             </div>
           </div>
 
+          {/* ... Rest of your component code remains the same ... */}
           <div className="mt-12 border-t pt-8">
             <div className="border-b border-gray-200">
               <nav className="-mb-px flex space-x-8" aria-label="Tabs">
