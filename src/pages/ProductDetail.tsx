@@ -141,7 +141,9 @@ const StarRating = ({ rating, text }: { rating: number; text?: string }) => (
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
-          className={`h-5 w-5 ${rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+          className={`h-5 w-5 ${
+            rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+          }`}
         />
       ))}
     </div>
@@ -294,12 +296,11 @@ const DetailPage = () => {
   useEffect(() => {
     setCurrentUrl(window.location.href);
   }, []);
-
   const encodedUrl = encodeURIComponent(currentUrl);
   const encodedTitle = encodeURIComponent(productName);
   const encodedImage = encodeURIComponent(productImages[selectedImageIndex]);
   const phoneNumber = "+918815939484";
-  const socialPlatforms = [
+  const socialPlatforms =[
     {
       name: "Facebook",
       icon: <FacebookIcon />,
@@ -349,7 +350,6 @@ const DetailPage = () => {
       href: `tel:${phoneNumber}`,
     },
   ];
-
   const handleAddToCart = () => {
     if (!displayData) return;
     addItem({
@@ -383,7 +383,10 @@ const DetailPage = () => {
 
   const whatsappMessage = `Hello, I'm interested in modifying this plan: *${productName}*. \nProduct Link: ${currentUrl}`;
   const encodedWhatsappMessage = encodeURIComponent(whatsappMessage);
-  const whatsappLink = `https://wa.me/${phoneNumber.replace("+", "")}?text=${encodedWhatsappMessage}`;
+  const whatsappLink = `https://wa.me/${phoneNumber.replace(
+    "+",
+    ""
+  )}?text=${encodedWhatsappMessage}`;
 
   const handleReviewSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -521,7 +524,7 @@ const DetailPage = () => {
           }
         />
         <link rel="canonical" href={canonicalUrl} />
-        {/* --- Open Graph Tags (Facebook, WhatsApp, LinkedIn, etc. ke liye) --- */}
+        {/* --- Open Graph Tags (for Facebook, WhatsApp, LinkedIn, etc.) --- */}
         <meta
           property="og:title"
           content={displayData.seo?.title || productName}
@@ -532,11 +535,10 @@ const DetailPage = () => {
             displayData.seo?.description || productDescription.substring(0, 160)
           }
         />
-        <meta property="og:image" content={productImages[0]} />{" "}
-        {/* Yeh sabse important hai image ke liye */}
+        <meta property="og:image" content={productImages[0]} />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:type" content="product" />
-        {/* --- Twitter Card Tags (Twitter par behtar preview ke liye) --- */}
+        {/* --- Twitter Card Tags (for better Twitter previews) --- */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta
           name="twitter:title"
@@ -599,7 +601,9 @@ const DetailPage = () => {
                     onClick={() => setIsLiked(!isLiked)}
                   >
                     <Heart
-                      className={`w-6 h-6 transition-all ${isLiked ? "fill-current text-red-500" : "text-gray-600"}`}
+                      className={`w-6 h-6 transition-all ${
+                        isLiked ? "fill-current text-red-500" : "text-gray-600"
+                      }`}
                     />
                   </Button>
                 </div>
@@ -617,7 +621,11 @@ const DetailPage = () => {
                   <button
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
-                    className={`relative overflow-hidden rounded-lg ${selectedImageIndex === index ? "ring-2 ring-primary" : "ring-1 ring-gray-200"}`}
+                    className={`relative overflow-hidden rounded-lg ${
+                      selectedImageIndex === index
+                        ? "ring-2 ring-primary"
+                        : "ring-1 ring-gray-200"
+                    }`}
                     type="button"
                   >
                     <img
@@ -738,19 +746,26 @@ const DetailPage = () => {
             </div>
           </div>
 
-          {/* ... Rest of your component code remains the same ... */}
           <div className="mt-12 border-t pt-8">
             <div className="border-b border-gray-200">
               <nav className="-mb-px flex space-x-8" aria-label="Tabs">
                 <button
                   onClick={() => setActiveTab("description")}
-                  className={`${activeTab === "description" ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"} whitespace-nowrap py-4 px-1 border-b-2 font-bold text-md flex items-center gap-2`}
+                  className={`${
+                    activeTab === "description"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-bold text-md flex items-center gap-2`}
                 >
                   <FileText className="w-5 h-5" /> Description
                 </button>
                 <button
                   onClick={() => setActiveTab("specifications")}
-                  className={`${activeTab === "specifications" ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"} whitespace-nowrap py-4 px-1 border-b-2 font-bold text-md flex items-center gap-2`}
+                  className={`${
+                    activeTab === "specifications"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-bold text-md flex items-center gap-2`}
                 >
                   <ClipboardList className="w-5 h-5" /> Specifications
                 </button>
@@ -845,7 +860,11 @@ const DetailPage = () => {
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
-                          className={`h-7 w-7 cursor-pointer ${rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+                          className={`h-7 w-7 cursor-pointer ${
+                            rating >= star
+                              ? "text-yellow-400 fill-yellow-400"
+                              : "text-gray-300"
+                          }`}
                           onClick={() => setRating(star)}
                         />
                       ))}
@@ -904,7 +923,9 @@ const DetailPage = () => {
               {relatedProducts.map((relatedProd: any) => {
                 const relatedProductName =
                   relatedProd.name || relatedProd.planName || relatedProd.Name;
-                const relatedLink = `/${relatedProd.source}/${slugify(relatedProductName)}-${relatedProd._id}`;
+                const relatedLink = `/${relatedProd.source}/${slugify(
+                  relatedProductName
+                )}-${relatedProd._id}`;
                 return (
                   <Link
                     key={relatedProd._id}
@@ -947,5 +968,4 @@ const DetailPage = () => {
     </div>
   );
 };
-
 export default DetailPage;
