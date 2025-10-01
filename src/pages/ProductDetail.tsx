@@ -296,11 +296,12 @@ const DetailPage = () => {
   useEffect(() => {
     setCurrentUrl(window.location.href);
   }, []);
+
   const encodedUrl = encodeURIComponent(currentUrl);
   const encodedTitle = encodeURIComponent(productName);
   const encodedImage = encodeURIComponent(productImages[selectedImageIndex]);
   const phoneNumber = "+918815939484";
-  const socialPlatforms =[
+  const socialPlatforms = [
     {
       name: "Facebook",
       icon: <FacebookIcon />,
@@ -350,6 +351,7 @@ const DetailPage = () => {
       href: `tel:${phoneNumber}`,
     },
   ];
+
   const handleAddToCart = () => {
     if (!displayData) return;
     addItem({
@@ -432,7 +434,9 @@ const DetailPage = () => {
 
   const allProductsAndPlans = useMemo(() => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
-    const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
+    const profArray = Array.isArray(professionalPlans)
+      ? professionalPlans
+      : [];
     return [
       ...adminArray.map((p) => ({ ...p, source: "product" })),
       ...profArray.map((p) => ({ ...p, source: "professional-plan" })),
@@ -444,7 +448,8 @@ const DetailPage = () => {
     const currentCategory =
       (Array.isArray(displayData.category)
         ? displayData.category[0]
-        : displayData.category) || displayData.Categories?.split(",")[0].trim();
+        : displayData.category) ||
+      displayData.Categories?.split(",")[0].trim();
     if (!currentCategory) return [];
     return allProductsAndPlans
       .filter((p: any) => {
@@ -523,7 +528,12 @@ const DetailPage = () => {
             displayData.seo?.description || productDescription.substring(0, 160)
           }
         />
+        {/* CORRECTED: Conditionally render keywords meta tag */}
+        {displayData.seo?.keywords && (
+          <meta name="keywords" content={displayData.seo.keywords} />
+        )}
         <link rel="canonical" href={canonicalUrl} />
+
         {/* --- Open Graph Tags (for Facebook, WhatsApp, LinkedIn, etc.) --- */}
         <meta
           property="og:title"
@@ -538,6 +548,7 @@ const DetailPage = () => {
         <meta property="og:image" content={productImages[0]} />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:type" content="product" />
+        
         {/* --- Twitter Card Tags (for better Twitter previews) --- */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta
@@ -602,7 +613,9 @@ const DetailPage = () => {
                   >
                     <Heart
                       className={`w-6 h-6 transition-all ${
-                        isLiked ? "fill-current text-red-500" : "text-gray-600"
+                        isLiked
+                          ? "fill-current text-red-500"
+                          : "text-gray-600"
                       }`}
                     />
                   </Button>
@@ -658,7 +671,9 @@ const DetailPage = () => {
                     </span>
                   )}
                   <span className="text-4xl font-bold text-primary">
-                    <DisplayPrice inrPrice={parseFloat(String(currentPrice))} />
+                    <DisplayPrice
+                      inrPrice={parseFloat(String(currentPrice))}
+                    />
                   </span>
                   {isSale &&
                     parseFloat(String(regularPrice)) > 0 &&
@@ -968,4 +983,5 @@ const DetailPage = () => {
     </div>
   );
 };
+
 export default DetailPage;
