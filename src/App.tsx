@@ -277,7 +277,7 @@ const App = () => (
                   </Route>
 
                   {/* --- 404 Not Found Route --- */}
-                  <Route path="*" element={<AllProductsPage />} />
+                 <Route path="*" element={<NotFound />} />
                 </Routes>
                 <FloatingCurrencySwitcher />
               </TooltipProvider>
