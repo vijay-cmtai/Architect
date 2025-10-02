@@ -127,23 +127,19 @@ const initialState: ProductState = {
 
 export const fetchProducts = createAsyncThunk<
   FetchProductsResponse,
-  { pageNumber?: number; keyword?: string },
+  { [key: string]: any }, // Can accept any key-value pairs for filtering
   { rejectValue: string }
->(
-  "products/fetchAll",
-  async ({ pageNumber = 1, keyword = "" }, { rejectWithValue }) => {
-    try {
-      const { data } = await axios.get(
-        `${API_URL}?pageNumber=${pageNumber}&keyword=${keyword}`
-      );
-      return data;
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch products"
-      );
-    }
+>("products/fetchAll", async (params, { rejectWithValue }) => {
+  try {
+    // Pass the entire params object to the API call
+    const { data } = await axios.get(API_URL, { params });
+    return data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message || "Failed to fetch products"
+    );
   }
-);
+});
 
 export const fetchProductBySlug = createAsyncThunk<
   Product,
