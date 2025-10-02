@@ -39,6 +39,8 @@ import house3 from "@/assets/house-3.jpg";
 import { toast } from "sonner";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import DisplayPrice from "@/components/DisplayPrice";
+import { Textarea } from "@/components/ui/textarea"; // यह import आवश्यक हो सकता है
+import { submitCustomizationRequest } from "@/lib/features/customization/customizationSlice"; // यह import आवश्यक हो सकता है
 
 const slugify = (text: any) => {
   if (!text) return "";
@@ -581,6 +583,11 @@ const CountryCustomizationForm = ({ countryName }: any) => {
   });
   const [referenceFile, setReferenceFile] = useState<File | null>(null);
 
+  useEffect(() => {
+    // अगर countryName prop बदलता है, तो फॉर्म में देश को अपडेट करें
+    setFormData((prev) => ({ ...prev, country: countryName || "" }));
+  }, [countryName]);
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -821,6 +828,11 @@ const Products = () => {
       apiParams.budget = filters.budget.join("-");
     }
 
+    // अगर URL में देश का नाम है, तो उसे API पैरामीटर में जोड़ें
+    if (countryQuery) {
+      apiParams.country = countryQuery;
+    }
+
     dispatch(fetchProducts(apiParams));
     dispatch(fetchAllApprovedPlans(apiParams));
 
@@ -833,8 +845,14 @@ const Products = () => {
     if (filters.searchTerm) searchParamsToSet.set("search", filters.searchTerm);
     if (filters.category !== "all")
       searchParamsToSet.set("category", filters.category);
+
+    // URL में country पैरामीटर को बनाए रखें
+    if (countryQuery) {
+      searchParamsToSet.set("country", countryQuery);
+    }
+
     setSearchParams(searchParamsToSet, { replace: true });
-  }, [dispatch, userInfo, filters, currentPage, setSearchParams]);
+  }, [dispatch, userInfo, filters, currentPage, setSearchParams, countryQuery]);
 
   const combinedProducts = useMemo(() => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
@@ -875,10 +893,10 @@ const Products = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
-        <title>READYMADE HOME DESIGNS</title>
+        <title>{`${pageTitle.toUpperCase()} | READYMADE HOME DESIGNS`}</title>
         <meta
           name="description"
-          content="Browse readymade house plans and modern home designs with detailed layouts."
+          content={`${pageDescription}. Browse readymade house plans and modern home designs with detailed layouts.`}
         />
       </Helmet>
       <Navbar />
