@@ -253,7 +253,7 @@ const Hero = () => {
         {/* --- Animated Stats (UPDATED) --- */}
         <div className="grid grid-cols-3 gap-4 md:gap-8 mt-12 max-w-lg mx-auto">
           <AnimatedStat end={1000} suffix="+" label="House Plans" />
-          <AnimatedStat end={50} suffix="k+" label="Happy Customers" />
+          <AnimatedStat end={1000} suffix="+" label="Happy Customers" />
           <AnimatedStat end={10} suffix="+" label="Years Experience" />
         </div>
       </div>
