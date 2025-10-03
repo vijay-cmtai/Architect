@@ -297,7 +297,7 @@ const MultiRoleRegisterPage = () => {
             {/* --- END: NEW FIELDS FOR PROFESSIONAL --- */}
             <div>
               <Label htmlFor="businessCertification">
-                Business Certification (Optional)
+                Qualification Certification (Optional)
               </Label>
               <Input
                 id="businessCertification"
