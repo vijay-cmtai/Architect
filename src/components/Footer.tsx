@@ -6,11 +6,12 @@ import {
   Mail,
   Phone,
   MapPin,
-  MessageCircle, // A good icon for WhatsApp
 } from "lucide-react";
 
-// SVG for Pinterest Icon
-const PinterestIcon = () => (
+// --- START: ADDED CUSTOM ICONS (like in TopBar.jsx) ---
+
+// Custom WhatsApp Icon for consistent styling
+const WhatsAppIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="20"
@@ -22,24 +23,50 @@ const PinterestIcon = () => (
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path d="M12.52.27a.5.5 0 0 0-.52.27L7.5 7.43a2.43 2.43 0 0 0 .1 2.37L9.56 14a.5.5 0 0 1-.16.53l-2.48 1.55a.5.5 0 0 0-.2.68l2.96 5.51a.5.5 0 0 0 .68.2l4.42-2.33a.5.5 0 0 0 .28-.53l-1-4.2a.5.5 0 0 1 .4-.56l3.87-1.2a.5.5 0 0 0 .34-.65L16.7 3.55a.5.5 0 0 0-.6-.35l-3.33 1.33a.5.5 0 0 1-.58-.33L12.52.27Z" />
-    <path d="M11 11.5c-.88.44-2.25 1.13-3 1.5" />
-    <path d="m13 13.5 2-1" />
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
   </svg>
 );
 
+// Custom Pinterest Icon for consistent styling
+const PinterestIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M12 2C6.477 2 2 6.477 2 12c0 4.237 2.636 7.855 6.356 9.312-.084-.602-.167-1.592.034-2.327.185-.68.995-4.223.995-4.223s-.255-.51-.255-1.267c0-1.185.688-2.072 1.553-2.072.73 0 1.08.547 1.08 1.202 0 .73-.465 1.822-.705 2.832-.202.84.42 1.532 1.258 1.532 1.508 0 2.65-1.59 2.65-3.868 0-2.046-1.445-3.48-3.566-3.48-2.35 0-3.738 1.743-3.738 3.355 0 .64.246 1.332.558 1.727.06.074.068.103.05.178-.02.083-.07.28-.09.358-.026.09-.105.12-.24.06-1.1-.47-1.8-1.82-1.8-3.132 0-2.438 2.085-4.73 5.25-4.73 2.76 0 4.86 1.956 4.86 4.418 0 2.712-1.72 4.882-4.14 4.882-.828 0-1.606-.43-1.865-.934 0 0-.405 1.616-.502 2.01-.132.52-.25.99-.4 1.392.36.11.732.17 1.114.17 6.627 0 12-5.373 12-12S18.627 2 12 2z" />
+  </svg>
+);
+// --- END: ADDED CUSTOM ICONS ---
+
 const Footer = () => {
   const socialLinks = [
-    { Icon: Facebook, href: "https://www.facebook.com/Houseplansndesignfiles" },
-    { Icon: Instagram, href: "https://www.instagram.com/house_plan_files" },
-    { Icon: Youtube, href: "https://www.youtube.com/@houseplanfiles" },
     {
-      Icon: PinterestIcon,
-      href: "https://www.youtube.com/channel/UCaZYmjNx6pJyokRHy2dk1QQ",
+      name: "Facebook",
+      Icon: Facebook,
+      href: "https://www.facebook.com/Houseplansndesignfiles",
     },
     {
-      Icon: MessageCircle,
-      href: "https://www.whatsapp.com/channel/0029Va99lQoGZNCjNmi8U73x",
+      name: "Instagram",
+      Icon: Instagram,
+      href: "https://www.instagram.com/house_plan_files",
+    },
+    {
+      name: "YouTube",
+      Icon: Youtube,
+      href: "https://www.youtube.com/@houseplanfiles",
+    },
+    {
+      name: "Pinterest",
+      Icon: PinterestIcon,
+      href: "https://pinterest.com/houseplanfiles/",
+    },
+    {
+      name: "WhatsApp",
+      Icon: WhatsAppIcon,
+      href: "https://wa.me/919755248864",
     },
   ];
 
@@ -64,12 +91,13 @@ const Footer = () => {
               dream home starts with the perfect plan.
             </p>
             <div className="flex space-x-3">
-              {socialLinks.map(({ Icon, href }, index) => (
+              {socialLinks.map(({ Icon, href, name }, index) => (
                 <a
                   key={index}
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
+                  title={name}
                   className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
                 >
                   <Icon />
@@ -165,9 +193,7 @@ const Footer = () => {
               © {new Date().getFullYear()} HousePlanFiles. All rights reserved.
             </p>
 
-            {/* ========================================================== */}
-            {/* ✨ YAHAN PAR PAYMENT LOGOS KO IMG TAG SE LAGAYA GAYA HAI ✨ */}
-            {/* ========================================================== */}
+            {/* --- START: UPDATED PAYMENT LOGOS --- */}
             <div className="flex items-center gap-4">
               <span className="text-sm font-semibold text-white">
                 We Accept:
@@ -176,20 +202,21 @@ const Footer = () => {
                 <img
                   src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/razorpay-icon.png"
                   alt="Razorpay"
-                  className="h-5"
+                  className="h-6 object-contain" // Size updated
                 />
                 <img
-                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT3no113HIfYGlfiWW58lJVwmAXif0Plr9Jkg&s"
+                  src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg"
                   alt="PayPal"
-                  className="h-5"
+                  className="h-6 object-contain" // Size and link updated
                 />
                 <img
                   src="https://download.logo.wine/logo/PhonePe/PhonePe-Logo.wine.png"
                   alt="PhonePe"
-                  className="h-6"
+                  className="h-6 object-contain" // Size updated
                 />
               </div>
             </div>
+            {/* --- END: UPDATED PAYMENT LOGOS --- */}
 
             <div className="flex space-x-6">
               <Link
@@ -211,5 +238,4 @@ const Footer = () => {
     </footer>
   );
 };
-
 export default Footer;
