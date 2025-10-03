@@ -39,8 +39,8 @@ import house3 from "@/assets/house-3.jpg";
 import { toast } from "sonner";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import DisplayPrice from "@/components/DisplayPrice";
-import { Textarea } from "@/components/ui/textarea"; // यह import आवश्यक हो सकता है
-import { submitCustomizationRequest } from "@/lib/features/customization/customizationSlice"; // यह import आवश्यक हो सकता है
+import { Textarea } from "@/components/ui/textarea";
+import { submitCustomizationRequest } from "@/lib/features/customization/customizationSlice";
 
 const slugify = (text: any) => {
   if (!text) return "";
@@ -584,7 +584,6 @@ const CountryCustomizationForm = ({ countryName }: any) => {
   const [referenceFile, setReferenceFile] = useState<File | null>(null);
 
   useEffect(() => {
-    // अगर countryName prop बदलता है, तो फॉर्म में देश को अपडेट करें
     setFormData((prev) => ({ ...prev, country: countryName || "" }));
   }, [countryName]);
 
@@ -808,6 +807,10 @@ const Products = () => {
   const [currentPage, setCurrentPage] = useState(pageQuery);
   const CARDS_PER_PAGE = 12;
 
+  // --- START: PAGE JUMP FEATURE ADDED ---
+  const [jumpToPage, setJumpToPage] = useState("");
+  // --- END: PAGE JUMP FEATURE ADDED ---
+
   useEffect(() => {
     setCurrentPage(pageQuery);
   }, [pageQuery]);
@@ -828,7 +831,6 @@ const Products = () => {
       apiParams.budget = filters.budget.join("-");
     }
 
-    // अगर URL में देश का नाम है, तो उसे API पैरामीटर में जोड़ें
     if (countryQuery) {
       apiParams.country = countryQuery;
     }
@@ -846,7 +848,6 @@ const Products = () => {
     if (filters.category !== "all")
       searchParamsToSet.set("category", filters.category);
 
-    // URL में country पैरामीटर को बनाए रखें
     if (countryQuery) {
       searchParamsToSet.set("country", countryQuery);
     }
@@ -878,6 +879,19 @@ const Products = () => {
       window.scrollTo(0, 0);
     }
   };
+
+  // --- START: PAGE JUMP FEATURE ADDED ---
+  const handleJumpToPage = (e: React.FormEvent) => {
+    e.preventDefault();
+    const pageNumber = parseInt(jumpToPage, 10);
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      handlePageChange(pageNumber);
+    } else {
+      toast.error(`Please enter a page number between 1 and ${totalPages}.`);
+    }
+    setJumpToPage("");
+  };
+  // --- END: PAGE JUMP FEATURE ADDED ---
 
   const pageTitle = countryQuery
     ? `${countryQuery} House Plans`
@@ -1019,8 +1033,9 @@ const Products = () => {
               </div>
             )}
 
+            {/* --- START: PAGINATION UPDATED WITH PAGE JUMP --- */}
             {totalPages > 1 && (
-              <div className="mt-12 flex justify-center items-center gap-4">
+              <div className="mt-12 flex flex-wrap justify-center items-center gap-4">
                 <Button
                   variant="outline"
                   onClick={() => handlePageChange(currentPage - 1)}
@@ -1040,8 +1055,25 @@ const Products = () => {
                   Next
                   <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
+
+                <form
+                  onSubmit={handleJumpToPage}
+                  className="flex items-center gap-2"
+                >
+                  <Input
+                    type="number"
+                    value={jumpToPage}
+                    onChange={(e) => setJumpToPage(e.target.value)}
+                    placeholder="Go to..."
+                    className="w-24 h-10"
+                    min="1"
+                    max={totalPages}
+                  />
+                  <Button type="submit">Go</Button>
+                </form>
               </div>
             )}
+            {/* --- END: PAGINATION UPDATED WITH PAGE JUMP --- */}
           </div>
         </div>
       </div>
