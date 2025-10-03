@@ -63,6 +63,7 @@ const FilterSidebar = ({ filters, setFilters }) => (
             <SelectItem value="30x40">30x40</SelectItem>
             <SelectItem value="40x60">40x60</SelectItem>
             <SelectItem value="50x80">50x80</SelectItem>
+            <SelectItem value="29x36">29x36</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -203,7 +204,7 @@ const FilterSidebar = ({ filters, setFilters }) => (
           onValueChange={(value) =>
             setFilters((prev) => ({
               ...prev,
-              budget: value as [number, number],
+              budget: value,
             }))
           }
           max={100000}
@@ -247,7 +248,6 @@ const ProductCard = ({ plan, userOrders }) => {
       ? `/product/${plan._id}`
       : `/professional-plan/${plan._id}`;
 
-  // Check if user has purchased this product
   const hasPurchased = userOrders?.some(
     (order) =>
       order.isPaid &&
@@ -285,7 +285,16 @@ const ProductCard = ({ plan, userOrders }) => {
     }
 
     try {
-      const response = await fetch(plan.planFile);
+      // The planFile can be a string or an array of strings
+      const fileUrl = Array.isArray(plan.planFile)
+        ? plan.planFile[0]
+        : plan.planFile;
+
+      if (!fileUrl) {
+        throw new Error("File URL is missing.");
+      }
+
+      const response = await fetch(fileUrl);
       if (!response.ok) throw new Error("Network response was not ok.");
       const blob = await response.blob();
 
@@ -293,8 +302,7 @@ const ProductCard = ({ plan, userOrders }) => {
       const link = document.createElement("a");
       link.href = url;
 
-      const fileExtension =
-        plan.planFile.split(".").pop()?.split("?")[0] || "pdf";
+      const fileExtension = fileUrl.split(".").pop()?.split("?")[0] || "pdf";
       link.setAttribute(
         "download",
         `ArchHome-3D-${plan.name.replace(/\s+/g, "-")}.${fileExtension}`
@@ -337,6 +345,7 @@ const ProductCard = ({ plan, userOrders }) => {
           <div className="absolute inset-2 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md"></div>
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-gray-900/80 text-white text-xs font-bold px-4 py-2 rounded-md shadow-lg text-center">
             <p>{plan.plotSize} 3D Elevation</p>
+            {/* THIS IS THE CORRECTED LINE */}
             <p className="text-xs font-normal">
               {hasPurchased ? "Download pdf file" : "Purchase to download"}
             </p>
@@ -356,7 +365,11 @@ const ProductCard = ({ plan, userOrders }) => {
           onClick={() =>
             isWishlisted ? removeFromWishlist(plan._id) : addToWishlist(plan)
           }
-          className={`absolute top-4 right-4 w-9 h-9 bg-white/80 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-gray-600 hover:text-red-500 hover:scale-110"}`}
+          className={`absolute top-4 right-4 w-9 h-9 bg-white/80 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${
+            isWishlisted
+              ? "text-red-500 scale-110"
+              : "text-gray-600 hover:text-red-500 hover:scale-110"
+          }`}
         >
           <Heart
             className="w-5 h-5"
@@ -367,24 +380,26 @@ const ProductCard = ({ plan, userOrders }) => {
       <div className="p-4 grid grid-cols-2 gap-4 border-t text-center text-sm">
         <div>
           <p className="text-xs text-gray-500">Plot Area</p>
-          <p className="font-bold">{plan.plotArea} sqft</p>
+          <p className="font-bold">{plan.plotArea || "N/A"} sqft</p>
         </div>
         <div className="bg-teal-50 p-2 rounded-md">
           <p className="text-xs text-gray-500">Rooms</p>
-          <p className="font-bold">{plan.rooms || plan.bhk} BHK</p>
+          <p className="font-bold">{plan.rooms || plan.bhk || "N/A"} BHK</p>
         </div>
         <div className="bg-teal-50 p-2 rounded-md">
           <p className="text-xs text-gray-500">Bathrooms</p>
-          <p className="font-bold">{plan.bathrooms}</p>
+          <p className="font-bold">{plan.bathrooms || "N/A"}</p>
         </div>
         <div>
           <p className="text-xs text-gray-500">Kitchen</p>
-          <p className="font-bold">{plan.kitchen}</p>
+          <p className="font-bold">{plan.kitchen || "N/A"}</p>
         </div>
       </div>
       <div className="p-4 border-t">
         <p className="text-xs text-gray-500 uppercase">
-          {plan.category || "3D Elevation"}
+          {plan.category?.[0] ||
+            plan.Categories?.split(",")[0] ||
+            "3D Elevation"}
         </p>
         <h3 className="text-lg font-bold text-gray-900 mt-1 truncate">
           {plan.name}
@@ -417,7 +432,7 @@ const ProductCard = ({ plan, userOrders }) => {
           className={`w-full text-white rounded-md ${
             hasPurchased
               ? "bg-teal-500 hover:bg-teal-600"
-              : "bg-gray-400 hover:bg-gray-500"
+              : "bg-gray-400 cursor-not-allowed"
           }`}
           onClick={handleDownload}
           disabled={!hasPurchased}
@@ -441,7 +456,6 @@ const ProductCard = ({ plan, userOrders }) => {
 
 const ThreeDPlansPage = () => {
   const dispatch: AppDispatch = useDispatch();
-  const navigate = useNavigate();
 
   const {
     products: adminProducts,
@@ -468,57 +482,106 @@ const ThreeDPlansPage = () => {
   const [sortBy, setSortBy] = useState("newest");
 
   useEffect(() => {
-    // Only send filters that are not "all" or default
-    const apiParams: Record<string, any> = {};
-    Object.entries(filters).forEach(([key, value]) => {
-      if (key === "budget") {
-        apiParams.budget = value.join("-");
-      } else if (value !== "all") {
-        apiParams[key] = value;
-      }
-    });
-    apiParams.planType = "3D Elevations";
+    dispatch(fetchProducts({}));
+    dispatch(fetchAllApprovedPlans({}));
 
-    dispatch(fetchProducts(apiParams));
-    dispatch(fetchAllApprovedPlans(apiParams));
-
-    // Fetch user orders if logged in
     if (userInfo) {
       dispatch(fetchMyOrders());
     }
-  }, [dispatch, filters, userInfo]);
+  }, [dispatch, userInfo]);
 
   const combinedProducts = useMemo(() => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
     const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
-    const normalizedAdmin = adminArray.map((p) => ({
-      ...p,
-      name: p.name || "Unnamed",
-      image: p.image || "",
-      source: "admin",
-    }));
+
+    // --- START: IMPORTANT NORMALIZATION LOGIC ---
+    // Normalize admin products to match the structure of professional plans
+    const normalizedAdmin = adminArray.map((p) => {
+      // Find attribute value by its name from the messy attribute fields
+      const getAttribute = (name) => {
+        for (let i = 1; i <= 9; i++) {
+          if (
+            p[`Attribute ${i} name`] &&
+            p[`Attribute ${i} name`].toLowerCase() === name.toLowerCase()
+          ) {
+            return p[`Attribute ${i} value(s)`];
+          }
+        }
+        return undefined;
+      };
+
+      const regularPrice = p["Regular price"] || p.price;
+      const salePrice = p["Sale price"] || p.salePrice;
+
+      return {
+        ...p, // Keep all original fields
+        source: "admin",
+        // Standardize common fields
+        name: p.name || p.Name || "Unnamed",
+        image: p.mainImage || p.Images,
+        price: Number(regularPrice) || 0, // CRITICAL FIX: Use 'Regular price'
+        salePrice: salePrice ? Number(salePrice) : null,
+        isSale: !!salePrice && Number(salePrice) < Number(regularPrice),
+        planFile: p["Download 1 URL"], // Standardize plan file
+        // Standardize filterable fields from attributes
+        plotSize: getAttribute("Plot Size") || p.plotSize || "",
+        rooms:
+          parseInt(getAttribute("No. of Rooms"), 10) ||
+          parseInt(p.rooms, 10) ||
+          0,
+        bhk:
+          parseInt(getAttribute("No. of Rooms"), 10) ||
+          parseInt(p.bhk, 10) ||
+          0,
+        direction: getAttribute("Direction") || p.direction || "",
+        floors:
+          parseInt(getAttribute("Floor"), 10) || parseInt(p.floors, 10) || 1,
+        // Since some fields might be missing in admin data, provide fallbacks
+        bathrooms: parseInt(getAttribute("Bathrooms"), 10) || p.bathrooms || 1,
+        kitchen: parseInt(getAttribute("Kitchen"), 10) || p.kitchen || 1,
+        plotArea: parseInt(p.plotArea, 10) || 1000, // Fallback plotArea if not present
+      };
+    });
+    // --- END: IMPORTANT NORMALIZATION LOGIC ---
+
     const normalizedProf = profArray.map((p) => ({
       ...p,
-      name: p.planName || "Unnamed",
-      image: p.mainImage || "",
+      name: p.planName || p.name || "Unnamed",
+      image: p.mainImage,
       source: "professional",
     }));
+
     return [...normalizedAdmin, ...normalizedProf];
   }, [adminProducts, professionalPlans]);
 
-  // Enhanced filtering logic matching BrowsePlansPage
   const filteredAndSortedProducts = useMemo(() => {
     let products = combinedProducts.filter((product) => {
+      // THIS IS THE FIRST AND MOST IMPORTANT CHECK
       if (!product || typeof product.price === "undefined") return false;
 
-      // Only show "3D Elevations"
-      if (product.planType !== "3D Elevations") return false;
+      // --- Primary Filtering Logic ---
+      const planTypeMatch = product.planType === "Floor Plan + 3D Elevations";
+      const categories = Array.isArray(product.category)
+        ? product.category
+        : (product.Categories || "").split(",").map((c) => c.trim());
 
-      const productPrice = product.isSale ? product.salePrice : product.price;
+      const categoryMatch = categories
+        .map((cat) => String(cat).toLowerCase().trim())
+        .includes("floor plan + elevation");
+
+      if (!planTypeMatch && !categoryMatch) {
+        return false;
+      }
+
+      // --- Secondary Filters ---
+      const productPrice =
+        product.isSale && product.salePrice ? product.salePrice : product.price;
       const matchesBudget =
         productPrice >= filters.budget[0] && productPrice <= filters.budget[1];
+
       const matchesPlotSize =
         filters.plotSize === "all" || product.plotSize === filters.plotSize;
+
       const matchesPlotArea =
         filters.plotArea === "all" ||
         (filters.plotArea === "500-1000"
@@ -528,14 +591,19 @@ const ThreeDPlansPage = () => {
             : filters.plotArea === "2000+"
               ? product.plotArea > 2000
               : true);
+
       const matchesBhk =
         filters.bhk === "all" ||
-        (product.rooms || product.bhk) === parseInt(filters.bhk, 10);
+        String(product.rooms) === filters.bhk ||
+        String(product.bhk) === filters.bhk;
+
       const matchesDirection =
-        filters.direction === "all" || product.direction === filters.direction;
+        filters.direction === "all" ||
+        product.direction?.toLowerCase() === filters.direction?.toLowerCase();
+
       const matchesFloors =
-        filters.floors === "all" ||
-        product.floors === parseInt(filters.floors, 10);
+        filters.floors === "all" || String(product.floors) === filters.floors;
+
       const matchesPropertyType =
         filters.propertyType === "all" ||
         product.propertyType === filters.propertyType;
@@ -551,6 +619,7 @@ const ThreeDPlansPage = () => {
       );
     });
 
+    // Sorting logic
     if (sortBy === "price-low") {
       products.sort(
         (a, b) =>
@@ -577,7 +646,7 @@ const ThreeDPlansPage = () => {
     adminListStatus === "loading" || profListStatus === "loading";
   const isError = adminListStatus === "failed" || profListStatus === "failed";
   const errorMessage = String(adminError || profError);
-  const pageTitle = "Floor Plans + 3D Elevation Plans ";
+  const pageTitle = "Floor Plans + 3D Elevation Plans";
 
   return (
     <div className="bg-gray-50">
@@ -623,7 +692,7 @@ const ThreeDPlansPage = () => {
               <div className="text-center py-20">
                 <ServerCrash className="mx-auto h-12 w-12 text-red-500" />
                 <h3 className="mt-4 text-xl font-semibold text-red-500">
-                  Failed to Load 3D Plans
+                  Failed to Load Plans
                 </h3>
                 <p className="mt-2 text-gray-500">{errorMessage}</p>
               </div>
@@ -633,9 +702,7 @@ const ThreeDPlansPage = () => {
               !isError &&
               filteredAndSortedProducts.length === 0 && (
                 <div className="text-center py-20">
-                  <h3 className="text-xl font-semibold">
-                    No 3D Elevation Plans Found
-                  </h3>
+                  <h3 className="text-xl font-semibold">No Plans Found</h3>
                   <p className="mt-2 text-gray-500">
                     Try adjusting your filters to see more results.
                   </p>
@@ -647,19 +714,13 @@ const ThreeDPlansPage = () => {
                 layout
                 className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
               >
-                {filteredAndSortedProducts.length > 0 ? (
-                  filteredAndSortedProducts.map((plan) => (
-                    <ProductCard
-                      key={`${plan.source}-${plan._id}`}
-                      plan={plan}
-                      userOrders={orders}
-                    />
-                  ))
-                ) : (
-                  <div className="col-span-full text-center py-20">
-                    <h3 className="text-xl font-semibold">No 3D Plans Found</h3>
-                  </div>
-                )}
+                {filteredAndSortedProducts.map((plan) => (
+                  <ProductCard
+                    key={`${plan.source}-${plan._id}`}
+                    plan={plan}
+                    userOrders={orders}
+                  />
+                ))}
               </motion.div>
             )}
           </div>
