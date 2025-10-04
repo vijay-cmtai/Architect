@@ -33,7 +33,7 @@ import Footer from "@/components/Footer";
 import house3 from "@/assets/house-3.jpg";
 import { useToast } from "@/components/ui/use-toast";
 
-const slugify = (text) => {
+const slugify = (text: any) => {
   if (!text) return "";
   return text
     .toString()
@@ -44,8 +44,7 @@ const slugify = (text) => {
     .replace(/\-\-+/g, "-");
 };
 
-// --- FilterSidebar Component (Included for completeness) ---
-const FilterSidebar = ({ filters, setFilters }) => (
+const FilterSidebar = ({ filters, setFilters }: any) => (
   <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-card rounded-xl shadow-lg h-fit border border-border sticky top-24">
     <h3 className="text-xl font-bold mb-4 flex items-center">
       <Filter className="w-5 h-5 mr-2" /> Filters
@@ -56,7 +55,7 @@ const FilterSidebar = ({ filters, setFilters }) => (
         <Select
           value={filters.plotSize}
           onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, plotSize: value }))
+            setFilters((prev: any) => ({ ...prev, plotSize: value }))
           }
         >
           <SelectTrigger id="plotSize">
@@ -75,7 +74,7 @@ const FilterSidebar = ({ filters, setFilters }) => (
         <Select
           value={filters.plotArea}
           onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, plotArea: value }))
+            setFilters((prev: any) => ({ ...prev, plotArea: value }))
           }
         >
           <SelectTrigger id="plotArea">
@@ -97,7 +96,7 @@ const FilterSidebar = ({ filters, setFilters }) => (
         <Slider
           value={filters.budget}
           onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, budget: value }))
+            setFilters((prev: any) => ({ ...prev, budget: value }))
           }
           max={50000}
           min={0}
@@ -109,7 +108,7 @@ const FilterSidebar = ({ filters, setFilters }) => (
         <Select
           value={filters.bhk}
           onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, bhk: value }))
+            setFilters((prev: any) => ({ ...prev, bhk: value }))
           }
         >
           <SelectTrigger id="bhk">
@@ -129,7 +128,7 @@ const FilterSidebar = ({ filters, setFilters }) => (
         <Select
           value={filters.direction}
           onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, direction: value }))
+            setFilters((prev: any) => ({ ...prev, direction: value }))
           }
         >
           <SelectTrigger id="direction">
@@ -149,7 +148,7 @@ const FilterSidebar = ({ filters, setFilters }) => (
         <Select
           value={filters.floors}
           onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, floors: value }))
+            setFilters((prev: any) => ({ ...prev, floors: value }))
           }
         >
           <SelectTrigger id="floors">
@@ -168,7 +167,7 @@ const FilterSidebar = ({ filters, setFilters }) => (
         <Select
           value={filters.propertyType}
           onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, propertyType: value }))
+            setFilters((prev: any) => ({ ...prev, propertyType: value }))
           }
         >
           <SelectTrigger id="propertyType">
@@ -202,12 +201,11 @@ const FilterSidebar = ({ filters, setFilters }) => (
   </aside>
 );
 
-// --- ProductCard Component (with Image Fix) ---
-const ProductCard = ({ plan: product, userOrders }) => {
+const ProductCard = ({ plan: product, userOrders }: any) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-  const { userInfo } = useSelector((state) => state.user);
+  const { userInfo } = useSelector((state: RootState) => state.user);
 
   const getImageSource = () => {
     const primaryImage = product.mainImage || product.image || product.Images;
@@ -229,14 +227,31 @@ const ProductCard = ({ plan: product, userOrders }) => {
   const rooms = product.rooms || product["Attribute 3 value(s)"] || "N/A";
   const bathrooms = product.bathrooms || "N/A";
   const kitchen = product.kitchen || "N/A";
-  const regularPrice = product.price ?? product["Regular price"] ?? 0;
-  const salePrice = product.salePrice ?? product["Sale price"];
+
+  // FIXED: Proper pricing logic for both admin and JSON products
+  const regularPrice =
+    product.price && product.price > 0
+      ? product.price
+      : product["Regular price"] &&
+          parseFloat(String(product["Regular price"])) > 0
+        ? parseFloat(String(product["Regular price"]))
+        : 0;
+
+  const salePrice =
+    product.salePrice && product.salePrice > 0
+      ? product.salePrice
+      : product["Sale price"] && parseFloat(String(product["Sale price"])) > 0
+        ? parseFloat(String(product["Sale price"]))
+        : null;
+
   const isSale =
-    salePrice != null
-      ? parseFloat(String(salePrice)) > 0 &&
-        parseFloat(String(salePrice)) < parseFloat(String(regularPrice))
-      : product.isSale || false;
-  const displayPrice = isSale && salePrice != null ? salePrice : regularPrice;
+    salePrice !== null &&
+    salePrice > 0 &&
+    regularPrice > 0 &&
+    salePrice < regularPrice;
+
+  const displayPrice = isSale ? salePrice : regularPrice;
+
   const category =
     (Array.isArray(product.category)
       ? product.category[0]
@@ -250,17 +265,45 @@ const ProductCard = ({ plan: product, userOrders }) => {
   const hasPurchased = useMemo(() => {
     if (!userInfo || !userOrders || userOrders.length === 0) return false;
     return userOrders.some(
-      (order) =>
+      (order: any) =>
         order.isPaid &&
-        order.orderItems?.some((item) => item.productId?._id === product._id)
+        order.orderItems?.some(
+          (item: any) => (item.productId?._id || item.productId) === product._id
+        )
     );
   }, [userOrders, userInfo, product._id]);
+
+  const handleWishlistToggle = () => {
+    if (!userInfo) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to add items to your wishlist.",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+    const productForWishlist = {
+      productId: product._id,
+      name: productName,
+      price: regularPrice,
+      salePrice: salePrice,
+      image: mainImage,
+      size: plotSize,
+    };
+    if (isWishlisted) {
+      removeFromWishlist(product._id);
+    } else {
+      addToWishlist(productForWishlist);
+    }
+  };
 
   const handleDownload = async () => {
     if (!userInfo) {
       toast({
         title: "Login Required",
         description: "Please log in to download.",
+        variant: "destructive",
       });
       navigate("/login");
       return;
@@ -269,6 +312,7 @@ const ProductCard = ({ plan: product, userOrders }) => {
       toast({
         title: "Not Purchased",
         description: "Please purchase this plan to download it.",
+        variant: "destructive",
       });
       navigate(linkTo);
       return;
@@ -278,7 +322,11 @@ const ProductCard = ({ plan: product, userOrders }) => {
         ? product.planFile[0]
         : product.planFile) || product["Download 1 URL"];
     if (!planFileUrl) {
-      toast({ title: "Error", description: "No downloadable file found." });
+      toast({
+        title: "Error",
+        description: "No downloadable file found.",
+        variant: "destructive",
+      });
       return;
     }
     try {
@@ -298,16 +346,20 @@ const ProductCard = ({ plan: product, userOrders }) => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Download failed:", error);
-      toast({ title: "Error", description: "Failed to download the file." });
+      toast({
+        title: "Error",
+        description: "Failed to download the file.",
+        variant: "destructive",
+      });
     }
   };
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
       className="bg-card rounded-lg shadow-soft border border-gray-200 overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
     >
       <div className="relative border-b p-4">
@@ -336,11 +388,7 @@ const ProductCard = ({ plan: product, userOrders }) => {
         </div>
         <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
-            onClick={() => {
-              isWishlisted
-                ? removeFromWishlist(product._id)
-                : addToWishlist(product);
-            }}
+            onClick={handleWishlistToggle}
             className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-foreground hover:text-primary hover:scale-110"}`}
             aria-label="Toggle Wishlist"
           >
@@ -376,18 +424,20 @@ const ProductCard = ({ plan: product, userOrders }) => {
         <h3 className="text-lg font-bold text-gray-800 mt-1 truncate">
           {productName}
         </h3>
-        <div className="flex items-baseline gap-2 mt-2">
+        <div className="flex items-baseline gap-2 mt-2 flex-wrap">
           {isSale && regularPrice > 0 && (
             <s className="text-md text-gray-500">
-              ₹{parseFloat(String(regularPrice)).toLocaleString()}
+              ₹{regularPrice.toLocaleString()}
             </s>
           )}
           <span className="text-xl font-bold text-gray-900">
-            ₹
-            {displayPrice > 0
-              ? parseFloat(String(displayPrice)).toLocaleString()
-              : "Free"}
+            {displayPrice > 0 ? `₹${displayPrice.toLocaleString()}` : "Free"}
           </span>
+          {isSale && regularPrice > 0 && displayPrice > 0 && (
+            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-semibold">
+              SAVE ₹{(regularPrice - displayPrice).toLocaleString()}
+            </span>
+          )}
         </div>
         <div className="mt-4 grid grid-cols-1 gap-2">
           <Link to={linkTo}>
@@ -418,7 +468,6 @@ const ProductCard = ({ plan: product, userOrders }) => {
   );
 };
 
-// --- Main Page Component ---
 const BrowsePlansPage = () => {
   const dispatch: AppDispatch = useDispatch();
 
