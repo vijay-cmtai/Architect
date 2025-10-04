@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { Helmet } from "react-helmet-async";
@@ -21,6 +21,8 @@ import {
   ShoppingBag,
   FileText,
   ClipboardList,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -32,7 +34,6 @@ import house1 from "@/assets/house-1.jpg";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import DisplayPrice from "@/components/DisplayPrice";
 
-// --- Helper Icon Components ---
 const FacebookIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -129,9 +130,10 @@ const ThreadsIcon = () => (
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path d="M11.5 12.5c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5-2 4.5-4.5 4.5" />
-    <path d="M4 12.5c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5-2 4.5-4.5 4.5" />
-    <path d="M8 12.5c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5-2 4.5-4.5 4.5" />
+    {" "}
+    <path d="M11.5 12.5c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5-2 4.5-4.5 4.5" />{" "}
+    <path d="M4 12.5c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5-2 4.5-4.5 4.5" />{" "}
+    <path d="M8 12.5c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5-2 4.5-4.5 4.5" />{" "}
   </svg>
 );
 
@@ -141,9 +143,7 @@ const StarRating = ({ rating, text }: { rating: number; text?: string }) => (
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
-          className={`h-5 w-5 ${
-            rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
-          }`}
+          className={`h-5 w-5 ${rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
         />
       ))}
     </div>
@@ -169,10 +169,7 @@ const DetailPage = () => {
   const dispatch: AppDispatch = useDispatch();
   const { toast } = useToast();
   const { symbol, rate } = useCurrency();
-  const [activeTab, setActiveTab] = useState("description");
-
   const isProfessionalPlan = location.pathname.includes("/professional-plan/");
-
   const {
     product: singleProduct,
     listStatus: adminListStatus,
@@ -187,7 +184,6 @@ const DetailPage = () => {
   } = useSelector((state: RootState) => state.professionalPlans);
   const { userInfo } = useSelector((state: RootState) => state.user);
   const { addItem } = useCart();
-
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
@@ -195,7 +191,6 @@ const DetailPage = () => {
   const [comment, setComment] = useState("");
   const [isZooming, setIsZooming] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-
   const productIdFromSlug = slug?.split("-").pop();
 
   useEffect(() => {
@@ -385,10 +380,7 @@ const DetailPage = () => {
 
   const whatsappMessage = `Hello, I'm interested in modifying this plan: *${productName}*. \nProduct Link: ${currentUrl}`;
   const encodedWhatsappMessage = encodeURIComponent(whatsappMessage);
-  const whatsappLink = `https://wa.me/${phoneNumber.replace(
-    "+",
-    ""
-  )}?text=${encodedWhatsappMessage}`;
+  const whatsappLink = `https://wa.me/${phoneNumber.replace("+", "")}?text=${encodedWhatsappMessage}`;
 
   const handleReviewSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -434,9 +426,7 @@ const DetailPage = () => {
 
   const allProductsAndPlans = useMemo(() => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
-    const profArray = Array.isArray(professionalPlans)
-      ? professionalPlans
-      : [];
+    const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
     return [
       ...adminArray.map((p) => ({ ...p, source: "product" })),
       ...profArray.map((p) => ({ ...p, source: "professional-plan" })),
@@ -448,8 +438,7 @@ const DetailPage = () => {
     const currentCategory =
       (Array.isArray(displayData.category)
         ? displayData.category[0]
-        : displayData.category) ||
-      displayData.Categories?.split(",")[0].trim();
+        : displayData.category) || displayData.Categories?.split(",")[0].trim();
     if (!currentCategory) return [];
     return allProductsAndPlans
       .filter((p: any) => {
@@ -458,7 +447,7 @@ const DetailPage = () => {
           p.Categories?.split(",")[0].trim();
         return pCategory === currentCategory && p._id !== productIdFromSlug;
       })
-      .slice(0, 2)
+      .slice(0, 8)
       .map((p: any) => {
         const regPrice = (p.price > 0 ? p.price : p["Regular price"]) ?? 0;
         const sPrice =
@@ -487,10 +476,24 @@ const DetailPage = () => {
     setPosition({ x: xPercent, y: yPercent });
   };
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = (direction: "left" | "right") => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = scrollContainerRef.current.clientWidth * 0.8;
+      if (direction === "left") {
+        scrollContainerRef.current.scrollLeft -= scrollAmount;
+      } else {
+        scrollContainerRef.current.scrollLeft += scrollAmount;
+      }
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+        {" "}
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />{" "}
       </div>
     );
   }
@@ -520,7 +523,6 @@ const DetailPage = () => {
       onContextMenu={(e) => e.preventDefault()}
     >
       <Helmet>
-        {/* --- Standard SEO Tags --- */}
         <title>{displayData.seo?.title || `${productName} | House Plan`}</title>
         <meta
           name="description"
@@ -528,13 +530,10 @@ const DetailPage = () => {
             displayData.seo?.description || productDescription.substring(0, 160)
           }
         />
-        {/* CORRECTED: Conditionally render keywords meta tag */}
         {displayData.seo?.keywords && (
           <meta name="keywords" content={displayData.seo.keywords} />
         )}
         <link rel="canonical" href={canonicalUrl} />
-
-        {/* --- Open Graph Tags (for Facebook, WhatsApp, LinkedIn, etc.) --- */}
         <meta
           property="og:title"
           content={displayData.seo?.title || productName}
@@ -548,8 +547,6 @@ const DetailPage = () => {
         <meta property="og:image" content={productImages[0]} />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:type" content="product" />
-        
-        {/* --- Twitter Card Tags (for better Twitter previews) --- */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta
           name="twitter:title"
@@ -612,11 +609,7 @@ const DetailPage = () => {
                     onClick={() => setIsLiked(!isLiked)}
                   >
                     <Heart
-                      className={`w-6 h-6 transition-all ${
-                        isLiked
-                          ? "fill-current text-red-500"
-                          : "text-gray-600"
-                      }`}
+                      className={`w-6 h-6 transition-all ${isLiked ? "fill-current text-red-500" : "text-gray-600"}`}
                     />
                   </Button>
                 </div>
@@ -634,11 +627,7 @@ const DetailPage = () => {
                   <button
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
-                    className={`relative overflow-hidden rounded-lg ${
-                      selectedImageIndex === index
-                        ? "ring-2 ring-primary"
-                        : "ring-1 ring-gray-200"
-                    }`}
+                    className={`relative overflow-hidden rounded-lg ${selectedImageIndex === index ? "ring-2 ring-primary" : "ring-1 ring-gray-200"}`}
                     type="button"
                   >
                     <img
@@ -671,9 +660,7 @@ const DetailPage = () => {
                     </span>
                   )}
                   <span className="text-4xl font-bold text-primary">
-                    <DisplayPrice
-                      inrPrice={parseFloat(String(currentPrice))}
-                    />
+                    <DisplayPrice inrPrice={parseFloat(String(currentPrice))} />
                   </span>
                   {isSale &&
                     parseFloat(String(regularPrice)) > 0 &&
@@ -691,7 +678,55 @@ const DetailPage = () => {
                       </span>
                     )}
                 </div>
+
+                {/* --- **START: MOVED SPECIFICATIONS BLOCK** --- */}
+                <div className="mt-6 border-t pt-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <ClipboardList className="w-5 h-5" />
+                    Specifications
+                  </h3>
+                  <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                    <div className="flex justify-between border-b pb-2">
+                      <span className="font-semibold text-gray-700">
+                        Plot Size:
+                      </span>
+                      <span className="text-gray-600">{plotSize}</span>
+                    </div>
+                    <div className="flex justify-between border-b pb-2">
+                      <span className="font-semibold text-gray-700">
+                        Plot Area:
+                      </span>
+                      <span className="text-gray-600">{plotArea} sqft</span>
+                    </div>
+                    <div className="flex justify-between border-b pb-2">
+                      <span className="font-semibold text-gray-700">
+                        Rooms:
+                      </span>
+                      <span className="text-gray-600">{rooms}</span>
+                    </div>
+                    <div className="flex justify-between border-b pb-2">
+                      <span className="font-semibold text-gray-700">
+                        Bathrooms:
+                      </span>
+                      <span className="text-gray-600">{bathrooms}</span>
+                    </div>
+                    <div className="flex justify-between border-b pb-2">
+                      <span className="font-semibold text-gray-700">
+                        Kitchen:
+                      </span>
+                      <span className="text-gray-600">{kitchen}</span>
+                    </div>
+                    <div className="flex justify-between border-b pb-2">
+                      <span className="font-semibold text-gray-700">
+                        Direction:
+                      </span>
+                      <span className="text-gray-600">{direction}</span>
+                    </div>
+                  </div>
+                </div>
+                {/* --- **END: MOVED SPECIFICATIONS BLOCK** --- */}
               </div>
+
               <div className="space-y-4 pt-4 border-t">
                 <div className="flex items-center space-x-4">
                   <span className="font-bold text-gray-800">Quantity:</span>
@@ -762,66 +797,14 @@ const DetailPage = () => {
           </div>
 
           <div className="mt-12 border-t pt-8">
-            <div className="border-b border-gray-200">
-              <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-                <button
-                  onClick={() => setActiveTab("description")}
-                  className={`${
-                    activeTab === "description"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-bold text-md flex items-center gap-2`}
-                >
-                  <FileText className="w-5 h-5" /> Description
-                </button>
-                <button
-                  onClick={() => setActiveTab("specifications")}
-                  className={`${
-                    activeTab === "specifications"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-bold text-md flex items-center gap-2`}
-                >
-                  <ClipboardList className="w-5 h-5" /> Specifications
-                </button>
-              </nav>
-            </div>
-            <div className="py-6">
-              {activeTab === "description" && (
-                <div
-                  className="text-gray-600 text-base leading-relaxed prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: productDescription }}
-                />
-              )}
-              {activeTab === "specifications" && (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-md p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <span className="font-bold text-gray-700">Plot Size:</span>{" "}
-                    {plotSize}
-                  </div>
-                  <div>
-                    <span className="font-bold text-gray-700">Plot Area:</span>{" "}
-                    {plotArea} sqft
-                  </div>
-                  <div>
-                    <span className="font-bold text-gray-700">Rooms:</span>{" "}
-                    {rooms}
-                  </div>
-                  <div>
-                    <span className="font-bold text-gray-700">Bathrooms:</span>{" "}
-                    {bathrooms}
-                  </div>
-                  <div>
-                    <span className="font-bold text-gray-700">Kitchen:</span>{" "}
-                    {kitchen}
-                  </div>
-                  <div>
-                    <span className="font-bold text-gray-700">Direction:</span>{" "}
-                    {direction}
-                  </div>
-                </div>
-              )}
-            </div>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <FileText className="w-6 h-6" />
+              Description
+            </h2>
+            <div
+              className="text-gray-600 text-base leading-relaxed prose max-w-none"
+              dangerouslySetInnerHTML={{ __html: productDescription }}
+            />
           </div>
         </div>
 
@@ -875,11 +858,7 @@ const DetailPage = () => {
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
-                          className={`h-7 w-7 cursor-pointer ${
-                            rating >= star
-                              ? "text-yellow-400 fill-yellow-400"
-                              : "text-gray-300"
-                          }`}
+                          className={`h-7 w-7 cursor-pointer ${rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
                           onClick={() => setRating(star)}
                         />
                       ))}
@@ -934,47 +913,68 @@ const DetailPage = () => {
             <h2 className="text-3xl font-extrabold text-gray-800 mb-8 text-center">
               Related Products
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {relatedProducts.map((relatedProd: any) => {
-                const relatedProductName =
-                  relatedProd.name || relatedProd.planName || relatedProd.Name;
-                const relatedLink = `/${relatedProd.source}/${slugify(
-                  relatedProductName
-                )}-${relatedProd._id}`;
-                return (
-                  <Link
-                    key={relatedProd._id}
-                    to={relatedLink}
-                    className="group block bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden"
-                  >
-                    <img
-                      src={
-                        relatedProd.mainImage ||
-                        relatedProd.Images?.split(",")[0].trim() ||
-                        house1
-                      }
-                      alt={relatedProductName}
-                      className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">
-                        {relatedProductName}
-                      </h3>
-                      <p className="text-gray-600 mb-3">
-                        {relatedProd.plotSize ||
-                          relatedProd["Attribute 1 value(s)"]}
-                      </p>
-                      <div className="text-2xl font-bold text-primary">
-                        <DisplayPrice
-                          inrPrice={parseFloat(
-                            String(relatedProd.displayPrice)
-                          )}
-                        />
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full shadow-md hover:bg-white"
+                onClick={() => handleScroll("left")}
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </Button>
+              <div
+                ref={scrollContainerRef}
+                className="flex overflow-x-auto space-x-6 pb-4 scroll-smooth scrollbar-hide"
+              >
+                {relatedProducts.map((relatedProd: any) => {
+                  const relatedProductName =
+                    relatedProd.name ||
+                    relatedProd.planName ||
+                    relatedProd.Name;
+                  const relatedLink = `/${relatedProd.source}/${slugify(relatedProductName)}-${relatedProd._id}`;
+                  return (
+                    <Link
+                      key={relatedProd.id}
+                      to={relatedLink}
+                      className="group block bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden w-72 flex-shrink-0"
+                    >
+                      <img
+                        src={
+                          relatedProd.mainImage ||
+                          relatedProd.Images?.split(",")[0].trim() ||
+                          house1
+                        }
+                        alt={relatedProductName}
+                        className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="p-4">
+                        <h3 className="text-lg font-bold text-gray-900 mb-1 truncate">
+                          {relatedProductName}
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-2">
+                          {relatedProd.plotSize ||
+                            relatedProd["Attribute 1 value(s)"]}
+                        </p>
+                        <div className="text-xl font-bold text-primary">
+                          <DisplayPrice
+                            inrPrice={parseFloat(
+                              String(relatedProd.displayPrice)
+                            )}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                );
-              })}
+                    </Link>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full shadow-md hover:bg-white"
+                onClick={() => handleScroll("right")}
+              >
+                <ChevronRight className="h-6 w-6" />
+              </Button>
             </div>
           </div>
         )}
