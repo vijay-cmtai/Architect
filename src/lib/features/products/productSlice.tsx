@@ -103,6 +103,7 @@ interface FetchProductsResponse {
   products: Product[];
   page: number;
   pages: number;
+  count: number;
 }
 
 interface ProductState {
@@ -110,6 +111,7 @@ interface ProductState {
   product: Product | null;
   page: number;
   pages: number;
+  count: number;
   listStatus: "idle" | "loading" | "succeeded" | "failed";
   actionStatus: "idle" | "loading" | "succeeded" | "failed";
   error: any;
@@ -120,6 +122,7 @@ const initialState: ProductState = {
   product: null,
   page: 1,
   pages: 1,
+  count: 0,
   listStatus: "idle",
   actionStatus: "idle",
   error: null,
@@ -127,11 +130,10 @@ const initialState: ProductState = {
 
 export const fetchProducts = createAsyncThunk<
   FetchProductsResponse,
-  { [key: string]: any }, // Can accept any key-value pairs for filtering
+  { [key: string]: any },
   { rejectValue: string }
 >("products/fetchAll", async (params, { rejectWithValue }) => {
   try {
-    // Pass the entire params object to the API call
     const { data } = await axios.get(API_URL, { params });
     return data;
   } catch (error: any) {
@@ -298,6 +300,7 @@ const productSlice = createSlice({
         state.products = action.payload.products;
         state.page = action.payload.page;
         state.pages = action.payload.pages;
+        state.count = action.payload.count;
       }
     );
     builder.addCase(fetchProducts.rejected, (state, action: AnyAction) => {
