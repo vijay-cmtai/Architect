@@ -776,15 +776,11 @@ const Products = () => {
 
   const {
     products: adminProducts,
-    page: adminPage,
-    pages: adminPages,
     listStatus: adminListStatus,
     error: adminError,
   } = useSelector((state: RootState) => state.products);
   const {
     plans: professionalPlans,
-    page: profPage,
-    pages: profPages,
     listStatus: profListStatus,
     error: profError,
   } = useSelector((state: RootState) => state.professionalPlans);
@@ -807,29 +803,18 @@ const Products = () => {
   const [currentPage, setCurrentPage] = useState(pageQuery);
   const CARDS_PER_PAGE = 12;
 
-  // --- START: PAGE JUMP FEATURE ADDED ---
   const [jumpToPage, setJumpToPage] = useState("");
-  // --- END: PAGE JUMP FEATURE ADDED ---
 
   useEffect(() => {
     setCurrentPage(pageQuery);
   }, [pageQuery]);
 
+  // --- FIX: Fetch ALL products for client-side filtering ---
   useEffect(() => {
     const apiParams: any = {
-      pageNumber: currentPage,
-      limit: CARDS_PER_PAGE,
-      keyword: filters.searchTerm,
-      ...Object.fromEntries(
-        Object.entries(filters).filter(
-          ([key, value]) => value !== "all" && key !== "searchTerm"
-        )
-      ),
+      pageNumber: 1,
+      limit: 9999, // Fetch a large number of products to enable full client-side search
     };
-
-    if (filters.budget[0] !== 0 || filters.budget[1] !== 50000) {
-      apiParams.budget = filters.budget.join("-");
-    }
 
     if (countryQuery) {
       apiParams.country = countryQuery;
@@ -841,25 +826,14 @@ const Products = () => {
     if (userInfo) {
       dispatch(fetchMyOrders());
     }
+  }, [dispatch, userInfo, countryQuery]);
 
-    const searchParamsToSet = new URLSearchParams();
-    if (currentPage > 1) searchParamsToSet.set("page", String(currentPage));
-    if (filters.searchTerm) searchParamsToSet.set("search", filters.searchTerm);
-    if (filters.category !== "all")
-      searchParamsToSet.set("category", filters.category);
-
-    if (countryQuery) {
-      searchParamsToSet.set("country", countryQuery);
-    }
-
-    setSearchParams(searchParamsToSet, { replace: true });
-  }, [dispatch, userInfo, filters, currentPage, setSearchParams, countryQuery]);
-
-  const combinedProducts = useMemo(() => {
+  // Client-side filtering with all filters
+  const filteredProducts = useMemo(() => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
     const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
 
-    const combined = [
+    let combined = [
       ...adminArray.map((p) => ({ ...p, source: "admin" })),
       ...profArray.map((p: any) => ({
         ...p,
@@ -868,19 +842,151 @@ const Products = () => {
         source: "professional",
       })),
     ];
-    return combined;
-  }, [adminProducts, professionalPlans]);
 
-  const totalPages = Math.max(adminPages || 1, profPages || 1);
+    // Search filter
+    if (filters.searchTerm) {
+      const searchLower = filters.searchTerm.toLowerCase();
+      combined = combined.filter((p) => {
+        // --- FIX: Safely access properties before calling .toLowerCase() ---
+        const name = (p.name || p.planName || p.Name || "").toLowerCase();
+        const category = (
+          (Array.isArray(p.category) ? p.category.join(" ") : p.category) ||
+          p.Categories ||
+          ""
+        ).toLowerCase();
+        const city = (
+          Array.isArray(p.city) ? p.city.join(" ") : p.city || ""
+        ).toLowerCase();
+        return (
+          name.includes(searchLower) ||
+          category.includes(searchLower) ||
+          city.includes(searchLower)
+        );
+      });
+    }
+
+    // Category filter
+    if (filters.category !== "all") {
+      combined = combined.filter((p) => {
+        const pCategory = Array.isArray(p.category)
+          ? p.category[0]
+          : p.category;
+        const pCategories = p.Categories?.split(",")[0].trim();
+        return (
+          pCategory === filters.category || pCategories === filters.category
+        );
+      });
+    }
+
+    // Plot Size filter
+    if (filters.plotSize !== "all") {
+      combined = combined.filter((p) => {
+        const pSize = p.plotSize || p["Attribute 1 value(s)"];
+        return pSize === filters.plotSize;
+      });
+    }
+
+    // Plot Area filter
+    if (filters.plotArea !== "all") {
+      combined = combined.filter((p) => {
+        const area =
+          p.plotArea ||
+          (p["Attribute 2 value(s)"]
+            ? parseInt(String(p["Attribute 2 value(s)"]).replace(/[^0-9]/g, ""))
+            : 0);
+        if (filters.plotArea === "500-1000") return area >= 500 && area <= 1000;
+        if (filters.plotArea === "1000-2000")
+          return area >= 1000 && area <= 2000;
+        if (filters.plotArea === "2000+") return area >= 2000;
+        return true;
+      });
+    }
+
+    // Direction filter
+    if (filters.direction !== "all") {
+      combined = combined.filter((p) => {
+        const dir = p.direction || p["Attribute 4 value(s)"];
+        return dir === filters.direction;
+      });
+    }
+
+    // Floors filter
+    if (filters.floors !== "all") {
+      combined = combined.filter((p) => {
+        const floor = String(p.floors || p["Attribute 5 value(s)"] || "");
+        if (filters.floors === "3") return parseInt(floor) >= 3;
+        return floor === filters.floors;
+      });
+    }
+
+    // Property Type filter
+    if (filters.propertyType !== "all") {
+      combined = combined.filter(
+        (p) => p.propertyType === filters.propertyType
+      );
+    }
+
+    // Budget filter
+    if (filters.budget[0] !== 0 || filters.budget[1] !== 50000) {
+      combined = combined.filter((p) => {
+        const price =
+          p.salePrice > 0
+            ? p.salePrice
+            : (p.price > 0 ? p.price : p["Regular price"]) || 0;
+        return price >= filters.budget[0] && price <= filters.budget[1];
+      });
+    }
+
+    // Sorting
+    if (filters.sortBy === "price-low") {
+      combined.sort((a, b) => {
+        const priceA =
+          a.salePrice > 0 ? a.salePrice : a.price || a["Regular price"] || 0;
+        const priceB =
+          b.salePrice > 0 ? b.salePrice : b.price || b["Regular price"] || 0;
+        return parseFloat(String(priceA)) - parseFloat(String(priceB));
+      });
+    } else if (filters.sortBy === "price-high") {
+      combined.sort((a, b) => {
+        const priceA =
+          a.salePrice > 0 ? a.salePrice : a.price || a["Regular price"] || 0;
+        const priceB =
+          b.salePrice > 0 ? b.salePrice : b.price || b["Regular price"] || 0;
+        return parseFloat(String(priceB)) - parseFloat(String(priceA));
+      });
+    } else if (filters.sortBy === "newest") {
+      // Assuming newest is default, can add specific sort logic if there's a date field
+      // For now, it will maintain the fetched order
+    }
+
+    return combined;
+  }, [adminProducts, professionalPlans, filters]);
+
+  // Pagination logic
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
+    const endIndex = startIndex + CARDS_PER_PAGE;
+    return filteredProducts.slice(startIndex, endIndex);
+  }, [filteredProducts, currentPage]);
+
+  const totalPages = Math.ceil(filteredProducts.length / CARDS_PER_PAGE);
 
   const handlePageChange = (newPage: number) => {
     if (newPage > 0 && newPage <= totalPages) {
       setCurrentPage(newPage);
       window.scrollTo(0, 0);
+
+      const searchParamsToSet = new URLSearchParams();
+      if (newPage > 1) searchParamsToSet.set("page", String(newPage));
+      if (filters.searchTerm)
+        searchParamsToSet.set("search", filters.searchTerm);
+      if (filters.category !== "all")
+        searchParamsToSet.set("category", filters.category);
+      if (countryQuery) searchParamsToSet.set("country", countryQuery);
+      setSearchParams(searchParamsToSet, { replace: true });
     }
   };
 
-  // --- START: PAGE JUMP FEATURE ADDED ---
   const handleJumpToPage = (e: React.FormEvent) => {
     e.preventDefault();
     const pageNumber = parseInt(jumpToPage, 10);
@@ -891,7 +997,6 @@ const Products = () => {
     }
     setJumpToPage("");
   };
-  // --- END: PAGE JUMP FEATURE ADDED ---
 
   const pageTitle = countryQuery
     ? `${countryQuery} House Plans`
@@ -947,8 +1052,9 @@ const Products = () => {
               <div>
                 <h2 className="text-2xl font-bold text-gray-800">All Plans</h2>
                 <p className="text-gray-500 text-sm">
-                  Showing {combinedProducts.length} results on page{" "}
-                  {currentPage} of {totalPages}
+                  Showing {paginatedProducts.length} of{" "}
+                  {filteredProducts.length} results on page {currentPage} of{" "}
+                  {totalPages > 0 ? totalPages : 1}
                 </p>
               </div>
               <div className="flex items-center gap-4">
@@ -1004,36 +1110,48 @@ const Products = () => {
                 <p className="mt-2 text-gray-500">{errorMessage}</p>
               </div>
             )}
-            {!isLoading && !isError && combinedProducts.length === 0 && (
+            {!isLoading && !isError && paginatedProducts.length === 0 && (
               <div className="text-center py-20">
                 <h3 className="text-xl font-semibold">No Plans Found</h3>
                 <p className="mt-2 text-gray-500">
                   Try adjusting your filters.
                 </p>
+                <Button
+                  onClick={() =>
+                    setFilters({
+                      category: "all",
+                      searchTerm: "",
+                      plotSize: "all",
+                      plotArea: "all",
+                      direction: "all",
+                      floors: "all",
+                      propertyType: "all",
+                      budget: [0, 50000],
+                      sortBy: "newest",
+                    })
+                  }
+                  variant="outline"
+                  className="mt-4"
+                >
+                  Clear All Filters
+                </Button>
               </div>
             )}
 
-            {!isLoading && !isError && (
+            {!isLoading && !isError && paginatedProducts.length > 0 && (
               <div
                 className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}
               >
-                {combinedProducts.length > 0 ? (
-                  combinedProducts.map((product) => (
-                    <ProductCard
-                      key={`${product.source || "prod"}-${product._id}`}
-                      product={product}
-                      userOrders={userOrders}
-                    />
-                  ))
-                ) : (
-                  <div className="col-span-full text-center py-20">
-                    <h3 className="text-xl font-semibold">No Products Found</h3>
-                  </div>
-                )}
+                {paginatedProducts.map((product) => (
+                  <ProductCard
+                    key={`${product.source || "prod"}-${product._id}`}
+                    product={product}
+                    userOrders={userOrders}
+                  />
+                ))}
               </div>
             )}
 
-            {/* --- START: PAGINATION UPDATED WITH PAGE JUMP --- */}
             {totalPages > 1 && (
               <div className="mt-12 flex flex-wrap justify-center items-center gap-4">
                 <Button
@@ -1073,7 +1191,6 @@ const Products = () => {
                 </form>
               </div>
             )}
-            {/* --- END: PAGINATION UPDATED WITH PAGE JUMP --- */}
           </div>
         </div>
       </div>
