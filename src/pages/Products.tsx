@@ -1,6 +1,3 @@
-// File Path: /frontend/pages/Products.jsx
-// Make sure you have created the useDebounce hook in `/frontend/hooks/useDebounce.js`
-
 import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
@@ -44,7 +41,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import DisplayPrice from "@/components/DisplayPrice";
 import { Textarea } from "@/components/ui/textarea";
 import { submitCustomizationRequest } from "@/lib/features/customization/customizationSlice";
-import useDebounce from "@/hooks/useDebounce"; // Import the custom hook
+import useDebounce from "@/hooks/useDebounce";
 
 const slugify = (text: any) => {
   if (!text) return "";
@@ -587,6 +584,7 @@ const CountryCustomizationForm = ({ countryName }: any) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setReferenceFile(e.target.files[0]);
@@ -606,7 +604,9 @@ const CountryCustomizationForm = ({ countryName }: any) => {
     try {
       await dispatch(submitCustomizationRequest(submitData)).unwrap();
       toast.success(
-        `Customization request for ${countryName || "your location"} sent successfully!`
+        `Customization request for ${
+          countryName || "your location"
+        } sent successfully!`
       );
       setFormData({
         country: countryName || "",
@@ -767,7 +767,6 @@ const Products = () => {
   const countryQuery = searchParams.get("country");
   const pageQuery = Number(searchParams.get("page")) || 1;
 
-  // Data now comes directly from Redux, already filtered by the backend
   const { products, page, pages, count, listStatus, error } = useSelector(
     (state: RootState) => state.products
   );
@@ -791,16 +790,14 @@ const Products = () => {
   const [currentPage, setCurrentPage] = useState(pageQuery);
   const [jumpToPage, setJumpToPage] = useState("");
 
-  const debouncedSearchTerm = useDebounce(filters.searchTerm, 500); // 500ms delay for search
+  const debouncedSearchTerm = useDebounce(filters.searchTerm, 500);
 
-  // This is the main effect that triggers API calls when filters or page change
   useEffect(() => {
     const params: any = {
       pageNumber: currentPage,
       limit: 12,
     };
 
-    // Build the parameters object to send to the backend
     if (debouncedSearchTerm) params.searchTerm = debouncedSearchTerm;
     if (countryQuery) params.country = countryQuery;
     if (filters.category !== "all") params.category = filters.category;
@@ -836,7 +833,6 @@ const Products = () => {
     filters.sortBy,
   ]);
 
-  // This effect resets the page number to 1 whenever any filter (except page itself) is changed
   useEffect(() => {
     if (currentPage !== 1) {
       setCurrentPage(1);
@@ -860,15 +856,6 @@ const Products = () => {
     if (newPage > 0 && newPage <= totalPages) {
       setCurrentPage(newPage);
       window.scrollTo(0, 0);
-
-      const newSearchParams = new URLSearchParams(searchParams);
-      if (newPage > 1) {
-        newSearchParams.set("page", String(newPage));
-      } else {
-        newSearchParams.delete("page");
-      }
-      // Use navigate to update URL without a full page reload
-      navigate({ search: newSearchParams.toString() }, { replace: true });
     }
   };
 
