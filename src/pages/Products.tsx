@@ -1,3 +1,6 @@
+// File Path: /frontend/pages/Products.jsx
+// Make sure you have created the useDebounce hook in `/frontend/hooks/useDebounce.js`
+
 import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
@@ -41,6 +44,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import DisplayPrice from "@/components/DisplayPrice";
 import { Textarea } from "@/components/ui/textarea";
 import { submitCustomizationRequest } from "@/lib/features/customization/customizationSlice";
+import useDebounce from "@/hooks/useDebounce"; // Import the custom hook
 
 const slugify = (text: any) => {
   if (!text) return "";
@@ -299,17 +303,9 @@ const ProductCard = ({ product, userOrders }: any) => {
 
   const productName =
     product.name || product.planName || product.Name || "Untitled Plan";
-
-  const linkTo =
-    product.source === "professional"
-      ? `/professional-plan/${slugify(productName)}-${product._id}`
-      : `/product/${slugify(productName)}-${product._id}`;
-
+  const linkTo = `/product/${slugify(productName)}-${product._id}`;
   const mainImage =
-    product.mainImage ||
-    product.image ||
-    product.Images?.split(",")[0].trim() ||
-    house3;
+    product.mainImage || product.Images?.split(",")[0].trim() || house3;
   const plotSize = product.plotSize || product["Attribute 1 value(s)"] || "N/A";
   const plotArea =
     product.plotArea ||
@@ -320,7 +316,6 @@ const ProductCard = ({ product, userOrders }: any) => {
   const direction =
     product.direction || product["Attribute 4 value(s)"] || "N/A";
   const floors = product.floors || product["Attribute 5 value(s)"] || "N/A";
-
   const regularPrice =
     (product.price > 0 ? product.price : product["Regular price"]) ?? 0;
   const salePrice =
@@ -330,7 +325,6 @@ const ProductCard = ({ product, userOrders }: any) => {
     parseFloat(String(salePrice)) > 0 &&
     parseFloat(String(salePrice)) < parseFloat(String(regularPrice));
   const displayPrice = isSale ? salePrice : regularPrice;
-
   const category =
     (Array.isArray(product.category)
       ? product.category[0]
@@ -593,7 +587,6 @@ const CountryCustomizationForm = ({ countryName }: any) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setReferenceFile(e.target.files[0]);
@@ -613,9 +606,7 @@ const CountryCustomizationForm = ({ countryName }: any) => {
     try {
       await dispatch(submitCustomizationRequest(submitData)).unwrap();
       toast.success(
-        `Customization request for ${
-          countryName || "your location"
-        } sent successfully!`
+        `Customization request for ${countryName || "your location"} sent successfully!`
       );
       setFormData({
         country: countryName || "",
@@ -768,22 +759,19 @@ const CountryCustomizationForm = ({ countryName }: any) => {
 const Products = () => {
   const dispatch: AppDispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { userInfo } = useSelector((state: RootState) => state.user);
+
   const categoryQuery = searchParams.get("category");
   const searchQuery = searchParams.get("search");
   const countryQuery = searchParams.get("country");
   const pageQuery = Number(searchParams.get("page")) || 1;
 
-  const {
-    products: adminProducts,
-    listStatus: adminListStatus,
-    error: adminError,
-  } = useSelector((state: RootState) => state.products);
-  const {
-    plans: professionalPlans,
-    listStatus: profListStatus,
-    error: profError,
-  } = useSelector((state: RootState) => state.professionalPlans);
+  // Data now comes directly from Redux, already filtered by the backend
+  const { products, page, pages, count, listStatus, error } = useSelector(
+    (state: RootState) => state.products
+  );
+
   const { orders: userOrders } = useSelector(
     (state: RootState) => state.orders
   );
@@ -801,189 +789,86 @@ const Products = () => {
     sortBy: "newest",
   });
   const [currentPage, setCurrentPage] = useState(pageQuery);
-  const CARDS_PER_PAGE = 12;
-
   const [jumpToPage, setJumpToPage] = useState("");
 
-  useEffect(() => {
-    setCurrentPage(pageQuery);
-  }, [pageQuery]);
+  const debouncedSearchTerm = useDebounce(filters.searchTerm, 500); // 500ms delay for search
 
-  // --- FIX: Fetch ALL products for client-side filtering ---
+  // This is the main effect that triggers API calls when filters or page change
   useEffect(() => {
-    const apiParams: any = {
-      pageNumber: 1,
-      limit: 9999, // Fetch a large number of products to enable full client-side search
+    const params: any = {
+      pageNumber: currentPage,
+      limit: 12,
     };
 
-    if (countryQuery) {
-      apiParams.country = countryQuery;
+    // Build the parameters object to send to the backend
+    if (debouncedSearchTerm) params.searchTerm = debouncedSearchTerm;
+    if (countryQuery) params.country = countryQuery;
+    if (filters.category !== "all") params.category = filters.category;
+    if (filters.plotSize !== "all") params.plotSize = filters.plotSize;
+    if (filters.plotArea !== "all") params.plotArea = filters.plotArea;
+    if (filters.direction !== "all") params.direction = filters.direction;
+    if (filters.floors !== "all") params.floors = filters.floors;
+    if (filters.propertyType !== "all")
+      params.propertyType = filters.propertyType;
+    if (filters.sortBy !== "newest") params.sortBy = filters.sortBy;
+    if (filters.budget[0] !== 0 || filters.budget[1] !== 50000) {
+      params.budget = `${filters.budget[0]}-${filters.budget[1]}`;
     }
 
-    dispatch(fetchProducts(apiParams));
-    dispatch(fetchAllApprovedPlans(apiParams));
+    dispatch(fetchProducts(params));
 
     if (userInfo) {
       dispatch(fetchMyOrders());
     }
-  }, [dispatch, userInfo, countryQuery]);
+  }, [
+    dispatch,
+    userInfo,
+    countryQuery,
+    currentPage,
+    debouncedSearchTerm,
+    filters.category,
+    filters.plotSize,
+    filters.plotArea,
+    filters.direction,
+    filters.floors,
+    filters.propertyType,
+    filters.budget,
+    filters.sortBy,
+  ]);
 
-  // Client-side filtering with all filters
-  const filteredProducts = useMemo(() => {
-    const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
-    const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
-
-    let combined = [
-      ...adminArray.map((p) => ({ ...p, source: "admin" })),
-      ...profArray.map((p: any) => ({
-        ...p,
-        name: p.name || p.planName || "Untitled Plan",
-        image: p.mainImage,
-        source: "professional",
-      })),
-    ];
-
-    // Search filter
-    if (filters.searchTerm) {
-      const searchLower = filters.searchTerm.toLowerCase();
-      combined = combined.filter((p) => {
-        // --- FIX: Safely access properties before calling .toLowerCase() ---
-        const name = (p.name || p.planName || p.Name || "").toLowerCase();
-        const category = (
-          (Array.isArray(p.category) ? p.category.join(" ") : p.category) ||
-          p.Categories ||
-          ""
-        ).toLowerCase();
-        const city = (
-          Array.isArray(p.city) ? p.city.join(" ") : p.city || ""
-        ).toLowerCase();
-        return (
-          name.includes(searchLower) ||
-          category.includes(searchLower) ||
-          city.includes(searchLower)
-        );
-      });
+  // This effect resets the page number to 1 whenever any filter (except page itself) is changed
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
     }
+  }, [
+    debouncedSearchTerm,
+    filters.category,
+    filters.plotSize,
+    filters.plotArea,
+    filters.direction,
+    filters.floors,
+    filters.propertyType,
+    filters.budget,
+    filters.sortBy,
+    countryQuery,
+  ]);
 
-    // Category filter
-    if (filters.category !== "all") {
-      combined = combined.filter((p) => {
-        const pCategory = Array.isArray(p.category)
-          ? p.category[0]
-          : p.category;
-        const pCategories = p.Categories?.split(",")[0].trim();
-        return (
-          pCategory === filters.category || pCategories === filters.category
-        );
-      });
-    }
-
-    // Plot Size filter
-    if (filters.plotSize !== "all") {
-      combined = combined.filter((p) => {
-        const pSize = p.plotSize || p["Attribute 1 value(s)"];
-        return pSize === filters.plotSize;
-      });
-    }
-
-    // Plot Area filter
-    if (filters.plotArea !== "all") {
-      combined = combined.filter((p) => {
-        const area =
-          p.plotArea ||
-          (p["Attribute 2 value(s)"]
-            ? parseInt(String(p["Attribute 2 value(s)"]).replace(/[^0-9]/g, ""))
-            : 0);
-        if (filters.plotArea === "500-1000") return area >= 500 && area <= 1000;
-        if (filters.plotArea === "1000-2000")
-          return area >= 1000 && area <= 2000;
-        if (filters.plotArea === "2000+") return area >= 2000;
-        return true;
-      });
-    }
-
-    // Direction filter
-    if (filters.direction !== "all") {
-      combined = combined.filter((p) => {
-        const dir = p.direction || p["Attribute 4 value(s)"];
-        return dir === filters.direction;
-      });
-    }
-
-    // Floors filter
-    if (filters.floors !== "all") {
-      combined = combined.filter((p) => {
-        const floor = String(p.floors || p["Attribute 5 value(s)"] || "");
-        if (filters.floors === "3") return parseInt(floor) >= 3;
-        return floor === filters.floors;
-      });
-    }
-
-    // Property Type filter
-    if (filters.propertyType !== "all") {
-      combined = combined.filter(
-        (p) => p.propertyType === filters.propertyType
-      );
-    }
-
-    // Budget filter
-    if (filters.budget[0] !== 0 || filters.budget[1] !== 50000) {
-      combined = combined.filter((p) => {
-        const price =
-          p.salePrice > 0
-            ? p.salePrice
-            : (p.price > 0 ? p.price : p["Regular price"]) || 0;
-        return price >= filters.budget[0] && price <= filters.budget[1];
-      });
-    }
-
-    // Sorting
-    if (filters.sortBy === "price-low") {
-      combined.sort((a, b) => {
-        const priceA =
-          a.salePrice > 0 ? a.salePrice : a.price || a["Regular price"] || 0;
-        const priceB =
-          b.salePrice > 0 ? b.salePrice : b.price || b["Regular price"] || 0;
-        return parseFloat(String(priceA)) - parseFloat(String(priceB));
-      });
-    } else if (filters.sortBy === "price-high") {
-      combined.sort((a, b) => {
-        const priceA =
-          a.salePrice > 0 ? a.salePrice : a.price || a["Regular price"] || 0;
-        const priceB =
-          b.salePrice > 0 ? b.salePrice : b.price || b["Regular price"] || 0;
-        return parseFloat(String(priceB)) - parseFloat(String(priceA));
-      });
-    } else if (filters.sortBy === "newest") {
-      // Assuming newest is default, can add specific sort logic if there's a date field
-      // For now, it will maintain the fetched order
-    }
-
-    return combined;
-  }, [adminProducts, professionalPlans, filters]);
-
-  // Pagination logic
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
-    const endIndex = startIndex + CARDS_PER_PAGE;
-    return filteredProducts.slice(startIndex, endIndex);
-  }, [filteredProducts, currentPage]);
-
-  const totalPages = Math.ceil(filteredProducts.length / CARDS_PER_PAGE);
+  const totalPages = pages > 0 ? pages : 1;
 
   const handlePageChange = (newPage: number) => {
     if (newPage > 0 && newPage <= totalPages) {
       setCurrentPage(newPage);
       window.scrollTo(0, 0);
 
-      const searchParamsToSet = new URLSearchParams();
-      if (newPage > 1) searchParamsToSet.set("page", String(newPage));
-      if (filters.searchTerm)
-        searchParamsToSet.set("search", filters.searchTerm);
-      if (filters.category !== "all")
-        searchParamsToSet.set("category", filters.category);
-      if (countryQuery) searchParamsToSet.set("country", countryQuery);
-      setSearchParams(searchParamsToSet, { replace: true });
+      const newSearchParams = new URLSearchParams(searchParams);
+      if (newPage > 1) {
+        newSearchParams.set("page", String(newPage));
+      } else {
+        newSearchParams.delete("page");
+      }
+      // Use navigate to update URL without a full page reload
+      navigate({ search: newSearchParams.toString() }, { replace: true });
     }
   };
 
@@ -998,16 +883,16 @@ const Products = () => {
     setJumpToPage("");
   };
 
+  const isLoading = listStatus === "loading";
+  const isError = listStatus === "failed";
+  const errorMessage = String(error);
+
   const pageTitle = countryQuery
     ? `${countryQuery} House Plans`
     : "House Plans & Designs";
   const pageDescription = countryQuery
     ? `Browse plans available in ${countryQuery}`
     : "Discover our complete collection of architectural masterpieces";
-  const isLoading =
-    adminListStatus === "loading" || profListStatus === "loading";
-  const isError = adminListStatus === "failed" || profListStatus === "failed";
-  const errorMessage = String(adminError || profError);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -1052,9 +937,8 @@ const Products = () => {
               <div>
                 <h2 className="text-2xl font-bold text-gray-800">All Plans</h2>
                 <p className="text-gray-500 text-sm">
-                  Showing {paginatedProducts.length} of{" "}
-                  {filteredProducts.length} results on page {currentPage} of{" "}
-                  {totalPages > 0 ? totalPages : 1}
+                  Showing {products.length} of {count} results on page{" "}
+                  {currentPage} of {totalPages}
                 </p>
               </div>
               <div className="flex items-center gap-4">
@@ -1110,7 +994,8 @@ const Products = () => {
                 <p className="mt-2 text-gray-500">{errorMessage}</p>
               </div>
             )}
-            {!isLoading && !isError && paginatedProducts.length === 0 && (
+
+            {!isLoading && !isError && products.length === 0 && (
               <div className="text-center py-20">
                 <h3 className="text-xl font-semibold">No Plans Found</h3>
                 <p className="mt-2 text-gray-500">
@@ -1138,13 +1023,13 @@ const Products = () => {
               </div>
             )}
 
-            {!isLoading && !isError && paginatedProducts.length > 0 && (
+            {!isLoading && !isError && products.length > 0 && (
               <div
                 className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}
               >
-                {paginatedProducts.map((product) => (
+                {products.map((product) => (
                   <ProductCard
-                    key={`${product.source || "prod"}-${product._id}`}
+                    key={product._id}
                     product={product}
                     userOrders={userOrders}
                   />
@@ -1173,7 +1058,6 @@ const Products = () => {
                   Next
                   <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
-
                 <form
                   onSubmit={handleJumpToPage}
                   className="flex items-center gap-2"
