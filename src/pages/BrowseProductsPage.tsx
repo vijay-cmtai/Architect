@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import {
@@ -11,6 +11,8 @@ import {
   Heart,
   Download,
   Lock,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -31,7 +33,6 @@ import Footer from "@/components/Footer";
 import house3 from "@/assets/house-3.jpg";
 import { useToast } from "@/components/ui/use-toast";
 
-// --- Slugify Helper Function (from Products.jsx) ---
 const slugify = (text) => {
   if (!text) return "";
   return text
@@ -43,12 +44,11 @@ const slugify = (text) => {
     .replace(/\-\-+/g, "-");
 };
 
-// --- FilterSidebar Component (No changes needed) ---
+// --- FilterSidebar Component (Included for completeness) ---
 const FilterSidebar = ({ filters, setFilters }) => (
-  <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-card rounded-xl shadow-lg h-fit border border-border">
+  <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-card rounded-xl shadow-lg h-fit border border-border sticky top-24">
     <h3 className="text-xl font-bold mb-4 flex items-center">
-      <Filter className="w-5 h-5 mr-2" />
-      Filters
+      <Filter className="w-5 h-5 mr-2" /> Filters
     </h3>
     <div className="space-y-6">
       <div>
@@ -202,14 +202,13 @@ const FilterSidebar = ({ filters, setFilters }) => (
   </aside>
 );
 
-// --- ProductCard Component (Updated with robust logic from Products.jsx) ---
+// --- ProductCard Component (with Image Fix) ---
 const ProductCard = ({ plan: product, userOrders }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-  const { userInfo } = useSelector((state: RootState) => state.user);
+  const { userInfo } = useSelector((state) => state.user);
 
-  // --- Start: Data Normalization (Logic from Products.jsx) ---
   const getImageSource = () => {
     const primaryImage = product.mainImage || product.image || product.Images;
     if (primaryImage && typeof primaryImage === "string") {
@@ -230,20 +229,13 @@ const ProductCard = ({ plan: product, userOrders }) => {
   const rooms = product.rooms || product["Attribute 3 value(s)"] || "N/A";
   const bathrooms = product.bathrooms || "N/A";
   const kitchen = product.kitchen || "N/A";
-
   const regularPrice = product.price ?? product["Regular price"] ?? 0;
   const salePrice = product.salePrice ?? product["Sale price"];
-
-  const isSale = (() => {
-    if (salePrice != null) {
-      return (
-        parseFloat(salePrice) > 0 &&
-        parseFloat(salePrice) < parseFloat(regularPrice)
-      );
-    }
-    return product.isSale || false;
-  })();
-
+  const isSale =
+    salePrice != null
+      ? parseFloat(String(salePrice)) > 0 &&
+        parseFloat(String(salePrice)) < parseFloat(String(regularPrice))
+      : product.isSale || false;
   const displayPrice = isSale && salePrice != null ? salePrice : regularPrice;
   const category =
     (Array.isArray(product.category)
@@ -251,7 +243,6 @@ const ProductCard = ({ plan: product, userOrders }) => {
       : product.category) ||
     product.Categories?.split(",")[0].trim() ||
     "House Plan";
-  // --- End: Data Normalization ---
 
   const isWishlisted = isInWishlist(product._id);
   const linkTo = `/product/${slugify(productName)}-${product._id}`;
@@ -388,13 +379,13 @@ const ProductCard = ({ plan: product, userOrders }) => {
         <div className="flex items-baseline gap-2 mt-2">
           {isSale && regularPrice > 0 && (
             <s className="text-md text-gray-500">
-              ₹{parseFloat(regularPrice).toLocaleString()}
+              ₹{parseFloat(String(regularPrice)).toLocaleString()}
             </s>
           )}
           <span className="text-xl font-bold text-gray-900">
             ₹
             {displayPrice > 0
-              ? parseFloat(displayPrice).toLocaleString()
+              ? parseFloat(String(displayPrice)).toLocaleString()
               : "Free"}
           </span>
         </div>
@@ -427,19 +418,25 @@ const ProductCard = ({ plan: product, userOrders }) => {
   );
 };
 
-// --- BrowsePlansPage (Main Component) ---
+// --- Main Page Component ---
 const BrowsePlansPage = () => {
   const dispatch: AppDispatch = useDispatch();
+
   const {
     products: adminProducts,
+    count: adminCount,
+    pages: adminPages,
     listStatus: adminListStatus,
     error: adminError,
   } = useSelector((state: RootState) => state.products);
   const {
     plans: professionalPlans,
+    count: profCount,
+    pages: profPages,
     listStatus: profListStatus,
     error: profError,
   } = useSelector((state: RootState) => state.professionalPlans);
+
   const { userInfo } = useSelector((state: RootState) => state.user);
   const { orders } = useSelector((state: RootState) => state.orders);
 
@@ -450,136 +447,64 @@ const BrowsePlansPage = () => {
     direction: "all",
     floors: "all",
     propertyType: "all",
-    budget: [0, 50000],
+    budget: [0, 50000] as [number, number],
   });
-
   const [sortBy, setSortBy] = useState("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const CARDS_PER_PAGE = 12;
 
   useEffect(() => {
-    const apiParams: Record<string, any> = {};
-    // ... API params logic can be added here if needed for server-side filtering
-    dispatch(fetchProducts({})); // Fetch all products
-    dispatch(fetchAllApprovedPlans({})); // Fetch all plans
+    const params: any = {
+      pageNumber: currentPage,
+      limit: CARDS_PER_PAGE,
+      planCategory: "floor-plans",
+    };
+
+    if (filters.plotSize !== "all") params.plotSize = filters.plotSize;
+    if (filters.plotArea !== "all") params.plotArea = filters.plotArea;
+    if (filters.bhk !== "all") params.bhk = filters.bhk;
+    if (filters.direction !== "all") params.direction = filters.direction;
+    if (filters.floors !== "all") params.floors = filters.floors;
+    if (filters.propertyType !== "all")
+      params.propertyType = filters.propertyType;
+    if (sortBy !== "newest") params.sortBy = sortBy;
+    if (filters.budget[0] !== 0 || filters.budget[1] !== 50000) {
+      params.budget = `${filters.budget[0]}-${filters.budget[1]}`;
+    }
+
+    dispatch(fetchProducts(params));
+    dispatch(fetchAllApprovedPlans(params));
 
     if (userInfo) {
       dispatch(fetchMyOrders());
     }
-  }, [dispatch, userInfo]);
+  }, [dispatch, userInfo, currentPage, filters, sortBy]);
 
-  const combinedProducts = useMemo(() => {
-    const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
-    const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
-    return [...adminArray, ...profArray];
-  }, [adminProducts, professionalPlans]);
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [filters, sortBy]);
 
-  const filteredAndSortedProducts = useMemo(() => {
-    let products = combinedProducts.filter((product) => {
-      if (!product || !product._id) return false;
+  const combinedProducts = useMemo(
+    () => [
+      ...(Array.isArray(adminProducts)
+        ? adminProducts.map((p) => ({ ...p, source: "admin" }))
+        : []),
+      ...(Array.isArray(professionalPlans)
+        ? professionalPlans.map((p) => ({ ...p, source: "professional" }))
+        : []),
+    ],
+    [adminProducts, professionalPlans]
+  );
 
-      // --- START: MODIFIED FILTER LOGIC FOR FLOOR PLANS ---
-      const isPlanTypeMatch = product.planType === "Floor Plans";
-      let isCategoryMatch = false;
-      const categoriesArray = Array.isArray(product.category)
-        ? product.category
-        : [];
-      const categoriesString =
-        product.Categories ||
-        (typeof product.category === "string" ? product.category : "");
-      if (categoriesArray.length > 0) {
-        isCategoryMatch = categoriesArray.some(
-          (cat) => cat && cat.toLowerCase().includes("floor-plans")
-        );
-      }
-      if (!isCategoryMatch && categoriesString) {
-        isCategoryMatch = categoriesString
-          .toLowerCase()
-          .includes("floor-plans");
-      }
-      if (!isPlanTypeMatch && !isCategoryMatch) {
-        return false;
-      }
-      // --- END: MODIFIED FILTER LOGIC ---
-
-      // Normalize price for filtering
-      const regularPrice = product.price ?? product["Regular price"] ?? 0;
-      const salePrice = product.salePrice ?? product["Sale price"];
-      const isSale =
-        salePrice != null
-          ? salePrice > 0 && salePrice < regularPrice
-          : product.isSale || false;
-      const displayPrice =
-        isSale && salePrice != null ? salePrice : regularPrice;
-
-      const matchesBudget =
-        displayPrice >= filters.budget[0] && displayPrice <= filters.budget[1];
-      const matchesPlotSize =
-        filters.plotSize === "all" ||
-        (product.plotSize || product["Attribute 1 value(s)"]) ===
-          filters.plotSize;
-
-      const productPlotArea =
-        product.plotArea ||
-        (product["Attribute 2 value(s)"]
-          ? parseInt(
-              String(product["Attribute 2 value(s)"]).replace(/[^0-9]/g, "")
-            )
-          : 0);
-      const matchesPlotArea =
-        filters.plotArea === "all" ||
-        (filters.plotArea === "500-1000"
-          ? productPlotArea >= 500 && productPlotArea <= 1000
-          : filters.plotArea === "1000-2000"
-            ? productPlotArea > 1000 && productPlotArea <= 2000
-            : filters.plotArea === "2000+"
-              ? productPlotArea > 2000
-              : true);
-
-      const productBhk = String(
-        product.rooms || product["Attribute 3 value(s)"] || ""
-      ).replace(/[^0-9]/g, "");
-      const matchesBhk = filters.bhk === "all" || productBhk === filters.bhk;
-
-      const matchesDirection =
-        filters.direction === "all" ||
-        (product.direction || product["Attribute 4 value(s)"]) ===
-          filters.direction;
-      const matchesFloors =
-        filters.floors === "all" ||
-        String(product.floors || product["Attribute 5 value(s)"] || "1") ===
-          filters.floors;
-      const matchesPropertyType =
-        filters.propertyType === "all" ||
-        product.propertyType === filters.propertyType;
-
-      return (
-        matchesBudget &&
-        matchesPlotSize &&
-        matchesPlotArea &&
-        matchesBhk &&
-        matchesDirection &&
-        matchesFloors &&
-        matchesPropertyType
-      );
-    });
-
-    products.sort((a, b) => {
-      const priceA =
-        (a.isSale ? a.salePrice : (a.price ?? a["Regular price"])) ?? 0;
-      const priceB =
-        (b.isSale ? b.salePrice : (b.price ?? b["Regular price"])) ?? 0;
-      if (sortBy === "price-low") return priceA - priceB;
-      if (sortBy === "price-high") return priceB - priceA;
-      // Default to newest
-      return new Date(b.createdAt) - new Date(a.createdAt);
-    });
-
-    return products;
-  }, [combinedProducts, filters, sortBy]);
+  const totalCount = (adminCount || 0) + (profCount || 0);
+  const totalPages = Math.max(adminPages || 1, profPages || 1);
 
   const isLoading =
     adminListStatus === "loading" || profListStatus === "loading";
   const isError = adminListStatus === "failed" || profListStatus === "failed";
-  const errorMessage = adminError || profError;
+  const errorMessage = String(adminError || profError);
   const pageTitle = "Floor Plans";
 
   return (
@@ -603,7 +528,7 @@ const BrowsePlansPage = () => {
                   {pageTitle}
                 </h1>
                 <p className="text-muted-foreground text-sm">
-                  Showing {filteredAndSortedProducts.length} results
+                  Showing {combinedProducts.length} of {totalCount} results
                 </p>
               </div>
               <div className="w-full sm:w-48">
@@ -634,34 +559,60 @@ const BrowsePlansPage = () => {
                 <h3 className="mt-4 text-xl font-semibold text-destructive">
                   Failed to Load Plans
                 </h3>
-                <p className="mt-2 text-muted-foreground">
-                  {String(errorMessage)}
-                </p>
+                <p className="mt-2 text-muted-foreground">{errorMessage}</p>
               </div>
             )}
-            {!isLoading &&
-              !isError &&
-              filteredAndSortedProducts.length === 0 && (
-                <div className="text-center py-20">
-                  <h3 className="text-xl font-semibold">No Plans Found</h3>
-                  <p className="mt-2 text-muted-foreground">
-                    Try adjusting your filters.
-                  </p>
-                </div>
-              )}
+
             {!isLoading && !isError && (
-              <motion.div
-                layout
-                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"
-              >
-                {filteredAndSortedProducts.map((plan) => (
-                  <ProductCard
-                    key={`${plan.source || "prod"}-${plan._id}`}
-                    plan={plan}
-                    userOrders={orders}
-                  />
-                ))}
-              </motion.div>
+              <>
+                {combinedProducts.length > 0 ? (
+                  <motion.div
+                    layout
+                    className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"
+                  >
+                    {combinedProducts.map((plan) => (
+                      <ProductCard
+                        key={`${plan.source || "prod"}-${plan._id}`}
+                        plan={plan}
+                        userOrders={orders}
+                      />
+                    ))}
+                  </motion.div>
+                ) : (
+                  <div className="text-center py-20">
+                    <h3 className="text-xl font-semibold">No Plans Found</h3>
+                    <p className="mt-2 text-muted-foreground">
+                      Try adjusting your filters.
+                    </p>
+                  </div>
+                )}
+
+                {totalPages > 1 && (
+                  <div className="mt-12 flex justify-center items-center gap-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="w-4 h-4 mr-2" />
+                      Previous
+                    </Button>
+                    <span className="font-medium text-gray-700">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(p + 1, totalPages))
+                      }
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
