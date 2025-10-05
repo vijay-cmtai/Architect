@@ -11,6 +11,7 @@ import {
 import { RootState, AppDispatch } from "@/lib/store";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   PlusCircle,
   Edit,
@@ -32,7 +33,10 @@ const AllProductsPage: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch products whenever the current page changes
+  // <<< BADLAAV 1: Page jump ke liye naya state >>>
+  const [jumpToPage, setJumpToPage] = useState("");
+  // <<< BADLAAV KHATAM >>>
+
   useEffect(() => {
     dispatch(fetchProducts({ pageNumber: currentPage }));
   }, [dispatch, currentPage]);
@@ -61,12 +65,28 @@ const AllProductsPage: React.FC = () => {
       dispatch(deleteProduct(productId)).then((res) => {
         if (res.type.endsWith("fulfilled")) {
           toast.success("Product deleted successfully!");
-          // Refetch products for the current page to update the list
           dispatch(fetchProducts({ pageNumber: currentPage }));
         }
       });
     }
   };
+
+  // <<< BADLAAV 2: Page jump ke liye naya function >>>
+  const handleJumpToPage = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const page = parseInt(jumpToPage, 10);
+      if (!isNaN(page) && page >= 1 && page <= totalPages) {
+        setCurrentPage(page);
+        setJumpToPage(""); // Input ko clear karein
+      } else {
+        toast.error(
+          `Please enter a valid page number between 1 and ${totalPages}.`
+        );
+      }
+    }
+  };
+  // <<< BADLAAV KHATAM >>>
 
   return (
     <>
@@ -200,9 +220,11 @@ const AllProductsPage: React.FC = () => {
           {totalPages > 1 && (
             <div className="flex justify-between items-center p-4 border-t">
               <span className="text-sm text-gray-600">
-                Page {currentPage} of {totalPages}
+                Total Pages: {totalPages}
               </span>
-              <div className="flex gap-2">
+
+              {/* <<< BADLAAV 3: Pagination UI ko update kiya gaya >>> */}
+              <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -213,6 +235,20 @@ const AllProductsPage: React.FC = () => {
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" /> Previous
                 </Button>
+
+                <div className="flex items-center gap-1 text-sm">
+                  <span>Page</span>
+                  <Input
+                    type="number"
+                    className="w-16 h-9 text-center"
+                    value={jumpToPage}
+                    onChange={(e) => setJumpToPage(e.target.value)}
+                    onKeyDown={handleJumpToPage}
+                    placeholder={`${currentPage}`}
+                  />
+                  <span>of {totalPages}</span>
+                </div>
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -226,6 +262,7 @@ const AllProductsPage: React.FC = () => {
                   Next <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>
+              {/* <<< BADLAAV KHATAM >>> */}
             </div>
           )}
         </div>
