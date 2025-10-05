@@ -53,6 +53,12 @@ const jobOpenings = [
     location: "Remote / On-site",
     type: "Part-time / Consultant",
   },
+  {
+    title: "3D Visualizer",
+    icon: <Youtube size={48} className="text-orange-500" />,
+    description: "High-quality 3D walkthroughs and visualization services.",
+    slug: "3d-visualizer",
+  },
 ];
 
 const corporatePackages = [
@@ -109,12 +115,6 @@ const corporatePackages = [
     icon: <Building size={48} className="text-orange-500" />,
     description: "For Hotels, Hospitals, and other large-scale projects.",
     slug: "industry-expert",
-  },
-  {
-    title: "3D Visualizer",
-    icon: <Youtube size={48} className="text-orange-500" />,
-    description: "High-quality 3D walkthroughs and visualization services.",
-    slug: "3d-visualizer",
   },
 ];
 

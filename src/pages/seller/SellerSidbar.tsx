@@ -1,98 +1,49 @@
 import React, { useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
-  ShoppingBag,
   Box,
   PlusCircle,
-  Users,
-  BarChart2,
   UserCircle,
   LogOut,
   X,
   ChevronDown,
-  FileText,
+  Briefcase, // Import kiya hua hai, acchi baat hai
   Building,
-  Briefcase,
-  HelpCircle,
-  FileCheck2,
-  Gem,
-  PenSquare,
-  Image,
-  Package, // ✨ पैकेज के लिए आइकन इम्पोर्ट करें
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/features/users/userSlice";
+import { RootState } from "@/lib/store";
 
 const mainLinks = [
-  { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
-  { name: "Orders", path: "/admin/orders", icon: ShoppingBag },
-  { name: "Customers", path: "/admin/customers", icon: Users },
-  { name: "Reports", path: "/admin/reports", icon: BarChart2 },
-  { name: "Profile", path: "/admin/profile", icon: UserCircle },
-  { name: "Videos", path: "/admin/addvideos", icon: PlusCircle },
-  {
-    name: "Seller Enquiries",
-    path: "/admin/seller-enquiries",
-    icon: Briefcase,
-  },
-];
-
-const requestLinks = [
-  {
-    name: "Customization",
-    path: "/admin/customization-requests",
-    icon: FileCheck2,
-  },
-  { name: "Standard", path: "/admin/standard-requests", icon: FileText },
-  { name: "Premium", path: "/admin/premium-requests", icon: Gem },
-];
-
-const inquiryLinks = [
-  { name: "Corporate", path: "/admin/inquiries", icon: Briefcase },
-  { name: "Seller/Contractor", path: "/admin/inquiries-sc", icon: HelpCircle },
+  { name: "Dashboard", path: "/seller", icon: LayoutDashboard },
+  { name: "Profile", path: "/seller/profile", icon: UserCircle },
 ];
 
 const productLinks = [
-  { name: "All Products", path: "/admin/products", icon: Box },
-  { name: "Add New Product", path: "/admin/products/add", icon: PlusCircle },
+  { name: "My Products", path: "/seller/products", icon: Box },
+  { name: "Add New", path: "/seller/products/add", icon: PlusCircle },
 ];
 
-const blogLinks = [
-  { name: "All Posts", path: "/admin/blogs", icon: Box },
-  { name: "Add New Post", path: "/admin/blogs/add", icon: PlusCircle },
+// <<< YAHAN BADLAAV KIYA GAYA HAI >>>
+// 'requestLinks' variable ko yahan define kiya gaya hai
+const requestLinks = [
+  { name: "All Enquiries", path: "/seller/inquiries", icon: Briefcase }, // 'enquiries' ko 'inquiries' kar diya hai
 ];
+// <<< BADLAAV KHATAM >>>
 
-const galleryLinks = [
-  { name: "Manage Gallery", path: "/admin/gallery", icon: Box },
-  { name: "Add Image", path: "/admin/gallery/add", icon: PlusCircle },
-];
-
-const packageLinks = [
-  { name: "All Packages", path: "/admin/packages", icon: Box },
-  { name: "Add New Package", path: "/admin/packages/add", icon: PlusCircle },
-];
-
-const userLinks = [
-  { name: "All Users", path: "/admin/users", icon: Users },
-  { name: "Add New User", path: "/admin/users/add", icon: PlusCircle },
-];
-
-const AdminSidebar = ({ isOpen, setIsOpen }) => {
+const SellerSidebar = ({ isOpen, setIsOpen }) => {
   const [openMenus, setOpenMenus] = useState({
-    products: false,
-    users: false,
-    requests: false,
-    inquiries: false,
-    blogs: false,
-    gallery: false,
-    packages: false,
+    products: true,
+    requests: true,
   });
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const { userInfo } = useSelector((state: RootState) => state.user);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -112,7 +63,7 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
     <NavLink
       key={link.name}
       to={link.path}
-      end={link.path === "/admin"}
+      end={link.path === "/seller"}
       className={({ isActive }) =>
         `${baseLinkClasses} my-1 ${isActive ? activeClasses : inactiveClasses}`
       }
@@ -124,10 +75,10 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
   );
 
   const renderSubMenu = (title, icon, menuKey, links) => (
-    <div>
+    <div className="mt-2">
       <button
         onClick={() => toggleMenu(menuKey)}
-        className={`${baseLinkClasses} ${inactiveClasses} justify-between mt-1`}
+        className={`${baseLinkClasses} ${inactiveClasses} justify-between`}
       >
         <div className="flex items-center">
           {React.createElement(icon, { className: "h-5 w-5 mr-3" })}
@@ -167,15 +118,14 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
           />
         )}
       </AnimatePresence>
-
       <aside
         className={`fixed top-0 left-0 h-full w-64 bg-slate-800 text-white p-4 shadow-2xl flex flex-col z-40 transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex items-center justify-between mb-6 border-b border-slate-700 pb-4">
-          <Link to="/admin">
-            <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
+          <Link to="/seller">
+            <h1 className="text-2xl font-bold text-white">Seller Panel</h1>
           </Link>
           <button
             onClick={() => setIsOpen(false)}
@@ -187,18 +137,35 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
         </div>
         <nav className="flex-grow overflow-y-auto pr-2">
           {mainLinks.map(renderNavLink)}
-          {renderSubMenu("Products", ShoppingBag, "products", productLinks)}
-          {renderSubMenu("Blog", PenSquare, "blogs", blogLinks)}
-          {renderSubMenu("Gallery", Image, "gallery", galleryLinks)}
 
-          {/* ✨ नया पैकेज सब-मेन्यू ✨ */}
-          {renderSubMenu("Packages", Package, "packages", packageLinks)}
+          {/* Maine yahan se "All Enquiries" ko hata diya hai, kyunki woh ab submenu mein hai */}
 
-          {renderSubMenu("Users", Users, "users", userLinks)}
-          {renderSubMenu("Requests", Building, "requests", requestLinks)}
-          {renderSubMenu("Inquiries", HelpCircle, "inquiries", inquiryLinks)}
+          {renderSubMenu("Products", Box, "products", productLinks)}
+
+          {/* Ab yeh line theek se kaam karegi */}
+          {renderSubMenu(
+            "Enquiries", // Naam chhota kar diya
+            Building,
+            "requests",
+            requestLinks
+          )}
         </nav>
+
         <div className="mt-auto pt-4 border-t border-slate-700">
+          {userInfo && (
+            <div className="p-3 mb-2 rounded-md bg-slate-700/50">
+              <div className="flex items-center">
+                <UserCircle className="h-8 w-8 mr-3 text-orange-400" />
+                <div className="flex flex-col">
+                  <span className="font-semibold text-white text-sm leading-tight">
+                    {userInfo.name || userInfo.businessName}
+                  </span>
+                  <span className="text-xs text-gray-400">Seller</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <Button
             onClick={handleLogout}
             variant="ghost"
@@ -213,4 +180,4 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
   );
 };
 
-export default AdminSidebar;
+export default SellerSidebar;

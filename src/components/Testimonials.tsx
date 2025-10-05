@@ -9,27 +9,30 @@ const Testimonials = () => {
   const testimonials = [
     {
       id: 1,
-      name: "Sarah Johnson",
+      name: "Vaibhav Maheshwari",
       role: "Homeowner",
-      image: "https://i.imgur.com/8sC2s0d.jpg", // Professional looking avatar
+      image:
+        "https://img.freepik.com/free-photo/fun-3d-cartoon-illustration-indian-businessman_183364-114500.jpg",
       rating: 5,
       comment:
         "Houseplanfiles helped us design our dream house perfectly. The team was professional and the process was seamless. Highly recommended!",
     },
     {
       id: 2,
-      name: "Michael Chen",
+      name: "Kamesh",
       role: "Real Estate Developer",
-      image: "https://i.imgur.com/nKNbC2b.jpg", // Professional looking avatar
+      image:
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQj3uMCPn30XWtrLYElm5i0Btin70LWn4YfNA&s",
       rating: 5,
       comment:
         "Outstanding architectural designs and excellent customer service. We have used their services for multiple projects and are always satisfied.",
     },
     {
       id: 3,
-      name: "Emily Rodriguez",
+      name: "Shubham Sharma",
       role: "Interior Designer",
-      image: "https://i.imgur.com/e2v5pY0.jpg", // Professional looking avatar
+      image:
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQtSHGuklgrqMI7ggWLm-621h29bXUGy4qMHA&s",
       rating: 5,
       comment:
         "The 3D visualizations are incredible! It really helped my clients understand the final outcome. Great attention to detail.",
@@ -61,24 +64,21 @@ const Testimonials = () => {
           </p>
         </div>
 
-        <div className="relative max-w-3xl mx-auto">
-          <Card className="rounded-2xl shadow-xl overflow-hidden border-2 border-transparent hover:border-orange-200 transition-colors">
-            <div className="p-8 md:p-12 relative">
-              <Quote className="absolute top-8 left-8 w-16 h-16 text-orange-100/70" />
-              <div className="relative z-10 text-center">
-                <div className="w-24 h-24 mx-auto mb-6 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                  <img
-                    src={activeTestimonial.image}
-                    alt={activeTestimonial.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+        <div className="relative max-w-3xl mx-auto pt-16">
+          <Card className="rounded-2xl shadow-xl overflow-visible border-2 border-transparent hover:border-orange-200 transition-colors relative">
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg bg-white">
+              <img
+                src={activeTestimonial.image}
+                alt={activeTestimonial.name}
+                className="w-full h-full object-cover object-top" // <-- THE CHANGE IS HERE
+              />
+            </div>
 
-                <blockquote className="text-lg md:text-xl text-slate-700 mb-6 font-medium leading-relaxed">
-                  "{activeTestimonial.comment}"
-                </blockquote>
+            <div className="p-8 md:p-12 relative text-center">
+              <div className="pt-16">
+                <Quote className="absolute top-6 right-6 w-12 h-12 text-orange-100/70" />
 
-                <div className="flex items-center justify-center mb-6">
+                <div className="flex items-center justify-center mb-4">
                   {[...Array(activeTestimonial.rating)].map((_, i) => (
                     <Star
                       key={i}
@@ -86,6 +86,10 @@ const Testimonials = () => {
                     />
                   ))}
                 </div>
+
+                <blockquote className="text-lg md:text-xl text-slate-700 mb-6 font-medium leading-relaxed">
+                  "{activeTestimonial.comment}"
+                </blockquote>
 
                 <div>
                   <h4 className="text-xl font-semibold text-slate-800">

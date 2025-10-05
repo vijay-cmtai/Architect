@@ -1,7 +1,7 @@
 // pages/ApplicationPage.tsx
 
 import React, { useState, useEffect } from "react";
-import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, store } from "@/lib/store";
 type AppDispatch = typeof store.dispatch;
@@ -41,6 +41,16 @@ const professionalSubRoles = [
   "Vastu Consultant",
   "Site Engineer",
   "MEP Consultant",
+  "3D Visualizer",
+];
+
+const experienceLevels = [
+  "Fresher",
+  "Less than 1 Year",
+  "1-3 Years",
+  "3-5 Years",
+  "5-10 Years",
+  "10+ Years",
 ];
 
 const ApplicationPage = () => {
@@ -61,7 +71,8 @@ const ApplicationPage = () => {
     phone: "",
     password: "",
     profession: jobTitle,
-    // ++ CHANGE HERE: Added state for the new files
+    city: "",
+    experience: "",
     businessCertification: null,
     shopImage: null,
   });
@@ -70,11 +81,10 @@ const ApplicationPage = () => {
     setFormData((prev) => ({ ...prev, [e.target.id]: e.target.value }));
   };
 
-  const handleSelectChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, profession: value }));
+  const handleSelectChange = (id: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
-  // ++ CHANGE HERE: A unified handler for all file inputs
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, files } = e.target;
     if (files && files.length > 0) {
@@ -85,7 +95,6 @@ const ApplicationPage = () => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const dataToSubmit = new FormData();
-    // Append all form data, including files
     Object.keys(formData).forEach((key) => {
       if (formData[key as keyof typeof formData]) {
         dataToSubmit.append(
@@ -112,14 +121,14 @@ const ApplicationPage = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen flex items-center justify-center bg-soft-teal px-4 py-12">
-        <Card className="w-full max-w-lg shadow-lg">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
+        <Card className="w-full max-w-lg shadow-xl border-gray-200">
           <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold">
-              Apply for a Position
+            <CardTitle className="text-3xl font-bold text-gray-800">
+              Register With Us
             </CardTitle>
             <CardDescription>
-              Create your professional account to submit your application.
+              Create your professional account to get started.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -134,16 +143,6 @@ const ApplicationPage = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="email">Email Address*</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div>
                 <Label htmlFor="phone">Phone Number*</Label>
                 <Input
                   id="phone"
@@ -153,25 +152,17 @@ const ApplicationPage = () => {
                   required
                 />
               </div>
+
               <div>
-                <Label htmlFor="password">Create Password*</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="profession">Applying for*</Label>
+                <Label htmlFor="profession">Profession*</Label>
                 <Select
                   value={formData.profession}
-                  onValueChange={handleSelectChange}
-                  required
+                  onValueChange={(value) =>
+                    handleSelectChange("profession", value)
+                  }
                 >
                   <SelectTrigger id="profession">
-                    <SelectValue placeholder="Select a position" />
+                    <SelectValue placeholder="Choose profession" />
                   </SelectTrigger>
                   <SelectContent>
                     {professionalSubRoles.map((role) => (
@@ -183,7 +174,37 @@ const ApplicationPage = () => {
                 </Select>
               </div>
 
-              {/* ++ CHANGE HERE: Added new file input fields */}
+              <div>
+                <Label htmlFor="city">City*</Label>
+                <Input
+                  id="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="experience">Experience*</Label>
+                <Select
+                  value={formData.experience}
+                  onValueChange={(value) =>
+                    handleSelectChange("experience", value)
+                  }
+                >
+                  <SelectTrigger id="experience">
+                    <SelectValue placeholder="Select your experience level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {experienceLevels.map((level) => (
+                      <SelectItem key={level} value={level}>
+                        {level}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div>
                 <Label htmlFor="businessCertification">
                   Business Certification (Optional)
@@ -193,15 +214,44 @@ const ApplicationPage = () => {
                   type="file"
                   onChange={handleFileChange}
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Upload your professional certification or business license.
+                </p>
               </div>
+
               <div>
-                <Label htmlFor="shopImage">Shop Image (Optional)</Label>
+                <Label htmlFor="shopImage">Shop/Office Image (Optional)</Label>
                 <Input id="shopImage" type="file" onChange={handleFileChange} />
+                <p className="text-xs text-gray-500 mt-1">
+                  Upload an image of your office or workspace.
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="email">Email Address*</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="password">Create Password*</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
               </div>
 
               <Button
                 type="submit"
-                className="w-full btn-primary"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 text-base"
                 disabled={actionStatus === "loading"}
               >
                 {actionStatus === "loading" ? (
@@ -210,7 +260,7 @@ const ApplicationPage = () => {
                     Submitting...
                   </>
                 ) : (
-                  "Submit Application"
+                  "Register"
                 )}
               </Button>
             </form>

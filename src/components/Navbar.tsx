@@ -42,13 +42,21 @@ const Navbar = () => {
 
   const { userInfo } = useSelector((state: RootState) => state.user);
 
+  // <<< BADLAAV 1: 'seller' ko allowed roles ki list mein add karein >>>
   const isUserAllowed =
-    userInfo && ["user", "admin", "professional"].includes(userInfo.role);
+    userInfo &&
+    ["user", "admin", "professional", "seller"].includes(userInfo.role);
+  // <<< BADLAAV KHATAM >>>
+
   const showCartAndWishlist = !userInfo || userInfo?.role === "user";
 
   const getDashboardPath = () => {
-    if (!isUserAllowed) return "/login";
+    if (!userInfo) return "/login"; // Guard clause for safety
     switch (userInfo.role) {
+      // <<< BADLAAV 2: Seller ke liye dashboard ka path add karein >>>
+      case "seller":
+        return "/seller";
+      // <<< BADLAAV KHATAM >>>
       case "professional":
         return "/professional";
       case "admin":
@@ -75,11 +83,8 @@ const Navbar = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (isMenuOpen || isWishlistOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
+    document.body.style.overflow =
+      isMenuOpen || isWishlistOpen ? "hidden" : "auto";
     return () => {
       document.body.style.overflow = "auto";
     };
@@ -97,12 +102,15 @@ const Navbar = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // <<< BADLAAV 3: Seller ka naam (businessName) handle karne ke liye >>>
+  const displayName = userInfo?.name || userInfo?.businessName || "User";
+  const avatarFallback = displayName.charAt(0).toUpperCase();
+  // <<< BADLAAV KHATAM >>>
+
   return (
     <>
       <header
-        className={`sticky top-0 z-40 transition-all duration-300 ${
-          isScrolled ? "bg-white/95 shadow-md backdrop-blur-lg" : "bg-white"
-        }`}
+        className={`sticky top-0 z-40 transition-all duration-300 ${isScrolled ? "bg-white/95 shadow-md backdrop-blur-lg" : "bg-white"}`}
       >
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
@@ -114,34 +122,23 @@ const Navbar = () => {
               />
             </Link>
 
-            {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-8">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`text-base font-medium relative transition-colors duration-300 group ${
-                    isActive(link.path)
-                      ? "text-orange-600"
-                      : "text-gray-600 hover:text-orange-600"
-                  }`}
+                  className={`text-base font-medium relative transition-colors duration-300 group ${isActive(link.path) ? "text-orange-600" : "text-gray-600 hover:text-orange-600"}`}
                 >
                   {link.name}
                   <span
-                    className={`absolute bottom-[-4px] left-0 w-full h-0.5 bg-orange-500 transition-transform duration-300 origin-center ${
-                      isActive(link.path)
-                        ? "scale-x-100"
-                        : "scale-x-0 group-hover:scale-x-100"
-                    }`}
+                    className={`absolute bottom-[-4px] left-0 w-full h-0.5 bg-orange-500 transition-transform duration-300 origin-center ${isActive(link.path) ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`}
                   ></span>
                 </Link>
               ))}
             </nav>
 
             <div className="flex items-center">
-              {/* Desktop Icons & Login */}
               <div className="hidden lg:flex items-center space-x-5">
-                {/* ... (Desktop icons and user auth logic) ... */}
                 <button className="text-gray-600 hover:text-orange-600 transition-colors">
                   <Search className="w-5 h-5" />
                 </button>
@@ -180,13 +177,11 @@ const Navbar = () => {
                       <button className="flex items-center gap-2">
                         <Avatar className="w-9 h-9 border-2 border-orange-500">
                           <AvatarFallback className="bg-orange-500 text-white font-bold">
-                            {userInfo.name
-                              ? userInfo.name.charAt(0).toUpperCase()
-                              : "U"}
+                            {avatarFallback}
                           </AvatarFallback>
                         </Avatar>
                         <span className="font-medium text-gray-700">
-                          {userInfo.name}
+                          {displayName}
                         </span>
                       </button>
                     </DropdownMenuTrigger>
@@ -227,7 +222,6 @@ const Navbar = () => {
                 )}
               </div>
 
-              {/* Mobile View Hamburger Icon */}
               <div className="lg:hidden flex items-center">
                 <button
                   onClick={() => setIsMenuOpen(true)}
@@ -241,7 +235,6 @@ const Navbar = () => {
         </div>
       </header>
 
-      {/* --- MOBILE MENU (MOVED OUTSIDE HEADER) --- */}
       <AnimatePresence>
         {isMenuOpen && (
           <>
@@ -274,11 +267,7 @@ const Navbar = () => {
                     <Link
                       key={link.name}
                       to={link.path}
-                      className={`text-xl font-medium p-4 rounded-lg transition-colors ${
-                        isActive(link.path)
-                          ? "bg-orange-500 text-white"
-                          : "text-gray-700 hover:bg-orange-100"
-                      }`}
+                      className={`text-xl font-medium p-4 rounded-lg transition-colors ${isActive(link.path) ? "bg-orange-500 text-white" : "text-gray-700 hover:bg-orange-100"}`}
                     >
                       {link.name}
                     </Link>
@@ -294,13 +283,11 @@ const Navbar = () => {
                     >
                       <Avatar className="w-10 h-10 border-2 border-orange-500">
                         <AvatarFallback className="bg-orange-500 text-white font-bold">
-                          {userInfo.name
-                            ? userInfo.name.charAt(0).toUpperCase()
-                            : "U"}
+                          {avatarFallback}
                         </AvatarFallback>
                       </Avatar>
                       <span className="font-semibold text-gray-800">
-                        {userInfo.name}
+                        {displayName}
                       </span>
                     </Link>
                     <Button

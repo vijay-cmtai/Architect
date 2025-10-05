@@ -1,3 +1,5 @@
+// File: lib/store.js
+
 import { configureStore } from "@reduxjs/toolkit";
 import userReducer from "./features/users/userSlice";
 import productReducer from "./features/products/productSlice";
@@ -16,6 +18,11 @@ import galleryReducer from "./features/gallery/gallerySlice";
 import videoReducer from "./features/videos/videoSlice";
 import packageReducer from "./features/packages/packageSlice";
 import professionalOrderReducer from "./features/professional/professionalOrderSlice";
+
+// --- YAHAN NAYA SLICE IMPORT KAREIN ---
+import sellerProductReducer from "./features/seller/sellerProductSlice";
+import sellerinquiryReducer from "./features/sellerinquiries/sellerinquirySlice";
+import sellerReducer from "./features/seller/sellerProductSlice";
 
 export const store = configureStore({
   reducer: {
@@ -36,6 +43,9 @@ export const store = configureStore({
     videos: videoReducer,
     packages: packageReducer,
     professionalOrders: professionalOrderReducer,
+    seller: sellerReducer,
+    sellerProducts: sellerProductReducer,
+    sellerInquiries: sellerinquiryReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

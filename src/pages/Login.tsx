@@ -40,7 +40,6 @@ const LoginPage = () => {
   useEffect(() => {
     // Check if user is already logged in and redirect accordingly
     if (userInfo) {
-      // Only allow specific roles to login and access dashboards
       switch (userInfo.role) {
         case "admin":
           navigate("/admin");
@@ -48,16 +47,18 @@ const LoginPage = () => {
         case "professional":
           navigate("/professional");
           break;
+        // --- CHANGE 1: Seller ko yahan allow karein (jab pehle se logged in ho) ---
+        case "seller":
+          navigate("/seller"); // Seller ko /seller dashboard par bhejo
+          break;
         case "user":
           navigate("/");
           break;
         default:
-          // For seller and Contractor roles, show error and logout
+          // Ab sirf Contractor jaise an-authorized roles ke liye error aayega
           toast.error(
             "Your account type is not authorized to login to this platform."
           );
-          // You might want to add a logout action here if needed
-          // dispatch(logoutUser());
           break;
       }
     }
@@ -66,8 +67,8 @@ const LoginPage = () => {
   useEffect(() => {
     // Handle login response
     if (actionStatus === "succeeded" && userInfo) {
-      // Check if the logged-in user has an allowed role
-      if (["user", "admin", "professional"].includes(userInfo.role)) {
+      // --- CHANGE 2: "seller" ko allowed roles ki list mein add karein ---
+      if (["user", "admin", "professional", "seller"].includes(userInfo.role)) {
         switch (userInfo.role) {
           case "admin":
             toast.success("Admin login successful! Redirecting...");
@@ -76,6 +77,11 @@ const LoginPage = () => {
           case "professional":
             toast.success("Professional login successful! Redirecting...");
             setTimeout(() => navigate("/professional"), 1000);
+            break;
+          // --- CHANGE 3: Seller ke login par redirection add karein ---
+          case "seller":
+            toast.success("Seller login successful! Redirecting...");
+            setTimeout(() => navigate("/seller"), 1000);
             break;
           case "user":
           default:
@@ -97,7 +103,7 @@ const LoginPage = () => {
     }
   }, [actionStatus, userInfo, error, navigate, dispatch]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       toast.error("Please fill in both email and password.");
@@ -149,6 +155,9 @@ const LoginPage = () => {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500"
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>

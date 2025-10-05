@@ -16,7 +16,7 @@ import {
 const WhatsAppIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="16" // Adjusted size
+    width="16"
     height="16"
     viewBox="0 0 24 24"
     fill="none"
@@ -33,7 +33,7 @@ const WhatsAppIcon = () => (
 const PinterestIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="16" // Adjusted size
+    width="16"
     height="16"
     viewBox="0 0 24 24"
     fill="currentColor"
@@ -41,6 +41,27 @@ const PinterestIcon = () => (
     <path d="M12 2C6.477 2 2 6.477 2 12c0 4.237 2.636 7.855 6.356 9.312-.084-.602-.167-1.592.034-2.327.185-.68.995-4.223.995-4.223s-.255-.51-.255-1.267c0-1.185.688-2.072 1.553-2.072.73 0 1.08.547 1.08 1.202 0 .73-.465 1.822-.705 2.832-.202.84.42 1.532 1.258 1.532 1.508 0 2.65-1.59 2.65-3.868 0-2.046-1.445-3.48-3.566-3.48-2.35 0-3.738 1.743-3.738 3.355 0 .64.246 1.332.558 1.727.06.074.068.103.05.178-.02.083-.07.28-.09.358-.026.09-.105.12-.24.06-1.1-.47-1.8-1.82-1.8-3.132 0-2.438 2.085-4.73 5.25-4.73 2.76 0 4.86 1.956 4.86 4.418 0 2.712-1.72 4.882-4.14 4.882-.828 0-1.606-.43-1.865-.934 0 0-.405 1.616-.502 2.01-.132.52-.25.99-.4 1.392.36.11.732.17 1.114.17 6.627 0 12-5.373 12-12S18.627 2 12 2z" />
   </svg>
 );
+
+// --- START: UPDATED THREADS ICON ---
+// This is the correct SVG for the Threads logo
+const ThreadsIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M12 22a10 10 0 0 1-10-10C2 7.1 7.1 2 12 2s10 5.1 10 10c0 4.2-2.6 7.8-6.2 9.2" />
+    <path d="M15.5 12c0-1.9-1.6-3.5-3.5-3.5S8.5 10.1 8.5 12c0 1.5 1 2.8 2.3 3.3" />
+    <path d="M12 12v6.5" />
+  </svg>
+);
+// --- END: UPDATED THREADS ICON ---
 
 const TopBar = () => {
   const contactInfo = {
@@ -78,6 +99,11 @@ const TopBar = () => {
       name: "Telegram",
       icon: <Send size={16} />,
       href: "https://t.me/+tPzdohVcUbJiZmNl",
+    },
+    {
+      name: "Threads",
+      icon: <ThreadsIcon />,
+      href: "https://www.threads.net/@house_plan_files?hl=en",
     },
     { name: "Koo", icon: <AtSign size={16} />, href: "#" },
   ];
@@ -131,5 +157,4 @@ const TopBar = () => {
     </header>
   );
 };
-
 export default TopBar;

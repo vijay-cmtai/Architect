@@ -103,6 +103,7 @@ interface FetchProductsResponse {
   products: Product[];
   page: number;
   pages: number;
+  count: number;
 }
 
 interface ProductState {
@@ -110,6 +111,7 @@ interface ProductState {
   product: Product | null;
   page: number;
   pages: number;
+  count: number;
   listStatus: "idle" | "loading" | "succeeded" | "failed";
   actionStatus: "idle" | "loading" | "succeeded" | "failed";
   error: any;
@@ -120,6 +122,7 @@ const initialState: ProductState = {
   product: null,
   page: 1,
   pages: 1,
+  count: 0,
   listStatus: "idle",
   actionStatus: "idle",
   error: null,
@@ -127,23 +130,18 @@ const initialState: ProductState = {
 
 export const fetchProducts = createAsyncThunk<
   FetchProductsResponse,
-  { pageNumber?: number; keyword?: string },
+  { [key: string]: any },
   { rejectValue: string }
->(
-  "products/fetchAll",
-  async ({ pageNumber = 1, keyword = "" }, { rejectWithValue }) => {
-    try {
-      const { data } = await axios.get(
-        `${API_URL}?pageNumber=${pageNumber}&keyword=${keyword}`
-      );
-      return data;
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch products"
-      );
-    }
+>("products/fetchAll", async (params, { rejectWithValue }) => {
+  try {
+    const { data } = await axios.get(API_URL, { params });
+    return data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message || "Failed to fetch products"
+    );
   }
-);
+});
 
 export const fetchProductBySlug = createAsyncThunk<
   Product,
@@ -302,6 +300,7 @@ const productSlice = createSlice({
         state.products = action.payload.products;
         state.page = action.payload.page;
         state.pages = action.payload.pages;
+        state.count = action.payload.count;
       }
     );
     builder.addCase(fetchProducts.rejected, (state, action: AnyAction) => {

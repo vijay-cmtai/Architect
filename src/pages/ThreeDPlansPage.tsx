@@ -1,8 +1,5 @@
-// src/pages/ThreeDPlansPage.jsx
-
 import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState, AppDispatch } from "@/lib/store";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -12,6 +9,8 @@ import {
   Heart,
   Download,
   Lock,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -28,15 +27,26 @@ import { useToast } from "@/components/ui/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import house1 from "@/assets/house-1.jpg";
-
-// Import both thunks
 import { fetchProducts } from "@/lib/features/products/productSlice";
 import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice";
 import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
+import { RootState, AppDispatch } from "@/lib/store";
 
-// --- Enhanced FilterSidebar Component ---
-const FilterSidebar = ({ filters, setFilters }) => (
-  <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-white rounded-xl shadow-lg h-fit border border-gray-200">
+// Helper function to create URL-friendly slugs
+const slugify = (text: any) => {
+  if (!text) return "";
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-");
+};
+
+// FilterSidebar Component
+const FilterSidebar = ({ filters, setFilters }: any) => (
+  <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-white rounded-xl shadow-lg h-fit border border-gray-200 sticky top-24">
     <h3 className="text-xl font-bold mb-4 flex items-center text-gray-800">
       <Filter className="w-5 h-5 mr-2 text-gray-500" />
       Filters
@@ -49,7 +59,7 @@ const FilterSidebar = ({ filters, setFilters }) => (
         <Select
           value={filters.plotSize}
           onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, plotSize: value }))
+            setFilters((prev: any) => ({ ...prev, plotSize: value }))
           }
         >
           <SelectTrigger
@@ -63,10 +73,10 @@ const FilterSidebar = ({ filters, setFilters }) => (
             <SelectItem value="30x40">30x40</SelectItem>
             <SelectItem value="40x60">40x60</SelectItem>
             <SelectItem value="50x80">50x80</SelectItem>
+            <SelectItem value="29x36">29x36</SelectItem>
           </SelectContent>
         </Select>
       </div>
-
       <div>
         <Label htmlFor="plotArea" className="font-semibold text-gray-600">
           Plot Area (sqft)
@@ -74,7 +84,7 @@ const FilterSidebar = ({ filters, setFilters }) => (
         <Select
           value={filters.plotArea}
           onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, plotArea: value }))
+            setFilters((prev: any) => ({ ...prev, plotArea: value }))
           }
         >
           <SelectTrigger
@@ -91,7 +101,6 @@ const FilterSidebar = ({ filters, setFilters }) => (
           </SelectContent>
         </Select>
       </div>
-
       <div>
         <Label htmlFor="bhk" className="font-semibold text-gray-600">
           Rooms (BHK)
@@ -99,7 +108,7 @@ const FilterSidebar = ({ filters, setFilters }) => (
         <Select
           value={filters.bhk}
           onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, bhk: value }))
+            setFilters((prev: any) => ({ ...prev, bhk: value }))
           }
         >
           <SelectTrigger
@@ -117,7 +126,6 @@ const FilterSidebar = ({ filters, setFilters }) => (
           </SelectContent>
         </Select>
       </div>
-
       <div>
         <Label htmlFor="direction" className="font-semibold text-gray-600">
           Direction
@@ -125,7 +133,7 @@ const FilterSidebar = ({ filters, setFilters }) => (
         <Select
           value={filters.direction}
           onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, direction: value }))
+            setFilters((prev: any) => ({ ...prev, direction: value }))
           }
         >
           <SelectTrigger
@@ -143,7 +151,6 @@ const FilterSidebar = ({ filters, setFilters }) => (
           </SelectContent>
         </Select>
       </div>
-
       <div>
         <Label htmlFor="floors" className="font-semibold text-gray-600">
           Floors
@@ -151,7 +158,7 @@ const FilterSidebar = ({ filters, setFilters }) => (
         <Select
           value={filters.floors}
           onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, floors: value }))
+            setFilters((prev: any) => ({ ...prev, floors: value }))
           }
         >
           <SelectTrigger
@@ -168,7 +175,6 @@ const FilterSidebar = ({ filters, setFilters }) => (
           </SelectContent>
         </Select>
       </div>
-
       <div>
         <Label htmlFor="propertyType" className="font-semibold text-gray-600">
           Property Type
@@ -176,7 +182,7 @@ const FilterSidebar = ({ filters, setFilters }) => (
         <Select
           value={filters.propertyType}
           onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, propertyType: value }))
+            setFilters((prev: any) => ({ ...prev, propertyType: value }))
           }
         >
           <SelectTrigger
@@ -192,7 +198,6 @@ const FilterSidebar = ({ filters, setFilters }) => (
           </SelectContent>
         </Select>
       </div>
-
       <div>
         <Label className="font-semibold text-gray-600">
           Budget: ₹{filters.budget[0].toLocaleString()} - ₹
@@ -201,10 +206,7 @@ const FilterSidebar = ({ filters, setFilters }) => (
         <Slider
           value={filters.budget}
           onValueChange={(value) =>
-            setFilters((prev) => ({
-              ...prev,
-              budget: value as [number, number],
-            }))
+            setFilters((prev: any) => ({ ...prev, budget: value }))
           }
           max={100000}
           min={500}
@@ -212,7 +214,6 @@ const FilterSidebar = ({ filters, setFilters }) => (
           className="mt-3"
         />
       </div>
-
       <Button
         onClick={() =>
           setFilters({
@@ -234,87 +235,133 @@ const FilterSidebar = ({ filters, setFilters }) => (
   </aside>
 );
 
-// --- Enhanced ProductCard Component with Authentication ---
-const ProductCard = ({ plan, userOrders }) => {
+// ProductCard Component
+const ProductCard = ({ plan, userOrders }: any) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { userInfo } = useSelector((state: RootState) => state.user);
+  const { toast } = useToast();
 
+  const productName =
+    plan.name || plan.planName || plan.Name || "Untitled Plan";
+  const linkTo = `/product/${slugify(productName)}-${plan._id}`;
+  const mainImage =
+    plan.mainImage || plan.Images?.split(",")[0].trim() || house1;
+  const plotSize = plan.plotSize || plan["Attribute 1 value(s)"] || "N/A";
+  const plotArea =
+    plan.plotArea ||
+    (plan["Attribute 2 value(s)"]
+      ? parseInt(String(plan["Attribute 2 value(s)"]).replace(/[^0-9]/g, ""))
+      : "N/A");
+  const rooms = plan.rooms || plan["Attribute 3 value(s)"] || "N/A";
+  const direction = plan.direction || plan["Attribute 4 value(s)"] || "N/A";
+  const floors = plan.floors || plan["Attribute 5 value(s)"] || "N/A";
+  const regularPrice =
+    (plan.price > 0 ? plan.price : plan["Regular price"]) ?? 0;
+  const salePrice =
+    (plan.salePrice > 0 ? plan.salePrice : plan["Sale price"]) ?? null;
+  const isSale =
+    salePrice !== null &&
+    parseFloat(String(salePrice)) > 0 &&
+    parseFloat(String(salePrice)) < parseFloat(String(regularPrice));
+  const displayPrice = isSale ? salePrice : regularPrice;
+  const category =
+    (Array.isArray(plan.category) ? plan.category[0] : plan.category) ||
+    plan.Categories?.split(",")[0].trim() ||
+    "House Plan";
+  const city = plan.city
+    ? Array.isArray(plan.city)
+      ? plan.city.join(", ")
+      : plan.city
+    : null;
   const isWishlisted = isInWishlist(plan._id);
-  const linkTo =
-    plan.source === "admin"
-      ? `/product/${plan._id}`
-      : `/professional-plan/${plan._id}`;
 
-  // Check if user has purchased this product
-  const hasPurchased = userOrders?.some(
-    (order) =>
-      order.isPaid &&
-      order.orderItems?.some(
-        (item) =>
-          item.productId === plan._id || item.productId?._id === plan._id
-      )
-  );
+  const hasPurchased = useMemo(() => {
+    if (!userInfo || !userOrders || userOrders.length === 0) return false;
+    return userOrders.some(
+      (order: any) =>
+        order.isPaid &&
+        order.orderItems?.some(
+          (item: any) => (item.productId?._id || item.productId) === plan._id
+        )
+    );
+  }, [userOrders, userInfo, plan._id]);
+
+  const handleWishlistToggle = () => {
+    if (!userInfo) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to add items to your wishlist.",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+    const productForWishlist = {
+      productId: plan._id,
+      name: productName,
+      price: regularPrice,
+      salePrice: salePrice,
+      image: mainImage,
+      size: plotSize,
+    };
+    if (isWishlisted) {
+      removeFromWishlist(plan._id);
+    } else {
+      addToWishlist(productForWishlist);
+    }
+  };
 
   const handleDownload = async () => {
     if (!userInfo) {
       toast({
         title: "Login Required",
-        description: "Please log in to download purchased products.",
-        action: <Button onClick={() => navigate("/login")}>Login</Button>,
+        description: "Please log in to download.",
+        variant: "destructive",
       });
+      navigate("/login");
       return;
     }
-
     if (!hasPurchased) {
       toast({
-        title: "Product Not Purchased",
-        description: "You must purchase this plan to download the file.",
-        action: <Button onClick={() => navigate(linkTo)}>View Product</Button>,
+        title: "Purchase Required",
+        description: "Please purchase this plan to download it.",
+        variant: "destructive",
       });
+      navigate(linkTo);
       return;
     }
-
-    if (!plan.planFile) {
+    const fileToDownload =
+      (Array.isArray(plan.planFile) ? plan.planFile[0] : plan.planFile) ||
+      plan["Download 1 URL"];
+    if (!fileToDownload) {
       toast({
         title: "Error",
-        description: "Download file is not available for this plan.",
+        description: "No downloadable file found for this product.",
+        variant: "destructive",
       });
       return;
     }
-
     try {
-      const response = await fetch(plan.planFile);
-      if (!response.ok) throw new Error("Network response was not ok.");
-      const blob = await response.blob();
-
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-
-      const fileExtension =
-        plan.planFile.split(".").pop()?.split("?")[0] || "pdf";
-      link.setAttribute(
-        "download",
-        `ArchHome-3D-${plan.name.replace(/\s+/g, "-")}.${fileExtension}`
-      );
-
-      document.body.appendChild(link);
-      link.click();
-
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
       toast({
         title: "Success",
-        description: "Your 3D plan download has started!",
+        description: "Your download is starting...",
       });
+      const link = document.createElement("a");
+      link.href = fileToDownload;
+      const fileExtension =
+        fileToDownload.split(".").pop()?.split("?")[0] || "pdf";
+      const fileName = `ArchHome-${productName.replace(/\s+/g, "-")}.${fileExtension}`;
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
       console.error("Download failed:", error);
       toast({
         title: "Error",
         description: "Failed to download the file.",
+        variant: "destructive",
       });
     }
   };
@@ -322,28 +369,30 @@ const ProductCard = ({ plan, userOrders }) => {
   return (
     <motion.div
       layout
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
       className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
     >
       <div className="relative p-2">
         <Link to={linkTo}>
-          <img
-            src={plan.mainImage || plan.image || house1}
-            alt={plan.name}
-            className="w-full h-48 object-cover rounded-md group-hover:scale-105 transition-transform duration-500"
-          />
+          <div className="aspect-square w-full bg-gray-100 rounded-md overflow-hidden">
+            <img
+              src={mainImage}
+              alt={productName}
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+            />
+          </div>
           <div className="absolute inset-2 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md"></div>
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-gray-900/80 text-white text-xs font-bold px-4 py-2 rounded-md shadow-lg text-center">
-            <p>{plan.plotSize} 3D Elevation</p>
+            <p>{plotSize}</p>
             <p className="text-xs font-normal">
-              {hasPurchased ? "Download pdf file" : "Purchase to download"}
+              {hasPurchased ? "Download now" : "Purchase to download"}
             </p>
           </div>
         </Link>
-        {plan.isSale && (
-          <div className="absolute top-4 left-4 bg-white text-gray-800 text-xs font-bold px-3 py-1 rounded-md shadow">
+        {isSale && (
+          <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-md shadow">
             Sale!
           </div>
         )}
@@ -352,59 +401,87 @@ const ProductCard = ({ plan, userOrders }) => {
             Purchased
           </div>
         )}
-        <button
-          onClick={() =>
-            isWishlisted ? removeFromWishlist(plan._id) : addToWishlist(plan)
-          }
-          className={`absolute top-4 right-4 w-9 h-9 bg-white/80 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-gray-600 hover:text-red-500 hover:scale-110"}`}
-        >
-          <Heart
-            className="w-5 h-5"
-            fill={isWishlisted ? "currentColor" : "none"}
-          />
-        </button>
+        <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={handleWishlistToggle}
+            className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-gray-600 hover:text-red-500 hover:scale-110"}`}
+            aria-label="Toggle Wishlist"
+          >
+            <Heart
+              className="w-5 h-5"
+              fill={isWishlisted ? "currentColor" : "none"}
+            />
+          </button>
+        </div>
       </div>
-      <div className="p-4 grid grid-cols-2 gap-4 border-t text-center text-sm">
+      <div className="p-4 grid grid-cols-3 gap-2 border-t text-center text-sm">
         <div>
           <p className="text-xs text-gray-500">Plot Area</p>
-          <p className="font-bold">{plan.plotArea} sqft</p>
+          <p className="font-bold">{plotArea} sqft</p>
         </div>
         <div className="bg-teal-50 p-2 rounded-md">
           <p className="text-xs text-gray-500">Rooms</p>
-          <p className="font-bold">{plan.rooms || plan.bhk} BHK</p>
+          <p className="font-bold">{rooms}</p>
         </div>
         <div className="bg-teal-50 p-2 rounded-md">
           <p className="text-xs text-gray-500">Bathrooms</p>
-          <p className="font-bold">{plan.bathrooms}</p>
+          <p className="font-bold">{plan.bathrooms || "N/A"}</p>
         </div>
         <div>
           <p className="text-xs text-gray-500">Kitchen</p>
-          <p className="font-bold">{plan.kitchen}</p>
+          <p className="font-bold">{plan.kitchen || "N/A"}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500">Floors</p>
+          <p className="font-bold">{floors}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500">Direction</p>
+          <p className="font-bold">{direction}</p>
         </div>
       </div>
       <div className="p-4 border-t">
-        <p className="text-xs text-gray-500 uppercase">
-          {plan.category || "3D Elevation"}
-        </p>
-        <h3 className="text-lg font-bold text-gray-900 mt-1 truncate">
-          {plan.name}
+        <p className="text-xs text-gray-500 uppercase">{category}</p>
+        <div className="mt-2 text-xs text-gray-600 space-y-1">
+          {plan.productNo && (
+            <div className="flex justify-between items-center">
+              <span className="font-semibold">Product No:</span>
+              <span>{plan.productNo}</span>
+            </div>
+          )}
+          {city && (
+            <div className="flex justify-between items-center">
+              <span className="font-semibold">City:</span>
+              <span className="text-right font-bold text-teal-700">{city}</span>
+            </div>
+          )}
+        </div>
+        <h3 className="text-lg font-bold text-teal-800 mt-1 truncate">
+          {productName}
         </h3>
-        <div className="flex items-baseline gap-2 mt-1">
-          {plan.isSale && (
+        <div className="flex items-baseline gap-2 mt-1 flex-wrap">
+          {isSale && parseFloat(String(regularPrice)) > 0 && (
             <s className="text-md text-gray-400">
-              ₹{plan.price.toLocaleString()}
+              ₹{parseFloat(String(regularPrice)).toLocaleString()}
             </s>
           )}
           <span className="text-xl font-bold text-gray-800">
-            ₹
-            {(plan.isSale && plan.salePrice
-              ? plan.salePrice
-              : plan.price
-            ).toLocaleString()}
+            ₹{parseFloat(String(displayPrice)).toLocaleString()}
           </span>
+          {isSale &&
+            parseFloat(String(regularPrice)) > 0 &&
+            parseFloat(String(displayPrice)) > 0 && (
+              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-semibold">
+                SAVE ₹
+                {(
+                  parseFloat(String(regularPrice)) -
+                  parseFloat(String(displayPrice))
+                ).toLocaleString()}
+              </span>
+            )}
         </div>
       </div>
-      <div className="p-4 pt-0 mt-auto grid grid-cols-1 gap-2">
+      <div className="p-4 pt-0 mt-auto space-y-2">
         <Link to={linkTo}>
           <Button
             variant="outline"
@@ -414,18 +491,14 @@ const ProductCard = ({ plan, userOrders }) => {
           </Button>
         </Link>
         <Button
-          className={`w-full text-white rounded-md ${
-            hasPurchased
-              ? "bg-teal-500 hover:bg-teal-600"
-              : "bg-gray-400 hover:bg-gray-500"
-          }`}
+          className={`w-full text-white rounded-md ${hasPurchased ? "bg-teal-500 hover:bg-teal-600" : "bg-gray-400 cursor-not-allowed"}`}
           onClick={handleDownload}
           disabled={!hasPurchased}
         >
           {hasPurchased ? (
             <>
               <Download className="mr-2 h-4 w-4" />
-              Download PDF
+              Download
             </>
           ) : (
             <>
@@ -439,12 +512,14 @@ const ProductCard = ({ plan, userOrders }) => {
   );
 };
 
+// Main Component
 const ThreeDPlansPage = () => {
   const dispatch: AppDispatch = useDispatch();
-  const navigate = useNavigate();
 
   const {
     products: adminProducts,
+    count: adminCount,
+    pages: adminPages,
     listStatus: adminListStatus,
     error: adminError,
   } = useSelector((state: RootState) => state.products);
@@ -453,6 +528,7 @@ const ThreeDPlansPage = () => {
     listStatus: profListStatus,
     error: profError,
   } = useSelector((state: RootState) => state.professionalPlans);
+
   const { userInfo } = useSelector((state: RootState) => state.user);
   const { orders } = useSelector((state: RootState) => state.orders);
 
@@ -463,121 +539,64 @@ const ThreeDPlansPage = () => {
     direction: "all",
     floors: "all",
     propertyType: "all",
-    budget: [500, 100000],
+    budget: [500, 100000] as [number, number],
   });
   const [sortBy, setSortBy] = useState("newest");
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    // Only send filters that are not "all" or default
-    const apiParams: Record<string, any> = {};
-    Object.entries(filters).forEach(([key, value]) => {
-      if (key === "budget") {
-        apiParams.budget = value.join("-");
-      } else if (value !== "all") {
-        apiParams[key] = value;
-      }
-    });
-    apiParams.planType = "3D Elevations";
+    const params: any = {
+      pageNumber: currentPage,
+      limit: 12,
+      planCategory: "elevations",
+    };
 
-    dispatch(fetchProducts(apiParams));
-    dispatch(fetchAllApprovedPlans(apiParams));
+    if (filters.plotSize !== "all") params.plotSize = filters.plotSize;
+    if (filters.plotArea !== "all") params.plotArea = filters.plotArea;
+    if (filters.bhk !== "all") params.bhk = filters.bhk;
+    if (filters.direction !== "all") params.direction = filters.direction;
+    if (filters.floors !== "all") params.floors = filters.floors;
+    if (filters.propertyType !== "all")
+      params.propertyType = filters.propertyType;
+    if (sortBy !== "newest") params.sortBy = sortBy;
+    if (filters.budget[0] !== 500 || filters.budget[1] !== 100000) {
+      params.budget = `${filters.budget[0]}-${filters.budget[1]}`;
+    }
 
-    // Fetch user orders if logged in
+    dispatch(fetchProducts(params));
+    dispatch(fetchAllApprovedPlans(params));
+
     if (userInfo) {
       dispatch(fetchMyOrders());
     }
-  }, [dispatch, filters, userInfo]);
+  }, [dispatch, userInfo, currentPage, filters, sortBy]);
 
-  const combinedProducts = useMemo(() => {
-    const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
-    const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
-    const normalizedAdmin = adminArray.map((p) => ({
-      ...p,
-      name: p.name || "Unnamed",
-      image: p.image || "",
-      source: "admin",
-    }));
-    const normalizedProf = profArray.map((p) => ({
-      ...p,
-      name: p.planName || "Unnamed",
-      image: p.mainImage || "",
-      source: "professional",
-    }));
-    return [...normalizedAdmin, ...normalizedProf];
-  }, [adminProducts, professionalPlans]);
-
-  // Enhanced filtering logic matching BrowsePlansPage
-  const filteredAndSortedProducts = useMemo(() => {
-    let products = combinedProducts.filter((product) => {
-      if (!product || typeof product.price === "undefined") return false;
-
-      // Only show "3D Elevations"
-      if (product.planType !== "3D Elevations") return false;
-
-      const productPrice = product.isSale ? product.salePrice : product.price;
-      const matchesBudget =
-        productPrice >= filters.budget[0] && productPrice <= filters.budget[1];
-      const matchesPlotSize =
-        filters.plotSize === "all" || product.plotSize === filters.plotSize;
-      const matchesPlotArea =
-        filters.plotArea === "all" ||
-        (filters.plotArea === "500-1000"
-          ? product.plotArea >= 500 && product.plotArea <= 1000
-          : filters.plotArea === "1000-2000"
-            ? product.plotArea > 1000 && product.plotArea <= 2000
-            : filters.plotArea === "2000+"
-              ? product.plotArea > 2000
-              : true);
-      const matchesBhk =
-        filters.bhk === "all" ||
-        (product.rooms || product.bhk) === parseInt(filters.bhk, 10);
-      const matchesDirection =
-        filters.direction === "all" || product.direction === filters.direction;
-      const matchesFloors =
-        filters.floors === "all" ||
-        product.floors === parseInt(filters.floors, 10);
-      const matchesPropertyType =
-        filters.propertyType === "all" ||
-        product.propertyType === filters.propertyType;
-
-      return (
-        matchesBudget &&
-        matchesPlotSize &&
-        matchesPlotArea &&
-        matchesBhk &&
-        matchesDirection &&
-        matchesFloors &&
-        matchesPropertyType
-      );
-    });
-
-    if (sortBy === "price-low") {
-      products.sort(
-        (a, b) =>
-          (a.isSale && a.salePrice ? a.salePrice : a.price) -
-          (b.isSale && b.salePrice ? b.salePrice : b.price)
-      );
-    } else if (sortBy === "price-high") {
-      products.sort(
-        (a, b) =>
-          (b.isSale && b.salePrice ? b.salePrice : b.price) -
-          (a.isSale && a.salePrice ? a.salePrice : a.price)
-      );
-    } else {
-      products.sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
     }
-    return products;
-  }, [combinedProducts, filters, sortBy]);
+  }, [filters, sortBy]);
+
+  const combinedProducts = useMemo(
+    () => [
+      ...(Array.isArray(adminProducts)
+        ? adminProducts.map((p) => ({ ...p, source: "admin" }))
+        : []),
+      ...(Array.isArray(professionalPlans)
+        ? professionalPlans.map((p) => ({ ...p, source: "professional" }))
+        : []),
+    ],
+    [adminProducts, professionalPlans]
+  );
+
+  const totalCount = adminCount || 0;
+  const totalPages = adminPages > 0 ? adminPages : 1;
 
   const isLoading =
     adminListStatus === "loading" || profListStatus === "loading";
   const isError = adminListStatus === "failed" || profListStatus === "failed";
   const errorMessage = String(adminError || profError);
-  const pageTitle = "Floor Plans + 3D Elevation Plans ";
+  const pageTitle = "Floor Plans + 3D Elevation";
 
   return (
     <div className="bg-gray-50">
@@ -592,13 +611,13 @@ const ThreeDPlansPage = () => {
                   {pageTitle}
                 </h1>
                 <p className="text-gray-500 text-sm">
-                  Showing {filteredAndSortedProducts.length} results
+                  Showing {combinedProducts.length} of {totalCount} results
                 </p>
               </div>
               <div className="w-full sm:w-48">
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="bg-white">
-                    <SelectValue />
+                    <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="newest">Sort by latest</SelectItem>
@@ -612,55 +631,71 @@ const ThreeDPlansPage = () => {
                 </Select>
               </div>
             </div>
-
             {isLoading && (
               <div className="flex justify-center items-center h-96">
                 <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
               </div>
             )}
-
             {isError && (
               <div className="text-center py-20">
                 <ServerCrash className="mx-auto h-12 w-12 text-red-500" />
                 <h3 className="mt-4 text-xl font-semibold text-red-500">
-                  Failed to Load 3D Plans
+                  Failed to Load Plans
                 </h3>
                 <p className="mt-2 text-gray-500">{errorMessage}</p>
               </div>
             )}
 
-            {!isLoading &&
-              !isError &&
-              filteredAndSortedProducts.length === 0 && (
-                <div className="text-center py-20">
-                  <h3 className="text-xl font-semibold">
-                    No 3D Elevation Plans Found
-                  </h3>
-                  <p className="mt-2 text-gray-500">
-                    Try adjusting your filters to see more results.
-                  </p>
-                </div>
-              )}
-
             {!isLoading && !isError && (
-              <motion.div
-                layout
-                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-              >
-                {filteredAndSortedProducts.length > 0 ? (
-                  filteredAndSortedProducts.map((plan) => (
-                    <ProductCard
-                      key={`${plan.source}-${plan._id}`}
-                      plan={plan}
-                      userOrders={orders}
-                    />
-                  ))
+              <>
+                {combinedProducts.length === 0 ? (
+                  <div className="text-center py-20">
+                    <h3 className="text-xl font-semibold">No Plans Found</h3>
+                    <p className="mt-2 text-gray-500">
+                      Try adjusting your filters to see more results.
+                    </p>
+                  </div>
                 ) : (
-                  <div className="col-span-full text-center py-20">
-                    <h3 className="text-xl font-semibold">No 3D Plans Found</h3>
+                  <motion.div
+                    layout
+                    className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                  >
+                    {combinedProducts.map((plan) => (
+                      <ProductCard
+                        key={`${plan.source}-${plan._id}`}
+                        plan={plan}
+                        userOrders={orders}
+                      />
+                    ))}
+                  </motion.div>
+                )}
+
+                {totalPages > 1 && (
+                  <div className="mt-12 flex justify-center items-center gap-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="w-4 h-4 mr-2" />
+                      Previous
+                    </Button>
+                    <span className="font-medium text-gray-700">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(p + 1, totalPages))
+                      }
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
                   </div>
                 )}
-              </motion.div>
+              </>
             )}
           </div>
         </div>

@@ -46,11 +46,11 @@ const CTA = () => {
             <div className="text-white/80">Projects Completed</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-white">15+</div>
+            <div className="text-3xl font-bold text-white">10+</div>
             <div className="text-white/80">Years Experience</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-white">50k+</div>
+            <div className="text-3xl font-bold text-white">1000+</div>
             <div className="text-white/80">Happy Clients</div>
           </div>
           <div className="text-center">

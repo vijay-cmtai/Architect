@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
+import { Loader2, Save } from "lucide-react";
+import { RootState, AppDispatch } from "@/lib/store";
 import {
   updateProfile,
   resetActionStatus,
@@ -10,15 +12,28 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 
-const ProfilePage = () => {
-  const dispatch = useDispatch<any>();
+// Form ke data ke liye type define karein
+type FormData = {
+  name: string;
+  phone: string;
+  profession: string;
+  city: string;
+  experience: string;
+};
+
+const ProfilePageProf = () => {
+  const dispatch: AppDispatch = useDispatch();
   const { userInfo, actionStatus, error } = useSelector(
-    (state: { user: any }) => state.user
+    (state: RootState) => state.user
   );
 
   const {
@@ -26,41 +41,68 @@ const ProfilePage = () => {
     handleSubmit,
     setValue,
     formState: { errors },
-  } = useForm();
+  } = useForm<FormData>();
 
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
+  const isLoading = actionStatus === "loading";
+
+  // Jab bhi userInfo mile, form ko data se bharein
   useEffect(() => {
-    // Jab bhi userInfo mile, form ko pre-fill karein
     if (userInfo) {
-      setValue("name", userInfo.name);
-      setValue("email", userInfo.email);
-      setValue("phone", userInfo.phone);
-      setValue("profession", userInfo.profession);
-      // ... baaki fields
+      setValue("name", userInfo.name || "");
+      setValue("phone", userInfo.phone || "");
+      setValue("profession", userInfo.profession || "");
+      setValue("city", userInfo.city || "");
+      setValue("experience", userInfo.experience || "");
+      setPhotoPreview(userInfo.photoUrl || null);
     }
   }, [userInfo, setValue]);
 
-  const onSubmit = (data) => {
-    // Sirf wohi data bhejein jo user ne enter kiya hai
-    dispatch(updateProfile(data)); // Typing fixed by casting dispatch to any above
-  };
-
+  // Update hone ke baad success/error message dikhayein
   useEffect(() => {
     if (actionStatus === "succeeded") {
       toast.success("Profile updated successfully!");
       dispatch(resetActionStatus());
     }
     if (actionStatus === "failed") {
-      toast.error(error || "Failed to update profile.");
+      toast.error(String(error || "Failed to update profile."));
       dispatch(resetActionStatus());
     }
   }, [actionStatus, error, dispatch]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhoto(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const onSubmit: SubmitHandler<FormData> = (data) => {
+    const dataToSubmit = new FormData();
+    // Form se saara data append karein
+    Object.entries(data).forEach(([key, value]) => {
+      dataToSubmit.append(key, value);
+    });
+    // Agar nayi photo hai to use bhi append karein
+    if (photo) {
+      dataToSubmit.append("photo", photo);
+    }
+    dispatch(updateProfile(dataToSubmit));
+  };
+
   if (!userInfo) {
-    return <div className="p-12 text-center">Loading profile...</div>;
+    return (
+      <div className="p-12 text-center">
+        <Loader2 className="animate-spin h-8 w-8 mx-auto" />
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6">
       <h1 className="text-3xl font-bold text-gray-800">My Profile</h1>
       <p className="text-gray-600">
         Update your public profile and account details.
@@ -70,42 +112,43 @@ const ProfilePage = () => {
         <Card>
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
+            <CardDescription>
+              This information will be displayed publicly.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center gap-6">
               <Avatar className="w-24 h-24">
-                <AvatarImage src={userInfo.photoUrl} alt={userInfo.name} />
+                <AvatarImage src={photoPreview} alt={userInfo.name} />
                 <AvatarFallback className="text-4xl">
-                  {userInfo.name ? userInfo.name.charAt(0).toUpperCase() : "U"}
+                  {userInfo.name ? userInfo.name.charAt(0).toUpperCase() : "P"}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <Label htmlFor="profile-picture">
-                  Profile Picture (Coming Soon)
-                </Label>
+                <Label htmlFor="photo">Change Profile Picture</Label>
                 <Input
-                  id="profile-picture"
+                  id="photo"
                   type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
                   className="mt-1"
-                  disabled
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  File upload for profile update will be added later.
+                  A high-quality picture helps you get more clients.
                 </p>
               </div>
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Label htmlFor="name">Full Name / Business Name</Label>
+                <Label htmlFor="name">Full Name</Label>
                 <Input
                   id="name"
                   {...register("name", { required: "Name is required" })}
                 />
                 {errors.name && (
                   <p className="text-red-500 text-xs mt-1">
-                    {typeof errors.name.message === "string"
-                      ? errors.name.message
-                      : ""}
+                    {errors.name.message}
                   </p>
                 )}
               </div>
@@ -130,9 +173,7 @@ const ProfilePage = () => {
                 />
                 {errors.phone && (
                   <p className="text-red-500 text-xs mt-1">
-                    {typeof errors.phone.message === "string"
-                      ? errors.phone.message
-                      : ""}
+                    {errors.phone.message}
                   </p>
                 )}
               </div>
@@ -149,33 +190,72 @@ const ProfilePage = () => {
           </CardContent>
         </Card>
 
-        {/* Role-specific fields */}
-        {userInfo.role === "professional" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Professional Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div>
-                <Label htmlFor="profession">Your Profession</Label>
-                <Input id="profession" {...register("profession")} />
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <Card>
+          <CardHeader>
+            <CardTitle>Professional Details</CardTitle>
+            <CardDescription>
+              Describe your expertise and experience.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Label htmlFor="profession">Your Profession</Label>
+              <Input
+                id="profession"
+                {...register("profession", {
+                  required: "Profession is required",
+                })}
+              />
+              {errors.profession && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.profession.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="city">City</Label>
+              <Input
+                id="city"
+                {...register("city", { required: "City is required" })}
+              />
+              {errors.city && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.city.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="experience">Years of Experience</Label>
+              <Input
+                id="experience"
+                {...register("experience", {
+                  required: "Experience is required",
+                })}
+                placeholder="e.g., 5-10 Years"
+              />
+              {errors.experience && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.experience.message}
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         <Button
           type="submit"
           className="btn-primary"
           size="lg"
-          disabled={actionStatus === "loading"}
+          disabled={isLoading}
         >
-          {actionStatus === "loading" ? (
+          {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating...
             </>
           ) : (
-            "Update Profile"
+            <>
+              <Save className="mr-2 h-4 w-4" /> Update Profile
+            </>
           )}
         </Button>
       </form>
@@ -183,4 +263,4 @@ const ProfilePage = () => {
   );
 };
 
-export default ProfilePage;
+export default ProfilePageProf;

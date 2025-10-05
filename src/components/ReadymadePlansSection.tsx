@@ -37,7 +37,7 @@ const planTypes = [
     name: "Home Design Product",
     icon: HardHat,
     image: "/r4.avif",
-    href: "/construction-products",
+    href: "/house-designs-products",
     bgColor: "bg-yellow-100",
     iconColor: "text-yellow-500",
   },
@@ -70,7 +70,7 @@ const ReadymadePlansSection = () => {
               className="flex-shrink-0 w-3/4 sm:w-auto"
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }} 
+              viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
               <Link

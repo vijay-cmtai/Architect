@@ -10,7 +10,13 @@ import { fetchVideos, fetchTopics } from "@/lib/features/videos/videoSlice";
 import RequestPageLayout from "../components/RequestPageLayout";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
-import { Loader2, PlayCircle, X, ShoppingCart } from "lucide-react";
+import {
+  Loader2,
+  PlayCircle,
+  X,
+  ShoppingCart,
+  CheckCircle,
+} from "lucide-react";
 import YouTube from "react-youtube";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -134,99 +140,205 @@ const ThreeDWalkthroughPage = () => {
         onClose={() => setPlayingVideoId(null)}
       />
       <Navbar />
-      <form key={formKey} onSubmit={handleSubmit}>
-        <RequestPageLayout
-          title="Request a 3D Video Walkthrough"
-          imageUrl="https://images.pexels.com/photos/1732414/pexels-photo-1732414.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-          imageAlt="Example of a 3D house walkthrough"
-          isLoading={actionStatus === "loading"}
-        >
-          <div>
-            <label htmlFor="name" className={formStyles.label}>
-              Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              className={formStyles.input}
-              required
-            />
+
+      {/* --- **START: UPDATED FORM AND PRICING SECTION** --- */}
+      <div className="bg-gray-50 py-12 sm:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">
+              Customize Your 3D Elevation
+            </h1>
+            <p className="mt-4 text-xl text-gray-600">
+              Get a stunning 3D elevation and video walkthrough for your plan.
+            </p>
           </div>
-          <div>
-            <label htmlFor="email" className={formStyles.label}>
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              className={formStyles.input}
-              required
-            />
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 items-start">
+            {/* --- Left Side: Form --- */}
+            <div className="lg:col-span-3 bg-white p-8 rounded-2xl shadow-lg">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                Send Your Request
+              </h2>
+              <form key={formKey} onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label htmlFor="name" className={formStyles.label}>
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    className={formStyles.input}
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className={formStyles.label}>
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    className={formStyles.input}
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="whatsappNumber" className={formStyles.label}>
+                    WhatsApp Number
+                  </label>
+                  <input
+                    type="tel"
+                    id="whatsappNumber"
+                    name="whatsappNumber"
+                    className={formStyles.input}
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="plotSize" className={formStyles.label}>
+                    Your Plot Size (e.g., 30x40 ft)
+                  </label>
+                  <input
+                    type="text"
+                    id="plotSize"
+                    name="plotSize"
+                    placeholder="e.g., 30x40 ft"
+                    className={formStyles.input}
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="description" className={formStyles.label}>
+                    Describe Your Requirements
+                  </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    placeholder="Tell us about the number of rooms, style, Vastu needs, etc."
+                    className={formStyles.textarea}
+                    rows={4}
+                  ></textarea>
+                </div>
+                <div>
+                  <label className={formStyles.label}>
+                    Upload Reference File (Optional)
+                  </label>
+                  <input
+                    type="file"
+                    name="referenceFile"
+                    className={formStyles.fileInput}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    You can upload a hand sketch, image, or PDF file.
+                  </p>
+                </div>
+                <div>
+                  <Button
+                    type="submit"
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-lg py-3"
+                    disabled={actionStatus === "loading"}
+                  >
+                    {actionStatus === "loading" ? (
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    ) : (
+                      "Send Request"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </div>
+
+            {/* --- Right Side: Pricing Cards --- */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Card 1: Standard Plan */}
+              <div className="relative bg-white p-8 rounded-2xl shadow-lg border-2 border-orange-500">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-xs font-bold uppercase px-4 py-1.5 rounded-full">
+                  Most Popular
+                </div>
+                <h3 className="text-2xl font-bold text-center text-gray-900">
+                  3D Elevation and video walkthrough
+                </h3>
+                <p className="text-center text-6xl font-extrabold text-orange-500 mt-4">
+                  ₹2999
+                </p>
+                <p className="text-center text-lg font-semibold text-gray-500">
+                  starting
+                </p>
+                <p className="text-center text-sm text-gray-400 mt-1">
+                  1 floor
+                </p>
+                <p className="text-center text-sm font-semibold text-gray-500 mt-2">
+                  Built-up Area
+                </p>
+                <ul className="mt-6 space-y-3 text-gray-600">
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <span>1- Model only model can not be change</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <span>2- renders copies diffrent angle</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <span>3- Delivery in 48 hours</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <span>correction in 24 hours</span>
+                  </li>
+                </ul>
+                <div className="mt-6 pt-4 border-t">
+                  <h4 className="font-bold text-gray-800">Includes:</h4>
+                  <ul className="mt-2 space-y-2 text-gray-600">
+                    <li className="flex items-center">
+                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                      <span>only 3D elevation render</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Card 2: Premium Plan */}
+              <div className="bg-white p-8 rounded-2xl shadow-lg border">
+                <h3 className="text-2xl font-bold text-center text-gray-900">
+                  3D elevation and video walkthrough
+                </h3>
+                <p className="text-center text-6xl font-extrabold text-orange-500 mt-4">
+                  ₹4999
+                </p>
+                <p className="text-center text-lg font-semibold text-gray-500">
+                  1
+                </p>
+                <ul className="mt-6 space-y-3 text-gray-600">
+                  <li className="flex items-start">
+                    <span>1-Model provided only on given refrence.</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span>
+                      2-Editing of designing and colour combination provided
+                      upto satisfaction.
+                    </span>
+                  </li>
+                  <li className="flex items-start">
+                    <span>3-Delivery in 24 hours</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <span>correction in 24 hours</span>
+                  </li>
+                </ul>
+                <p className="text-center text-sm font-semibold text-gray-500 mt-2">
+                  Built-up Area
+                </p>
+              </div>
+            </div>
           </div>
-          <div>
-            <label htmlFor="whatsappNumber" className={formStyles.label}>
-              WhatsApp Number
-            </label>
-            <input
-              type="tel"
-              id="whatsappNumber"
-              name="whatsappNumber"
-              className={formStyles.input}
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="country" className={formStyles.label}>
-              Country
-            </label>
-            <input
-              type="text"
-              id="country"
-              name="country"
-              className={formStyles.input}
-              defaultValue="India"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="projectScope" className={formStyles.label}>
-              Project Scope (e.g., Number of Floors)
-            </label>
-            <input
-              type="text"
-              id="projectScope"
-              name="projectScope"
-              className={formStyles.input}
-              placeholder="e.g., G+1, 2000 sqft"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="description" className={formStyles.label}>
-              Describe your Vision
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              placeholder="e.g., I want to showcase the flow from the living room..."
-              className={formStyles.textarea}
-              rows={4}
-            ></textarea>
-          </div>
-          <div>
-            <label className={formStyles.label}>
-              Upload Existing Plans (Optional)
-            </label>
-            <input
-              type="file"
-              name="referenceFile"
-              className={formStyles.fileInput}
-            />
-          </div>
-        </RequestPageLayout>
-      </form>
+        </div>
+      </div>
+      {/* --- **END: UPDATED SECTION** --- */}
+
       <div className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
@@ -269,7 +381,6 @@ const ThreeDWalkthroughPage = () => {
                   const buyNowLink = video.productLink
                     ? `/product/${video.productLink._id}`
                     : "/products";
-
                   return (
                     <div
                       key={video._id}
@@ -315,7 +426,6 @@ const ThreeDWalkthroughPage = () => {
                         >
                           Watch Video
                         </button>
-
                         <div className="mt-auto pt-4">
                           <Link to={buyNowLink} className="w-full block">
                             <Button className="w-full bg-orange-500 hover:bg-orange-600">

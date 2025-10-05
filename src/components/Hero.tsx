@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
@@ -39,6 +39,7 @@ const Hero = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
+  const searchContainerRef = useRef(null);
 
   const { products, listStatus } = useSelector(
     (state: RootState) => state.products
@@ -46,12 +47,46 @@ const Hero = () => {
 
   const [selectedCategory, setSelectedCategory] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
 
   useEffect(() => {
     if (listStatus === "idle") {
       dispatch(fetchProducts({}));
     }
   }, [dispatch, listStatus]);
+
+  // --- START: Live Search Logic ---
+  useEffect(() => {
+    if (searchTerm.length > 1) {
+      const filtered = products
+        .filter(
+          (product) =>
+            product.plotSize &&
+            product.plotSize.toLowerCase().startsWith(searchTerm.toLowerCase())
+        )
+        .slice(0, 5); // Show top 5 suggestions
+      setSuggestions(filtered);
+    } else {
+      setSuggestions([]);
+    }
+  }, [searchTerm, products]);
+
+  // Click outside handler to close suggestions
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target)
+      ) {
+        setSuggestions([]);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [searchContainerRef]);
+  // --- END: Live Search Logic ---
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -62,22 +97,29 @@ const Hero = () => {
 
   const uniqueCategories = useMemo(() => {
     if (!products || products.length === 0) return [];
-    const categories = new Set(
-      products.map((product) => product.category).filter(Boolean)
+    // Using a Set to get unique plot sizes for suggestions
+    const plotSizes = new Set(
+      products.map((product) => product.plotSize).filter(Boolean)
     );
-    return Array.from(categories).sort();
+    return Array.from(plotSizes).sort();
   }, [products]);
 
   const handleSearch = () => {
     const queryParams = new URLSearchParams();
+    // Use selectedCategory if available, otherwise it can be ignored
     if (selectedCategory) queryParams.append("category", selectedCategory);
     if (searchTerm) queryParams.append("search", searchTerm);
+    setSuggestions([]); // Close suggestions on search
     navigate(`/products?${queryParams.toString()}`);
   };
 
+  const handleSuggestionClick = (suggestion) => {
+    setSearchTerm(suggestion.plotSize);
+    setSuggestions([]);
+    navigate(`/products?search=${suggestion.plotSize}`);
+  };
+
   return (
-    // --- Responsive Height ---
-    // Desktop: h-screen, Mobile: h-[85vh] (85% of viewport height)
     <section className="relative h-[85vh] min-h-[600px] md:h-screen md:min-h-[700px] flex items-center justify-center text-white overflow-hidden">
       {/* Background Image Slider */}
       <div className="absolute inset-0">
@@ -98,7 +140,6 @@ const Hero = () => {
 
       {/* Hero Content */}
       <div className="relative z-10 text-center max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8">
-        {/* --- Responsive Text Size --- */}
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 animate-slide-up">
           Find Your Perfect
           <span
@@ -115,7 +156,6 @@ const Hero = () => {
           Discover amazing architectural designs for your dream home
         </p>
 
-        {/* Explore Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -131,10 +171,10 @@ const Hero = () => {
 
         {/* --- Responsive Search Bar --- */}
         <div
-          className="bg-white rounded-2xl p-3 sm:p-4 shadow-large max-w-2xl w-full mx-auto animate-scale-in"
+          ref={searchContainerRef}
+          className="bg-white rounded-2xl p-3 sm:p-4 shadow-large max-w-2xl w-full mx-auto animate-scale-in relative"
           style={{ animationDelay: "0.9s" }}
         >
-          {/* Mobile: flex-col, Desktop: flex-row */}
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <div className="flex-1">
               <Select
@@ -159,13 +199,46 @@ const Hero = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex-1">
+            <div className="flex-1 relative">
               <Input
-                placeholder="Search by plot size e.g., 21x30"
+                placeholder="Search by plot size e.g., 21x"
                 className="border-0 focus:ring-2 focus:ring-primary text-primary-gray transition-all duration-300 hover:bg-primary/5"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                autoComplete="off"
               />
+              {/* --- Suggestions Dropdown --- */}
+              <AnimatePresence>
+                {suggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg z-20 text-left"
+                  >
+                    <ul className="py-2">
+                      {suggestions.map((s) => (
+                        <li
+                          key={s._id}
+                          className="px-4 py-2 cursor-pointer text-gray-700 hover:bg-gray-100"
+                          onClick={() => handleSuggestionClick(s)}
+                        >
+                          {s.plotSize} -{" "}
+                          <span className="text-sm text-gray-500">
+                            {s.name}
+                          </span>
+                        </li>
+                      ))}
+                      <li
+                        className="px-4 py-3 cursor-pointer text-primary font-semibold hover:bg-gray-100 border-t"
+                        onClick={handleSearch}
+                      >
+                        See all results for "{searchTerm}"
+                      </li>
+                    </ul>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
             <Button
               className="btn-primary w-full sm:w-auto sm:px-8 group"
@@ -177,11 +250,11 @@ const Hero = () => {
           </div>
         </div>
 
-        {/* Animated Stats */}
+        {/* --- Animated Stats (UPDATED) --- */}
         <div className="grid grid-cols-3 gap-4 md:gap-8 mt-12 max-w-lg mx-auto">
-          <AnimatedStat end={500} suffix="+" label="House Plans" />
-          <AnimatedStat end={50} suffix="k+" label="Happy Customers" />
-          <AnimatedStat end={15} suffix="+" label="Years Experience" />
+          <AnimatedStat end={1000} suffix="+" label="House Plans" />
+          <AnimatedStat end={1000} suffix="+" label="Happy Customers" />
+          <AnimatedStat end={10} suffix="+" label="Years Experience" />
         </div>
       </div>
     </section>

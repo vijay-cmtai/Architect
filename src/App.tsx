@@ -10,7 +10,7 @@ import { store } from "./lib/store";
 import ScrollToTop from "@/components/ScrollToTop";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// --- सभी पृष्ठों का आयात ---
+// --- Public Pages Imports ---
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
@@ -46,12 +46,17 @@ import RefundPolicy from "./pages/RefundPolicy";
 import ThreeDWalkthroughPage from "./pages/ThreeDVideoWalkthorugh";
 import ProfessionalProductDetail from "./pages/ProfessionalProduct";
 import GalleryPage from "./pages/GalleryPage";
+import OrderSuccessPage from "./pages/OrderSuccessPage";
+
+// --- User Dashboard Imports ---
 import DashboardLayout from "./pages/Userdashboard/DashboardLayout";
 import DashboardPage from "./pages/Userdashboard/DashboardPage";
 import OrdersPage from "./pages/Userdashboard/OrdersPage";
 import DownloadsPage from "./pages/Userdashboard/DownloadsPage";
 import AddressesPage from "./pages/Userdashboard/AddressesPage";
 import AccountDetailsPage from "./pages/Userdashboard/AccountDetailsPage";
+
+// --- Admin Dashboard Imports ---
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AllProductsPage from "./pages/admin/products/AllProductsPage";
@@ -75,15 +80,30 @@ import ManageGalleryPage from "./pages/admin/ManageGalleryPage";
 import VideoUploadPage from "./pages/admin/VideoUploadPage";
 import PackageEditPage from "./pages/admin/packages/PackageEditPage";
 import PackageListPage from "./pages/admin/packages/PackageListPage";
+import SellerInquirypage from "./pages/admin/sellerEnquirypage";
+
+// --- Professional Dashboard Imports ---
 import ProfessionalLayout from "./pages/professional/ProfessionalLayout";
 import ProfessionalDashboardPage from "./pages/professional/DashboardPage";
 import MyProductsPage from "./pages/professional/MyProductsPage";
 import AddProductPageProf from "./pages/professional/AddProductPage";
 import ProfilePageProf from "./pages/professional/ProfilePage";
 import ProfessionalOrdersPage from "./pages/professional/OrdersPage";
-import OrderSuccessPage from "./pages/OrderSuccessPage";
+
+// --- Contexts and Components ---
 import { CurrencyProvider } from "./contexts/CurrencyContext";
 import FloatingCurrencySwitcher from "./components/FloatingCurrencySwitcher";
+
+// --- SELLER DASHBOARD IMPORTS (YE NAYE HAIN) ---
+import SellerLayout from "./pages/seller/SellerLayout";
+import SellerDashboardPage from "./pages/seller/DashboadPage";
+import SellerProductsPage from "./pages/seller/MyProductpage";
+import SellerAddproduct from "./pages/seller/addProduct";
+import SellerProfilePage from "./pages/seller/profile";
+import SellerInquiryPage from "./pages/seller/SellerInquiriesPage";
+// import SellerProductsPage from "./pages/seller/SellerProductsPage";
+// import SellerOrdersPage from "./pages/seller/SellerOrdersPage";
+// import SellerProfilePage from "./pages/seller/SellerProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -99,6 +119,7 @@ const App = () => (
                 <Sonner />
                 <ScrollToTop />
                 <Routes>
+                  {/* --- PUBLIC ROUTES --- */}
                   <Route path="/" element={<Index />} />
                   <Route path="/products" element={<Products />} />
                   <Route path="/product/:slug" element={<ProductDetail />} />
@@ -112,7 +133,6 @@ const App = () => (
                     path="/order-success/:orderId"
                     element={<OrderSuccessPage />}
                   />
-
                   <Route path="/thank-you" element={<ThankYou />} />
                   <Route path="/services" element={<ServicePage />} />
                   <Route path="/about" element={<AboutUs />} />
@@ -128,7 +148,6 @@ const App = () => (
                   <Route path="/refund-policy" element={<RefundPolicy />} />
                   <Route path="/blogs" element={<BlogsPage />} />
                   <Route path="/blog/:slug" element={<SingleBlogPostPage />} />
-
                   <Route
                     path="/category/:categoryName"
                     element={<BrowseProductsPage />}
@@ -144,7 +163,7 @@ const App = () => (
                     element={<InteriorDesignsPage />}
                   />
                   <Route
-                    path="/construction-products"
+                    path="/house-designs-products"
                     element={<ConstructionProductsPage />}
                   />
                   <Route
@@ -178,6 +197,7 @@ const App = () => (
                   />
                   <Route path="/gallery" element={<GalleryPage />} />
 
+                  {/* --- USER PROTECTED ROUTES --- */}
                   <Route
                     element={
                       <ProtectedRoute allowedRoles={["user", "admin"]} />
@@ -195,6 +215,7 @@ const App = () => (
                     </Route>
                   </Route>
 
+                  {/* --- PROFESSIONAL PROTECTED ROUTES --- */}
                   <Route
                     element={
                       <ProtectedRoute
@@ -220,6 +241,26 @@ const App = () => (
                     </Route>
                   </Route>
 
+                  {/* --- SELLER ROUTES START --- */}
+                  <Route
+                    element={
+                      <ProtectedRoute allowedRoles={["seller", "admin"]} />
+                    }
+                  >
+                    <Route path="/seller" element={<SellerLayout />}>
+                      <Route index element={<SellerDashboardPage />} />
+                      <Route path="products" element={<MyProductsPage />} />
+                      <Route
+                        path="products/add"
+                        element={<SellerAddproduct />}
+                      />
+                      <Route path="profile" element={<SellerProfilePage />} />
+                      <Route path="inquiries" element={<SellerInquiryPage />} />
+                    </Route>
+                  </Route>
+                  {/* --- SELLER ROUTES END --- */}
+
+                  {/* --- ADMIN PROTECTED ROUTES --- */}
                   <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
                     <Route path="/admin" element={<AdminLayout />}>
                       <Route index element={<AdminDashboardPage />} />
@@ -233,6 +274,10 @@ const App = () => (
                       <Route path="users/add" element={<AddNewUserPage />} />
                       <Route path="profile" element={<AdminProfilePage />} />
                       <Route path="gallery" element={<ManageGalleryPage />} />
+                      <Route
+                        path="seller-enquiries"
+                        element={<SellerInquirypage />}
+                      />
                       <Route
                         path="gallery/add"
                         element={<AddGalleryImagePage />}
@@ -277,7 +322,7 @@ const App = () => (
                   </Route>
 
                   {/* --- 404 Not Found Route --- */}
-                  <Route path="*" element={<AllProductsPage />} />
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
                 <FloatingCurrencySwitcher />
               </TooltipProvider>

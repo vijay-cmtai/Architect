@@ -1,4 +1,4 @@
-// lib/features/users/userSlice.js
+// File: lib/features/users/userSlice.js
 
 import axios from "axios";
 import {
@@ -104,7 +104,6 @@ export const registerUser = createAsyncThunk<UserInfo, FormData>(
         userData,
         config
       );
-      // Let the reducer handle localStorage
       return data;
     } catch (error: any) {
       return rejectWithValue(
@@ -121,7 +120,6 @@ export const loginUser = createAsyncThunk<
   try {
     const config = { headers: { "Content-Type": "application/json" } };
     const { data } = await axios.post(`${API_URL}/login`, userData, config);
-    // Let the reducer handle localStorage
     return data;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "Login failed");
@@ -148,7 +146,6 @@ export const updateProfile = createAsyncThunk<
     };
     const { data } = await axios.put(`${API_URL}/${userId}`, formData, config);
     const updatedUserInfo = { ...state.user.userInfo, ...data };
-    // Let the reducer handle localStorage
     return updatedUserInfo;
   } catch (error: any) {
     return rejectWithValue(
@@ -305,25 +302,21 @@ const userSlice = createSlice({
         localStorage.setItem("userInfo", JSON.stringify(action.payload));
       })
       .addCase(registerUser.rejected, actionRejected)
+
       .addCase(loginUser.pending, actionPending)
+      // --- YAHAN BADLAAV KIYA GAYA HAI ---
       .addCase(
         loginUser.fulfilled,
         (state, action: PayloadAction<UserInfo>) => {
-          const user = action.payload;
-          if (user.role === "seller" || user.role === "Contractor") {
-            state.actionStatus = "failed";
-            state.error =
-              "Access denied. This account type cannot log in here.";
-            state.userInfo = null;
-            localStorage.removeItem("userInfo");
-          } else {
-            state.actionStatus = "succeeded";
-            state.userInfo = user;
-            localStorage.setItem("userInfo", JSON.stringify(user));
-          }
+          // Ab yeh sabhi roles ke liye kaam karega.
+          // Backend ab pending users ko handle kar raha hai.
+          state.actionStatus = "succeeded";
+          state.userInfo = action.payload;
+          localStorage.setItem("userInfo", JSON.stringify(action.payload));
         }
       )
       .addCase(loginUser.rejected, actionRejected)
+
       .addCase(updateProfile.pending, actionPending)
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.actionStatus = "succeeded";
