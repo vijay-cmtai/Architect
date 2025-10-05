@@ -34,6 +34,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -44,9 +51,20 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Link } from "react-router-dom"; // Link import करें
+
+type OrderItem = {
+  product?: string;
+  productId?: any;
+  name: string;
+  qty?: number;
+  quantity?: number;
+  price: number;
+  image?: string;
+  planFile?: string[];
+};
 
 type Order = {
   _id: string;
@@ -54,10 +72,12 @@ type Order = {
     name: string;
     email: string;
   };
+  orderItems?: OrderItem[];
   createdAt: string;
   totalPrice: number;
   isPaid: boolean;
   paymentMethod: string;
+  paidAt?: string;
 };
 
 const AdminOrdersPage: React.FC = () => {
@@ -68,6 +88,8 @@ const AdminOrdersPage: React.FC = () => {
 
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -111,6 +133,26 @@ const AdminOrdersPage: React.FC = () => {
   const handleMarkAsPaid = (orderId: string) => {
     setSelectedOrderId(orderId);
     dispatch(markOrderAsPaidAdmin(orderId));
+  };
+
+  const handleViewDetails = (order: Order) => {
+    setSelectedOrder(order);
+    setIsDetailDialogOpen(true);
+  };
+
+  const handleDownloadFile = (fileUrl: string, fileName: string) => {
+    try {
+      const link = document.createElement("a");
+      link.href = fileUrl;
+      link.download = fileName;
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success(`Downloading ${fileName}`);
+    } catch (err) {
+      toast.error("Failed to download file");
+    }
   };
 
   if (status === "loading") {
@@ -180,9 +222,7 @@ const AdminOrdersPage: React.FC = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onSelect={() =>
-                            alert(`Viewing details for order ${order._id}`)
-                          }
+                          onSelect={() => handleViewDetails(order)}
                         >
                           <Eye className="mr-2 h-4 w-4" />
                           View Details
@@ -244,6 +284,275 @@ const AdminOrdersPage: React.FC = () => {
         </div>
       )}
 
+      {/* Order Details Dialog */}
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">
+              Order Details
+            </DialogTitle>
+            <DialogDescription>
+              Order ID: {selectedOrder?._id}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedOrder && (
+            <div className="space-y-6 mt-4">
+              {/* Customer Info */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-lg mb-3 text-gray-800">
+                  Customer Information
+                </h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Name:</span>
+                    <span className="font-medium">
+                      {selectedOrder.user?.name || "Guest"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Email:</span>
+                    <span className="font-medium">
+                      {selectedOrder.user?.email || "N/A"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-lg mb-4 text-gray-800">
+                  Order Items
+                </h3>
+                <div className="space-y-4">
+                  {selectedOrder.orderItems &&
+                  selectedOrder.orderItems.length > 0 ? (
+                    selectedOrder.orderItems.map((item, index) => {
+                      const itemQty = item.qty || item.quantity || 1;
+                      const itemPrice = item.price || 0;
+                      const itemTotal = itemQty * itemPrice;
+
+                      // Get planFile from multiple possible sources
+                      let planFiles = [];
+
+                      // First check if planFile exists directly on item
+                      if (
+                        item.planFile &&
+                        Array.isArray(item.planFile) &&
+                        item.planFile.length > 0
+                      ) {
+                        planFiles = item.planFile;
+                      }
+                      // Then check in populated productId
+                      else if (
+                        item.productId?.planFile &&
+                        Array.isArray(item.productId.planFile) &&
+                        item.productId.planFile.length > 0
+                      ) {
+                        planFiles = item.productId.planFile;
+                      }
+
+                      // If no plan files, use image as fallback
+                      if (planFiles.length === 0 && item.image) {
+                        planFiles = [item.image];
+                      }
+
+                      console.log(
+                        "Order Item:",
+                        item.name,
+                        "Files to Download:",
+                        planFiles
+                      );
+
+                      return (
+                        <div
+                          key={index}
+                          className="bg-white p-4 rounded-lg border border-gray-200"
+                        >
+                          <div className="flex items-start gap-4">
+                            {item.image && (
+                              <img
+                                src={item.image}
+                                alt={item.name}
+                                className="w-20 h-20 object-cover rounded border"
+                              />
+                            )}
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900">
+                                {item.name}
+                              </h4>
+                              <div className="mt-2 space-y-1 text-sm text-gray-600">
+                                <p>
+                                  Quantity:{" "}
+                                  <span className="font-medium">{itemQty}</span>
+                                </p>
+                                <p>
+                                  Price:{" "}
+                                  <span className="font-medium">
+                                    ₹{itemPrice.toLocaleString()}
+                                  </span>
+                                </p>
+                                <p className="text-base font-semibold text-gray-900">
+                                  Total: ₹{itemTotal.toLocaleString()}
+                                </p>
+                              </div>
+
+                              {/* Download Buttons for Plan Files or Image */}
+                              {planFiles.length > 0 ? (
+                                <div className="mt-3 space-y-2">
+                                  <p className="text-xs font-semibold text-teal-700 uppercase tracking-wide">
+                                    📥 Available Downloads:
+                                  </p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {planFiles.map((fileUrl, fileIndex) => {
+                                      if (!fileUrl) return null;
+
+                                      const fileName =
+                                        fileUrl
+                                          .split("/")
+                                          .pop()
+                                          ?.split("?")[0] ||
+                                        `File-${fileIndex + 1}`;
+                                      const fileExt =
+                                        fileName
+                                          .split(".")
+                                          .pop()
+                                          ?.toUpperCase() || "FILE";
+
+                                      // Check if this is image fallback (no plan file)
+                                      const isImageFallback =
+                                        fileUrl === item.image;
+
+                                      return (
+                                        <Button
+                                          key={fileIndex}
+                                          size="sm"
+                                          variant="outline"
+                                          className={`text-xs h-9 px-3 ${
+                                            isImageFallback
+                                              ? "bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-300 text-blue-700"
+                                              : "bg-gradient-to-r from-teal-50 to-cyan-50 hover:from-teal-100 hover:to-cyan-100 border-teal-300 text-teal-700"
+                                          } font-semibold shadow-sm transition-all`}
+                                          onClick={() =>
+                                            handleDownloadFile(
+                                              fileUrl,
+                                              fileName
+                                            )
+                                          }
+                                        >
+                                          <Download className="w-4 h-4 mr-1.5" />
+                                          {isImageFallback
+                                            ? `Download Image (${fileExt})`
+                                            : `Download ${fileExt}`}
+                                        </Button>
+                                      );
+                                    })}
+                                  </div>
+                                  {planFiles[0] === item.image && (
+                                    <p className="text-xs text-blue-600 italic flex items-center">
+                                      ℹ️ Plan file not available, showing
+                                      product image for download
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded">
+                                  <p className="text-xs text-amber-800 flex items-center">
+                                    <span className="mr-2">⚠️</span>
+                                    No downloadable files or images available
+                                    for this item
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-gray-500 text-sm text-center py-4">
+                      No items in this order
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Payment Summary */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-lg mb-3 text-gray-800">
+                  Payment Information
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Payment Method:</span>
+                    <span className="font-semibold text-gray-900">
+                      {selectedOrder.paymentMethod}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Payment Status:</span>
+                    {selectedOrder.isPaid ? (
+                      <Badge className="bg-green-100 text-green-800 px-3 py-1">
+                        Paid
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-red-100 text-red-800 px-3 py-1">
+                        Not Paid
+                      </Badge>
+                    )}
+                  </div>
+                  {selectedOrder.paidAt && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-600">Paid At:</span>
+                      <span className="font-medium">
+                        {new Date(selectedOrder.paidAt).toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">Order Date:</span>
+                    <span className="font-medium">
+                      {new Date(selectedOrder.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pt-3 border-t border-gray-300">
+                    <span className="text-lg font-bold text-gray-900">
+                      Total Amount:
+                    </span>
+                    <span className="text-2xl font-bold text-teal-600">
+                      ₹{selectedOrder.totalPrice.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                {!selectedOrder.isPaid && (
+                  <Button
+                    onClick={() => {
+                      handleMarkAsPaid(selectedOrder._id);
+                      setIsDetailDialogOpen(false);
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Mark as Paid
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDetailDialogOpen(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -257,7 +566,6 @@ const AdminOrdersPage: React.FC = () => {
             <AlertDialogCancel onClick={() => setSelectedOrderId(null)}>
               Cancel
             </AlertDialogCancel>
-            {/* ✨ Attractive Destructive Button ✨ */}
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-red-600 text-white hover:bg-red-700 focus:ring-red-500"
