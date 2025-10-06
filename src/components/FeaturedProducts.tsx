@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react"; // ++ ADD useState ++
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
 import { motion } from "framer-motion";
@@ -12,7 +12,9 @@ import {
   ChevronRight,
   Youtube,
   Lock,
+  X, // ++ ADD X icon for modal close button ++
 } from "lucide-react";
+import YouTube from "react-youtube"; // ++ ADD YouTube component ++
 import { Button } from "@/components/ui/button";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { Product, fetchProducts } from "@/lib/features/products/productSlice";
@@ -22,7 +24,7 @@ import house3 from "@/assets/house-3.jpg";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import DisplayPrice from "@/components/DisplayPrice";
 
-// --- START: SLUGIFY FUNCTION ADD KAREIN ---
+// --- START: SLUGIFY FUNCTION ---
 const slugify = (text: any) => {
   if (!text) return "";
   return text
@@ -33,7 +35,52 @@ const slugify = (text: any) => {
     .replace(/[^\w\-]+/g, "")
     .replace(/\-\-+/g, "-");
 };
-// --- END: SLUGIFY FUNCTION ADD KAREIN ---
+
+// --- START: HELPER FUNCTION TO GET YOUTUBE ID FROM URL ---
+const getYouTubeId = (url: string): string | null => {
+  if (!url) return null;
+  const regExp =
+    /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2].length === 11 ? match[2] : null;
+};
+
+// --- START: VIDEO MODAL COMPONENT ---
+const VideoModal = ({
+  videoId,
+  onClose,
+}: {
+  videoId: string | null;
+  onClose: () => void;
+}) => {
+  if (!videoId) return null;
+  const opts = {
+    height: "100%",
+    width: "100%",
+    playerVars: { autoplay: 1, controls: 1 },
+  };
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-4xl aspect-video bg-black rounded-lg shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute -top-3 -right-3 h-10 w-10 bg-white rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 z-10"
+          aria-label="Close video player"
+        >
+          <X size={24} />
+        </button>
+        <YouTube videoId={videoId} opts={opts} className="w-full h-full" />
+      </div>
+    </div>
+  );
+};
+// --- END: VIDEO MODAL COMPONENT ---
 
 const FeaturedProducts = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -42,6 +89,9 @@ const FeaturedProducts = () => {
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { symbol, rate } = useCurrency();
+
+  // ++ ADD STATE FOR VIDEO MODAL ++
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
   const { products, listStatus, error } = useSelector(
     (state: RootState) => state.products
@@ -97,6 +147,12 @@ const FeaturedProducts = () => {
 
   return (
     <section className="py-20 bg-background">
+      {/* ++ RENDER THE VIDEO MODAL ++ */}
+      <VideoModal
+        videoId={playingVideoId}
+        onClose={() => setPlayingVideoId(null)}
+      />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -192,6 +248,9 @@ const FeaturedProducts = () => {
                       parseFloat(String(regularPrice));
                   const displayPrice = isSale ? salePrice : regularPrice;
 
+                  // ++ GET YOUTUBE VIDEO ID FOR THE BUTTON ++
+                  const videoId = getYouTubeId(product.youtubeLink);
+
                   return (
                     <motion.div
                       key={product._id}
@@ -226,7 +285,11 @@ const FeaturedProducts = () => {
                         <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => handleWishlistToggle(product)}
-                            className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-foreground hover:text-primary hover:scale-110"}`}
+                            className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${
+                              isWishlisted
+                                ? "text-red-500 scale-110"
+                                : "text-foreground hover:text-primary hover:scale-110"
+                            }`}
                             aria-label="Toggle Wishlist"
                           >
                             <Heart
@@ -234,16 +297,15 @@ const FeaturedProducts = () => {
                               fill={isWishlisted ? "currentColor" : "none"}
                             />
                           </button>
-                          {product.youtubeLink && (
-                            <a
-                              href={product.youtubeLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
+                          {/* ++ FIX: Changed from <a> to <button> to open modal ++ */}
+                          {videoId && (
+                            <button
+                              onClick={() => setPlayingVideoId(videoId)}
                               className="w-9 h-9 bg-red-500/90 rounded-full flex items-center justify-center shadow-sm text-white hover:bg-red-600"
+                              aria-label="Watch video"
                             >
                               <Youtube className="w-5 h-5" />
-                            </a>
+                            </button>
                           )}
                         </div>
                       </div>
@@ -318,7 +380,9 @@ const FeaturedProducts = () => {
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <Link
-                            to={`/product/${slugify(productName)}-${product._id}`}
+                            to={`/product/${slugify(productName)}-${
+                              product._id
+                            }`}
                           >
                             <Button
                               size="sm"
@@ -329,7 +393,11 @@ const FeaturedProducts = () => {
                           </Link>
                           <Button
                             size="sm"
-                            className={`w-full text-white text-sm h-10 ${hasPurchased ? "bg-teal-500 hover:bg-teal-600" : "bg-gray-400 cursor-not-allowed"}`}
+                            className={`w-full text-white text-sm h-10 ${
+                              hasPurchased
+                                ? "bg-teal-500 hover:bg-teal-600"
+                                : "bg-gray-400 cursor-not-allowed"
+                            }`}
                             onClick={() => handleDownload(product)}
                             disabled={!hasPurchased}
                           >
