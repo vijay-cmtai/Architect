@@ -21,7 +21,7 @@ import {
   Gem,
   PenSquare,
   Image,
-  Package, // ✨ पैकेज के लिए आइकन इम्पोर्ट करें
+  Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/features/users/userSlice";
@@ -33,6 +33,7 @@ const mainLinks = [
   { name: "Reports", path: "/admin/reports", icon: BarChart2 },
   { name: "Profile", path: "/admin/profile", icon: UserCircle },
   { name: "Videos", path: "/admin/addvideos", icon: PlusCircle },
+  { name: "Media", path: "/admin/media", icon: FileText },
   {
     name: "Seller Enquiries",
     path: "/admin/seller-enquiries",

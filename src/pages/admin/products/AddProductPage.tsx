@@ -848,6 +848,7 @@ const AddProductPage: React.FC = () => {
                       <SelectItem value="Construction Products">
                         Construction Products
                       </SelectItem>
+                      <SelectItem value="Downloads">Downloads</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

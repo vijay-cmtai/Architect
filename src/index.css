@@ -8,36 +8,24 @@
 @layer base {
   :root {
     /* Architecture E-commerce Color Palette */
-    --background: 173 45% 96%; /* THIS IS THE FIX: Soft Teal Background */
+    --background: 173 45% 96%;
     --foreground: 215 15% 15%;
-
-    /* Primary Orange Theme */
-    --primary: 24 85% 57%; /* Warm Orange #F28A2E */
-    --primary-dark: 21 75% 51%; /* Deep Orange #E36F1E */
+    --primary: 24 85% 57%;
+    --primary-dark: 21 75% 51%;
     --primary-foreground: 0 0% 100%;
-
-    /* Accent Teal */
-    --accent: 173 58% 39%; /* Teal #15B8A6 */
+    --accent: 173 58% 39%;
     --accent-light: 173 58% 49%;
     --accent-foreground: 0 0% 100%;
-
-    /* Background Variants */
-    --background-soft: 173 45% 96%; /* Soft Teal #ECF8F7 */
+    --background-soft: 173 45% 96%;
     --background-muted: 173 25% 98%;
-
-    /* Text Colors */
-    --text-primary: 215 15% 15%; /* Dark Gray #22252A */
-    --text-secondary: 215 10% 35%; /* Medium Gray #55585E */
+    --text-primary: 215 15% 15%;
+    --text-secondary: 215 10% 35%;
     --text-muted: 215 8% 50%;
-
-    /* Card & UI Elements */
     --card: 0 0% 100%;
     --card-foreground: 215 15% 15%;
     --border: 173 25% 90%;
     --input: 173 25% 94%;
     --ring: 24 85% 57%;
-
-    /* Gradients */
     --gradient-orange: linear-gradient(
       135deg,
       hsl(24 85% 57%),
@@ -53,20 +41,13 @@
       hsl(24 85% 57% / 0.9),
       hsl(21 75% 51% / 0.9)
     );
-
-    /* Shadows */
     --shadow-soft: 0 2px 8px hsl(215 15% 15% / 0.1);
     --shadow-medium: 0 4px 16px hsl(215 15% 15% / 0.15);
     --shadow-large: 0 8px 32px hsl(215 15% 15% / 0.2);
     --shadow-orange: 0 4px 16px hsl(24 85% 57% / 0.3);
-
-    /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-
     --radius: 0.75rem;
-
-    /* Additional UI Elements */
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
@@ -75,8 +56,6 @@
     --destructive-foreground: 210 40% 98%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-
-    /* Sidebar */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -125,20 +104,16 @@
 
   body {
     @apply bg-background text-foreground font-poppins antialiased;
-
-    /* --- यह कोड टेक्स्ट को सेलेक्ट/कॉपी होने से रोकता है --- */
-    -webkit-user-select: none; /* Safari */
-    -moz-user-select: none; /* Firefox */
-    -ms-user-select: none; /* IE 10+ */
-    user-select: none; /* Standard syntax */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
   }
 
-  /* --- यह कोड इमेज पर राइट-क्लिक को रोकता है --- */
   img {
     pointer-events: none;
   }
 
-  /* --- यह कोड प्रिंटिंग (Ctrl+P) को रोकता है --- */
   @media print {
     body * {
       display: none !important;
@@ -154,6 +129,114 @@
   }
 }
 
+body.screenshot-protection {
+  position: relative;
+}
+
+/* Blur overlay - initially hidden */
+body.screenshot-protection::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 9998;
+  transition: all 0.2s ease-out;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  visibility: hidden;
+}
+
+/* Active blur state */
+body.screenshot-protection-active::before {
+  opacity: 1;
+  visibility: visible;
+  backdrop-filter: blur(25px) brightness(0.5) saturate(0.5);
+  -webkit-backdrop-filter: blur(25px) brightness(0.5) saturate(0.5);
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* Warning message - initially hidden */
+body.screenshot-protection::after {
+  content: "⚠️ PROTECTED CONTENT ⚠️";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  font-size: 2rem;
+  font-weight: 900;
+  color: #ef4444;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  user-select: none;
+  -webkit-user-select: none;
+  letter-spacing: 2px;
+  text-align: center;
+  padding: 1.5rem 3rem;
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+}
+
+/* Active warning state */
+body.screenshot-protection-active::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  25% { transform: translate(-48%, -50%) scale(1.02); }
+  50% { transform: translate(-52%, -50%) scale(1.02); }
+  75% { transform: translate(-48%, -50%) scale(1.02); }
+}
+
+/* Extra protection layers */
+body.screenshot-protection img,
+body.screenshot-protection video {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  pointer-events: auto !important;
+  -webkit-user-drag: none !important;
+  -khtml-user-drag: none !important;
+  -moz-user-drag: none !important;
+  -o-user-drag: none !important;
+}
+
+/* Prevent text selection except in inputs */
+body.screenshot-protection * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Allow input fields and buttons to work properly */
+body.screenshot-protection input,
+body.screenshot-protection textarea,
+body.screenshot-protection button,
+body.screenshot-protection a,
+body.screenshot-protection [contenteditable="true"] {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+  pointer-events: auto !important;
+}
 @layer components {
   /* Architecture E-commerce Component Styles */
   .btn-primary {
@@ -408,4 +491,14 @@ html {
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--primary-dark));
+}
+#screenshot-blackout-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000;
+  z-index: 99999;
+  display: none;
 }

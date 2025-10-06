@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import { useDispatch, useSelector } from "react-redux";
 
 import {
   Dialog,
@@ -54,15 +54,16 @@ interface EditProductModalProps {
   product: Product | null;
 }
 
+// सभी फ़ील्ड्स को वैकल्पिक बनाने के लिए Partial का उपयोग करें
 interface IProductFormData {
-  name: string;
-  description: string;
+  name?: string;
+  description?: string;
   youtubeLink?: string;
-  productNo: string;
-  city: string;
-  plotSize: string;
-  plotArea: number;
-  rooms: number;
+  productNo?: string;
+  city?: string;
+  plotSize?: string;
+  plotArea?: number;
+  rooms?: number;
   bathrooms?: number;
   kitchen?: number;
   floors?: number;
@@ -73,10 +74,10 @@ interface IProductFormData {
   contactName?: string;
   contactEmail?: string;
   contactPhone?: string;
-  price: number;
+  price?: number;
   salePrice?: number;
   taxRate?: number;
-  category: string;
+  category?: string;
 }
 
 interface MultiSelectCountryProps {
@@ -86,7 +87,6 @@ interface MultiSelectCountryProps {
   placeholder: string;
 }
 
-// Static Data
 const countries = [
   { value: "India", label: "India" },
   { value: "Pakistan", label: "Pakistan" },
@@ -256,7 +256,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     handleSubmit,
     reset,
     control,
-    formState: { isSubmitting, errors },
+    formState: { isSubmitting }, // errors हटा दिया गया है क्योंकि required नहीं है
   } = useForm<IProductFormData>();
 
   // State Management
@@ -275,8 +275,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   // Initialize form data when product changes
   useEffect(() => {
     if (product) {
-      // Create a comprehensive defaultValues object for react-hook-form
-      // This handles both standard and imported (JSON/CSV) data formats
       const defaultValues: IProductFormData = {
         name: product.name || product.Name || "",
         description: product.description || product["Short description"] || "",
@@ -300,18 +298,18 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
         seoTitle: product.seo?.title || "",
         seoAltText: product.seo?.altText || "",
         seoDescription: product.seo?.description || "",
-        seoKeywords: product.seo?.keywords || "",
-        contactName: product.contactName || "",
-        contactEmail: product.contactEmail || "",
-        contactPhone: product.contactPhone || "",
+        seoKeywords: Array.isArray(product.seo?.keywords)
+          ? product.seo.keywords.join(", ")
+          : product.seo?.keywords || "",
+        contactName: product.contactDetails?.name || "",
+        contactEmail: product.contactDetails?.email || "",
+        contactPhone: product.contactDetails?.phone || "",
       };
       reset(defaultValues);
 
-      // Set state for controlled components outside of react-hook-form
       setPropertyType(product.propertyType || "");
       setDirection(product.direction || "");
       setPlanType(product.planType || "");
-
       const countries = Array.isArray(product.country)
         ? product.country
         : typeof product.country === "string"
@@ -321,9 +319,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               .filter(Boolean)
           : [];
       setSelectedCountries(countries);
-
       setIsSale(product.isSale || product["Is featured?"] === 1 || false);
-
       const getProductIds = (prodList: any) => {
         if (!prodList) return [];
         if (typeof prodList === "string")
@@ -335,13 +331,10 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           return prodList.map((p) => (typeof p === "string" ? p : p._id));
         return [];
       };
-
       setCrossSell(
         getProductIds(product.crossSellProducts || product["Cross-sells"])
       );
       setUpSell(getProductIds(product.upSellProducts || product.Upsells));
-
-      // Reset file states
       setMainImage(null);
       setGalleryImages([]);
       setPlanFiles([]);
@@ -349,14 +342,12 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     }
   }, [product, reset]);
 
-  // Data processing
   const productOptions = products
     ? products
         .filter((p) => p._id !== product?._id)
         .map((p) => ({ value: p._id, label: p.name || p.Name || "Untitled" }))
     : [];
 
-  // Event Handlers
   const handleGalleryImagesChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -385,33 +376,27 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   const onSubmit = async (data: IProductFormData) => {
     if (!product) return;
 
-    if (selectedCountries.length === 0 || !propertyType || !planType) {
-      toast.error(
-        "Please select at least one Country, a Property Type, and a Plan Type."
-      );
-      return;
-    }
-
     const formData = new FormData();
 
-    // Append all form data
     Object.keys(data).forEach((key) => {
       const value = data[key as keyof IProductFormData];
-      if (value !== undefined && value !== null) {
+      // सिर्फ वही वैल्यू भेजें जो खाली न हो
+      if (value !== undefined && value !== null && value !== "") {
         formData.append(key, String(value));
       }
     });
 
-    // Append state-managed data
-    formData.append("country", selectedCountries.join(","));
-    formData.append("propertyType", propertyType);
-    formData.append("direction", direction);
-    formData.append("planType", planType);
-    formData.append("isSale", String(isSale));
-    formData.append("crossSellProducts", crossSell.join(","));
-    formData.append("upSellProducts", upSell.join(","));
+    if (selectedCountries.length > 0)
+      formData.append("country", selectedCountries.join(","));
+    if (propertyType) formData.append("propertyType", propertyType);
+    if (direction) formData.append("direction", direction);
+    if (planType) formData.append("planType", planType);
 
-    // Append files only if new files are selected
+    formData.append("isSale", String(isSale));
+    if (crossSell.length > 0)
+      formData.append("crossSellProducts", crossSell.join(","));
+    if (upSell.length > 0) formData.append("upSellProducts", upSell.join(","));
+
     if (mainImage) formData.append("mainImage", mainImage);
     if (headerImage) formData.append("headerImage", headerImage);
     galleryImages.forEach((file) => formData.append("galleryImages", file));
@@ -422,7 +407,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
         updateProduct({ productId: product._id, productData: formData })
       ).unwrap();
       toast.success("Product updated successfully!");
-      dispatch(fetchProducts({})); // Refetch products to see updates
+      dispatch(fetchProducts({}));
       onClose();
     } catch (error) {
       toast.error(String(error) || "Failed to update product.");
@@ -444,34 +429,23 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Main Content */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Product Information */}
               <Card>
                 <CardHeader>
                   <CardTitle>Product Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="name">Product Title*</Label>
-                    <Input
-                      id="name"
-                      {...register("name", { required: "Title is required" })}
-                    />
-                    {errors.name && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.name.message}
-                      </p>
-                    )}
+                    <Label htmlFor="name">Product Title</Label>
+                    <Input id="name" {...register("name")} />
                   </div>
                   <div>
                     <Label htmlFor="description">
-                      Description (For H2, H3 tags)*
+                      Description (For H2, H3 tags)
                     </Label>
                     <Controller
                       name="description"
                       control={control}
-                      rules={{ required: "Description is required" }}
                       render={({ field }) => (
                         <ReactQuill
                           theme="snow"
@@ -482,11 +456,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                         />
                       )}
                     />
-                    {errors.description && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.description.message}
-                      </p>
-                    )}
                   </div>
                   <div>
                     <Label htmlFor="youtubeLink">YouTube Video Link</Label>
@@ -502,84 +471,42 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 </CardContent>
               </Card>
 
-              {/* Product Specifications */}
               <Card>
                 <CardHeader>
                   <CardTitle>Product Specifications</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="productNo">Product Number*</Label>
-                    <Input
-                      id="productNo"
-                      {...register("productNo", {
-                        required: "Product No. is required",
-                      })}
-                    />
-                    {errors.productNo && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.productNo.message}
-                      </p>
-                    )}
+                    <Label htmlFor="productNo">Product Number</Label>
+                    <Input id="productNo" {...register("productNo")} />
                   </div>
                   <div>
-                    <Label htmlFor="city">City*</Label>
+                    <Label htmlFor="city">City</Label>
                     <Input
                       id="city"
-                      {...register("city", { required: "City is required" })}
+                      {...register("city")}
                       placeholder="e.g., Mumbai, Delhi"
                     />
-                    {errors.city && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.city.message}
-                      </p>
-                    )}
                   </div>
                   <div>
-                    <Label htmlFor="plotSize">Plot Size*</Label>
-                    <Input
-                      id="plotSize"
-                      {...register("plotSize", {
-                        required: "Plot size is required",
-                      })}
-                    />
-                    {errors.plotSize && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.plotSize.message}
-                      </p>
-                    )}
+                    <Label htmlFor="plotSize">Plot Size</Label>
+                    <Input id="plotSize" {...register("plotSize")} />
                   </div>
                   <div>
-                    <Label htmlFor="plotArea">Plot Area (sqft)*</Label>
+                    <Label htmlFor="plotArea">Plot Area (sqft)</Label>
                     <Input
                       id="plotArea"
                       type="number"
-                      {...register("plotArea", {
-                        required: "Plot area is required",
-                        valueAsNumber: true,
-                      })}
+                      {...register("plotArea", { valueAsNumber: true })}
                     />
-                    {errors.plotArea && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.plotArea.message}
-                      </p>
-                    )}
                   </div>
                   <div>
-                    <Label htmlFor="rooms">Rooms (BHK)*</Label>
+                    <Label htmlFor="rooms">Rooms (BHK)</Label>
                     <Input
                       id="rooms"
                       type="number"
-                      {...register("rooms", {
-                        required: "Rooms count is required",
-                        valueAsNumber: true,
-                      })}
+                      {...register("rooms", { valueAsNumber: true })}
                     />
-                    {errors.rooms && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.rooms.message}
-                      </p>
-                    )}
                   </div>
                   <div>
                     <Label htmlFor="bathrooms">Bathrooms</Label>
@@ -624,18 +551,20 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                     </Select>
                   </div>
                   <div className="md:col-span-3">
-                    <Label htmlFor="country">Country*</Label>
+                    <Label htmlFor="country">Country</Label>
                     <MultiSelectCountry
                       selected={selectedCountries}
                       setSelected={setSelectedCountries}
-                      options={countries}
+                      options={countries.map((c) => ({
+                        value: c.value,
+                        label: c.label,
+                      }))}
                       placeholder="Select countries..."
                     />
                   </div>
                 </CardContent>
               </Card>
 
-              {/* SEO & Marketing */}
               <Card>
                 <CardHeader>
                   <CardTitle>SEO & Marketing</CardTitle>
@@ -701,7 +630,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 </CardContent>
               </Card>
 
-              {/* Contact Information - Show only for Construction Products */}
               {planType === "Construction Products" && (
                 <Card>
                   <CardHeader>
@@ -732,7 +660,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 </Card>
               )}
 
-              {/* Files */}
               <Card>
                 <CardHeader>
                   <CardTitle>Files</CardTitle>
@@ -825,29 +752,19 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               </Card>
             </div>
 
-            {/* Right Column - Sidebar */}
             <div className="lg:col-span-1 space-y-6">
-              {/* Pricing & Tax */}
               <Card>
                 <CardHeader>
                   <CardTitle>Pricing & Tax</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="price">Price (₹)*</Label>
+                    <Label htmlFor="price">Price (₹)</Label>
                     <Input
                       id="price"
                       type="number"
-                      {...register("price", {
-                        required: "Price is required",
-                        valueAsNumber: true,
-                      })}
+                      {...register("price", { valueAsNumber: true })}
                     />
-                    {errors.price && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.price.message}
-                      </p>
-                    )}
                   </div>
                   <div>
                     <Label htmlFor="salePrice">Sale Price (₹)</Label>
@@ -878,14 +795,13 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 </CardContent>
               </Card>
 
-              {/* Organization */}
               <Card>
                 <CardHeader>
                   <CardTitle>Organization</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label>Plan Type*</Label>
+                    <Label>Plan Type</Label>
                     <Select onValueChange={setPlanType} value={planType}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select Plan Type" />
@@ -901,19 +817,19 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                         <SelectItem value="Construction Products">
                           Construction Products
                         </SelectItem>
+                        <SelectItem value="Downloads">Downloads</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label>Category*</Label>
+                    <Label>Category</Label>
                     <Controller
                       name="category"
                       control={control}
-                      rules={{ required: "Category is required" }}
                       render={({ field }) => (
                         <Select
                           onValueChange={field.onChange}
-                          value={field.value} // Use value instead of defaultValue for controlled component
+                          value={field.value}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select a category" />
@@ -928,14 +844,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                         </Select>
                       )}
                     />
-                    {errors.category && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.category.message}
-                      </p>
-                    )}
                   </div>
                   <div>
-                    <Label>Property Type*</Label>
+                    <Label>Property Type</Label>
                     <Select
                       onValueChange={setPropertyType}
                       value={propertyType}
@@ -946,6 +857,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                       <SelectContent>
                         <SelectItem value="Residential">Residential</SelectItem>
                         <SelectItem value="Commercial">Commercial</SelectItem>
+                        <SelectItem value="Rental">Rental</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

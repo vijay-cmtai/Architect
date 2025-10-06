@@ -17,27 +17,16 @@ import {
   Lock,
 } from "lucide-react";
 import { fetchProducts } from "@/lib/features/products/productSlice";
-import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice";
 import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useWishlist } from "@/contexts/WishlistContext";
 import house3 from "@/assets/house-3.jpg";
 import { toast } from "sonner";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import DisplayPrice from "@/components/DisplayPrice";
-import { Textarea } from "@/components/ui/textarea";
-import { submitCustomizationRequest } from "@/lib/features/customization/customizationSlice";
 
 const slugify = (text: any) => {
   if (!text) return "";
@@ -50,37 +39,25 @@ const slugify = (text: any) => {
     .replace(/\-\-+/g, "-");
 };
 
-// --- FILTER SIDEBAR AND STATIC CATEGORIES REMOVED ---
-
 const ProductCard = ({ product, userOrders }: any) => {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { userInfo } = useSelector((state: RootState) => state.user);
   const { symbol, rate } = useCurrency();
 
-  const productName =
-    product.name || product.planName || product.Name || "Untitled Plan";
-
-  const linkTo =
-    product.source === "professional"
-      ? `/professional-plan/${slugify(productName)}-${product._id}`
-      : `/product/${slugify(productName)}-${product._id}`;
-
+  const productName = product.name || product.Name || "Untitled Download";
+  const linkTo = `/product/${slugify(productName)}-${product._id}`;
   const mainImage =
-    product.mainImage ||
-    product.image ||
-    product.Images?.split(",")[0].trim() ||
-    house3;
-  const plotSize = product.plotSize || product["Attribute 1 value(s)"] || "N/A";
-  const plotArea =
-    product.plotArea ||
-    (product["Attribute 2 value(s)"]
-      ? parseInt(String(product["Attribute 2 value(s)"]).replace(/[^0-9]/g, ""))
-      : "N/A");
-  const rooms = product.rooms || product["Attribute 3 value(s)"] || "N/A";
-  const direction =
-    product.direction || product["Attribute 4 value(s)"] || "N/A";
-  const floors = product.floors || product["Attribute 5 value(s)"] || "N/A";
+    product.mainImage || product.Images?.split(",")[0].trim() || house3;
+
+  // --- सभी फ़ील्ड्स को यहाँ जोड़ा गया है ---
+  const plotSize = product.plotSize || "N/A";
+  const plotArea = product.plotArea || "N/A";
+  const rooms = product.rooms || "N/A";
+  const bathrooms = product.bathrooms || "N/A";
+  const kitchen = product.kitchen || "N/A";
+  const floors = product.floors || "N/A";
+  const direction = product.direction || "N/A";
 
   const regularPrice =
     (product.price > 0 ? product.price : product["Regular price"]) ?? 0;
@@ -92,17 +69,6 @@ const ProductCard = ({ product, userOrders }: any) => {
     parseFloat(String(salePrice)) < parseFloat(String(regularPrice));
   const displayPrice = isSale ? salePrice : regularPrice;
 
-  const category =
-    (Array.isArray(product.category)
-      ? product.category[0]
-      : product.category) ||
-    product.Categories?.split(",")[0].trim() ||
-    "House Plan";
-  const city = product.city
-    ? Array.isArray(product.city)
-      ? product.city.join(", ")
-      : product.city
-    : null;
   const isWishlisted = isInWishlist(product._id);
 
   const hasPurchased = useMemo(() => {
@@ -128,7 +94,6 @@ const ProductCard = ({ product, userOrders }: any) => {
       price: regularPrice,
       salePrice: salePrice,
       image: mainImage,
-      size: plotSize,
     };
     if (isWishlisted) {
       removeFromWishlist(product._id);
@@ -144,7 +109,7 @@ const ProductCard = ({ product, userOrders }: any) => {
       return;
     }
     if (!hasPurchased) {
-      toast.error("Please purchase this plan to download it.");
+      toast.error("Please purchase this item to download it.");
       navigate(linkTo);
       return;
     }
@@ -161,8 +126,8 @@ const ProductCard = ({ product, userOrders }: any) => {
       const link = document.createElement("a");
       link.href = fileToDownload;
       const fileExtension =
-        fileToDownload.split(".").pop()?.split("?")[0] || "pdf";
-      const fileName = `ArchHome-${productName.replace(/\s+/g, "-")}.${fileExtension}`;
+        fileToDownload.split(".").pop()?.split("?")[0] || "zip";
+      const fileName = `Download-${productName.replace(/\s+/g, "-")}.${fileExtension}`;
       link.setAttribute("download", fileName);
       document.body.appendChild(link);
       link.click();
@@ -184,7 +149,6 @@ const ProductCard = ({ product, userOrders }: any) => {
               className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
             />
           </div>
-          <div className="absolute inset-2 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md"></div>
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-gray-900/80 text-white text-xs font-bold px-4 py-2 rounded-md shadow-lg text-center">
             <p>{plotSize}</p>
             <p className="text-xs font-normal">
@@ -213,23 +177,16 @@ const ProductCard = ({ product, userOrders }: any) => {
               fill={isWishlisted ? "currentColor" : "none"}
             />
           </button>
-          {product.youtubeLink && (
-            <a
-              href={product.youtubeLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="w-9 h-9 bg-red-500/90 rounded-full flex items-center justify-center shadow-sm text-white hover:bg-red-600"
-            >
-              <Youtube className="w-5 h-5" />
-            </a>
-          )}
         </div>
       </div>
+
+      {/* --- यहाँ नया स्पेसिफिकेशन ग्रिड जोड़ा गया है --- */}
       <div className="p-4 grid grid-cols-3 gap-2 border-t text-center text-sm">
         <div>
           <p className="text-xs text-gray-500">Plot Area</p>
-          <p className="font-bold">{plotArea} sqft</p>
+          <p className="font-bold">
+            {plotArea} {plotArea !== "N/A" && "sqft"}
+          </p>
         </div>
         <div className="bg-teal-50 p-2 rounded-md">
           <p className="text-xs text-gray-500">Rooms</p>
@@ -237,11 +194,11 @@ const ProductCard = ({ product, userOrders }: any) => {
         </div>
         <div className="bg-teal-50 p-2 rounded-md">
           <p className="text-xs text-gray-500">Bathrooms</p>
-          <p className="font-bold">{product.bathrooms || "N/A"}</p>
+          <p className="font-bold">{bathrooms}</p>
         </div>
         <div>
           <p className="text-xs text-gray-500">Kitchen</p>
-          <p className="font-bold">{product.kitchen || "N/A"}</p>
+          <p className="font-bold">{kitchen}</p>
         </div>
         <div>
           <p className="text-xs text-gray-500">Floors</p>
@@ -252,23 +209,15 @@ const ProductCard = ({ product, userOrders }: any) => {
           <p className="font-bold">{direction}</p>
         </div>
       </div>
+
       <div className="p-4 border-t">
-        <p className="text-xs text-gray-500 uppercase">{category}</p>
-        <div className="mt-2 text-xs text-gray-600 space-y-1">
-          {product.productNo && (
-            <div className="flex justify-between items-center">
-              <span className="font-semibold">Product No:</span>
-              <span>{product.productNo}</span>
-            </div>
-          )}
-          {city && (
-            <div className="flex justify-between items-center">
-              <span className="font-semibold">City:</span>
-              <span className="text-right font-bold text-teal-700">{city}</span>
-            </div>
-          )}
-        </div>
-        <h3 className="text-lg font-bold text-teal-800 mt-1 truncate">
+        <p className="text-xs text-gray-500 uppercase">
+          {product.category?.[0] || "Download"}
+        </p>
+        <h3
+          className="text-lg font-bold text-gray-800 mt-1 truncate"
+          title={productName}
+        >
           {productName}
         </h3>
         <div className="flex items-baseline gap-2 mt-1 flex-wrap">
@@ -280,21 +229,6 @@ const ProductCard = ({ product, userOrders }: any) => {
           <span className="text-xl font-bold text-gray-800">
             <DisplayPrice inrPrice={parseFloat(String(displayPrice))} />
           </span>
-          {isSale &&
-            parseFloat(String(regularPrice)) > 0 &&
-            parseFloat(String(displayPrice)) > 0 && (
-              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-semibold">
-                SAVE {symbol}
-                {(
-                  (parseFloat(String(regularPrice)) -
-                    parseFloat(String(displayPrice))) *
-                  rate
-                ).toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </span>
-            )}
         </div>
       </div>
       <div className="p-4 pt-0 mt-auto space-y-2">
@@ -303,7 +237,7 @@ const ProductCard = ({ product, userOrders }: any) => {
             variant="outline"
             className="w-full bg-gray-800 text-white hover:bg-gray-700"
           >
-            Read more
+            View Details
           </Button>
         </Link>
         <Button
@@ -314,7 +248,7 @@ const ProductCard = ({ product, userOrders }: any) => {
           {hasPurchased ? (
             <>
               <Download className="mr-2 h-4 w-4" />
-              Download
+              Download Now
             </>
           ) : (
             <>
@@ -328,259 +262,33 @@ const ProductCard = ({ product, userOrders }: any) => {
   );
 };
 
-const CountryCustomizationForm = ({ countryName }: any) => {
-  const dispatch: AppDispatch = useDispatch();
-  const { actionStatus } = useSelector(
-    (state: RootState) => state.customization
-  );
-  const [formData, setFormData] = useState({
-    country: countryName || "",
-    name: "",
-    email: "",
-    whatsappNumber: "",
-    width: "",
-    length: "",
-    description: "",
-  });
-  const [referenceFile, setReferenceFile] = useState<File | null>(null);
-
-  useEffect(() => {
-    setFormData((prev) => ({ ...prev, country: countryName || "" }));
-  }, [countryName]);
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setReferenceFile(e.target.files[0]);
-    }
-  };
-
-  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const submitData = new FormData();
-    Object.keys(formData).forEach((key) => {
-      submitData.append(key, (formData as any)[key]);
-    });
-    if (referenceFile) {
-      submitData.append("referenceFile", referenceFile);
-    }
-    submitData.append("requestType", "Floor Plan Customization");
-    try {
-      await dispatch(submitCustomizationRequest(submitData)).unwrap();
-      toast.success(
-        `Customization request for ${
-          countryName || "your location"
-        } sent successfully!`
-      );
-      setFormData({
-        country: countryName || "",
-        name: "",
-        email: "",
-        whatsappNumber: "",
-        width: "",
-        length: "",
-        description: "",
-      });
-      setReferenceFile(null);
-    } catch (rejectedError) {
-      toast.error(
-        String(rejectedError) || "Failed to submit customization request"
-      );
-    }
-  };
-
-  return (
-    <div className="bg-gray-50 py-16 mb-12">
-      <div className="container mx-auto px-4">
-        <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl p-8 md:p-12 flex flex-col lg:flex-row items-center gap-12">
-          <div className="w-full lg:w-1/2">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              Customize a Plan for {countryName || "Your Location"}
-            </h2>
-            <form onSubmit={handleFormSubmit} className="space-y-5">
-              <div>
-                <Label htmlFor="country">Country</Label>
-                <Input
-                  id="country"
-                  name="country"
-                  value={formData.country}
-                  onChange={handleInputChange}
-                  className="mt-1 bg-gray-200 border-gray-300 text-gray-500"
-                  readOnly={!!countryName}
-                />
-              </div>
-              <div>
-                <Label htmlFor="name">Name *</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="mt-1 bg-gray-100 border-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="email">Email *</Label>
-                <Input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="mt-1 bg-gray-100 border-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="whatsappNumber">WhatsApp Number *</Label>
-                <Input
-                  type="tel"
-                  id="whatsappNumber"
-                  name="whatsappNumber"
-                  value={formData.whatsappNumber}
-                  onChange={handleInputChange}
-                  className="mt-1 bg-gray-100 border-transparent"
-                  required
-                />
-              </div>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <Label htmlFor="width">Width (ft)</Label>
-                  <Input
-                    id="width"
-                    name="width"
-                    value={formData.width}
-                    onChange={handleInputChange}
-                    className="mt-1 bg-gray-100 border-transparent"
-                  />
-                </div>
-                <div className="flex-1">
-                  <Label htmlFor="length">Length (ft)</Label>
-                  <Input
-                    id="length"
-                    name="length"
-                    value={formData.length}
-                    onChange={handleInputChange}
-                    className="mt-1 bg-gray-100 border-transparent"
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  placeholder="Your message..."
-                  className="mt-1 bg-gray-100 border-transparent"
-                  rows={3}
-                />
-              </div>
-              <div>
-                <Label htmlFor="referenceFile">
-                  Upload Reference (Image or PDF)
-                </Label>
-                <Input
-                  id="referenceFile"
-                  name="referenceFile"
-                  type="file"
-                  onChange={handleFileChange}
-                  accept="image/*,.pdf"
-                  className="mt-1"
-                />
-              </div>
-              <Button
-                type="submit"
-                disabled={actionStatus === "loading"}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-12 text-base disabled:opacity-50"
-              >
-                {actionStatus === "loading" ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  "Send Request"
-                )}
-              </Button>
-            </form>
-          </div>
-          <div className="w-full lg:w-1/2 hidden lg:block">
-            <img
-              src="/threeDfloor.jpg"
-              alt="Beautiful modern house"
-              className="w-full h-full object-cover rounded-xl"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const Products = () => {
+const DownloadsPage = () => {
   const dispatch: AppDispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
   const { userInfo } = useSelector((state: RootState) => state.user);
-  const categoryQuery = searchParams.get("category");
-  const searchQuery = searchParams.get("search");
-  const countryQuery = searchParams.get("country");
+
   const pageQuery = Number(searchParams.get("page")) || 1;
 
-  const {
-    products: adminProducts,
-    pages: adminPages,
-    listStatus: adminListStatus,
-    error: adminError,
-  } = useSelector((state: RootState) => state.products);
-  const {
-    plans: professionalPlans,
-    pages: profPages,
-    listStatus: profListStatus,
-    error: profError,
-  } = useSelector((state: RootState) => state.professionalPlans);
+  const { products, pages, count, listStatus, error } = useSelector(
+    (state: RootState) => state.products
+  );
+
   const { orders: userOrders } = useSelector(
     (state: RootState) => state.orders
   );
 
-  const [viewMode, setViewMode] = useState("grid");
-  const [filters, setFilters] = useState({
-    category: categoryQuery || "all",
-    searchTerm: searchQuery || "",
-    sortBy: "newest",
-  });
   const [currentPage, setCurrentPage] = useState(pageQuery);
+  const [jumpToPage, setJumpToPage] = useState("");
   const CARDS_PER_PAGE = 12;
 
-  const [jumpToPage, setJumpToPage] = useState("");
-
   useEffect(() => {
-    setCurrentPage(pageQuery);
-  }, [pageQuery]);
-
-  useEffect(() => {
-    const apiParams: any = {
+    const apiParams = {
       pageNumber: currentPage,
       limit: CARDS_PER_PAGE,
-      keyword: filters.searchTerm,
-      sortBy: filters.sortBy,
-      category: filters.category === "all" ? "" : filters.category,
+      planCategory: "downloads",
     };
 
-    if (countryQuery) {
-      apiParams.country = countryQuery;
-    }
-
     dispatch(fetchProducts(apiParams));
-    dispatch(fetchAllApprovedPlans(apiParams));
 
     if (userInfo) {
       dispatch(fetchMyOrders());
@@ -588,34 +296,10 @@ const Products = () => {
 
     const searchParamsToSet = new URLSearchParams();
     if (currentPage > 1) searchParamsToSet.set("page", String(currentPage));
-    if (filters.searchTerm) searchParamsToSet.set("search", filters.searchTerm);
-    if (filters.category !== "all")
-      searchParamsToSet.set("category", filters.category);
-
-    if (countryQuery) {
-      searchParamsToSet.set("country", countryQuery);
-    }
-
     setSearchParams(searchParamsToSet, { replace: true });
-  }, [dispatch, userInfo, filters, currentPage, setSearchParams, countryQuery]);
+  }, [dispatch, userInfo, currentPage, setSearchParams]);
 
-  const combinedProducts = useMemo(() => {
-    const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
-    const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
-
-    const combined = [
-      ...adminArray.map((p) => ({ ...p, source: "admin" })),
-      ...profArray.map((p: any) => ({
-        ...p,
-        name: p.name || p.planName || "Untitled Plan",
-        image: p.mainImage,
-        source: "professional",
-      })),
-    ];
-    return combined;
-  }, [adminProducts, professionalPlans]);
-
-  const totalPages = Math.max(adminPages || 1, profPages || 1);
+  const totalPages = pages > 0 ? pages : 1;
 
   const handlePageChange = (newPage: number) => {
     if (newPage > 0 && newPage <= totalPages) {
@@ -635,92 +319,29 @@ const Products = () => {
     setJumpToPage("");
   };
 
-  const pageTitle = countryQuery
-    ? `${countryQuery} House Plans`
-    : "House Plans & Designs";
-  const pageDescription = countryQuery
-    ? `Browse plans available in ${countryQuery}`
-    : "Discover our complete collection of architectural masterpieces";
-  const isLoading =
-    adminListStatus === "loading" || profListStatus === "loading";
-  const isError = adminListStatus === "failed" || profListStatus === "failed";
-  const errorMessage = String(adminError || profError);
+  const isLoading = listStatus === "loading";
+  const isError = listStatus === "failed";
+  const errorMessage = String(error);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
-        <title>{`${pageTitle.toUpperCase()} | READYMADE HOME DESIGNS`}</title>
+        <title>Downloads | READYMADE HOME DESIGNS</title>
         <meta
           name="description"
-          content={`${pageDescription}. Browse readymade house plans and modern home designs with detailed layouts.`}
+          content="Browse and download exclusive digital products, including CAD files, 3D models, and more."
         />
       </Helmet>
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">{pageTitle}</h1>
-          <p className="text-xl text-muted-foreground">{pageDescription}</p>
-          {(countryQuery || categoryQuery || searchQuery) && (
-            <div className="mt-4">
-              <Link to="/products">
-                <Button variant="destructive" size="sm">
-                  <X className="w-4 h-4 mr-2" />
-                  Clear Current Search/Category
-                </Button>
-              </Link>
-            </div>
-          )}
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold">Digital Downloads</h1>
+          <p className="text-xl text-muted-foreground mt-2">
+            Get exclusive digital assets for your projects.
+          </p>
         </div>
 
-        {countryQuery && (
-          <CountryCustomizationForm countryName={countryQuery} />
-        )}
-
-        {/* --- LAYOUT ADJUSTED FOR FULL WIDTH --- */}
         <div className="w-full">
-          <div className="flex flex-wrap gap-4 justify-between items-center mb-6 border-b pb-4">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800">All Plans</h2>
-              <p className="text-gray-500 text-sm">
-                Showing {combinedProducts.length} results on page {currentPage}{" "}
-                of {totalPages}
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <Select
-                value={filters.sortBy}
-                onValueChange={(value) =>
-                  setFilters((prev) => ({ ...prev, sortBy: value }))
-                }
-              >
-                <SelectTrigger className="w-48 bg-white">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Sort by latest</SelectItem>
-                  <SelectItem value="price-low">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high">Price: High to Low</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="flex border rounded-lg">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <Grid className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("list")}
-                >
-                  <List className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
           {isLoading && (
             <div className="flex justify-center items-center h-96">
               <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
@@ -730,37 +351,29 @@ const Products = () => {
             <div className="text-center py-20">
               <ServerCrash className="mx-auto h-12 w-12 text-red-500" />
               <h3 className="mt-4 text-xl font-semibold text-red-500">
-                Failed to Load Products
+                Failed to Load Downloads
               </h3>
               <p className="mt-2 text-gray-500">{errorMessage}</p>
             </div>
           )}
-          {!isLoading && !isError && combinedProducts.length === 0 && (
+          {!isLoading && !isError && products.length === 0 && (
             <div className="text-center py-20">
-              <h3 className="text-xl font-semibold">No Plans Found</h3>
+              <h3 className="text-xl font-semibold">No Downloads Found</h3>
               <p className="mt-2 text-gray-500">
-                Please try a different search or clear the current filters.
+                We are constantly adding new digital products. Check back soon!
               </p>
             </div>
           )}
 
-          {!isLoading && !isError && (
-            <div
-              className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"}`}
-            >
-              {combinedProducts.length > 0 ? (
-                combinedProducts.map((product) => (
-                  <ProductCard
-                    key={`${product.source || "prod"}-${product._id}`}
-                    product={product}
-                    userOrders={userOrders}
-                  />
-                ))
-              ) : (
-                <div className="col-span-full text-center py-20">
-                  <h3 className="text-xl font-semibold">No Products Found</h3>
-                </div>
-              )}
+          {!isLoading && !isError && products.length > 0 && (
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {products.map((product) => (
+                <ProductCard
+                  key={product._id}
+                  product={product}
+                  userOrders={userOrders}
+                />
+              ))}
             </div>
           )}
 
@@ -810,4 +423,4 @@ const Products = () => {
   );
 };
 
-export default Products;
+export default DownloadsPage;

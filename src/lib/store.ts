@@ -19,10 +19,10 @@ import videoReducer from "./features/videos/videoSlice";
 import packageReducer from "./features/packages/packageSlice";
 import professionalOrderReducer from "./features/professional/professionalOrderSlice";
 
-// --- YAHAN NAYA SLICE IMPORT KAREIN ---
 import sellerProductReducer from "./features/seller/sellerProductSlice";
 import sellerinquiryReducer from "./features/sellerinquiries/sellerinquirySlice";
 import sellerReducer from "./features/seller/sellerProductSlice";
+import mediaReducer from "./features/media/mediaSlice";
 
 export const store = configureStore({
   reducer: {
@@ -46,6 +46,7 @@ export const store = configureStore({
     seller: sellerReducer,
     sellerProducts: sellerProductReducer,
     sellerInquiries: sellerinquiryReducer,
+    media: mediaReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
