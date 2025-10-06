@@ -88,7 +88,7 @@ const Footer = () => {
     {
       name: "YouTube",
       Icon: Youtube,
-      href: "https://www.youtube.com/@houseplanfiles",
+      href: "https://www.youtube.com/@houseplansfiles8308",
     },
     {
       name: "LinkedIn",
