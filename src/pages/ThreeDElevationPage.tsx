@@ -122,14 +122,15 @@ const ThreeDElevationPage: React.FC = () => {
                       required
                     />
                   </div>
+                  {/* ++ FIX HERE: Changed name="country" to name="countryName" ++ */}
                   <div>
-                    <label htmlFor="country" className={formStyles.label}>
+                    <label htmlFor="countryName" className={formStyles.label}>
                       Country
                     </label>
                     <input
                       type="text"
-                      id="country"
-                      name="country"
+                      id="countryName"
+                      name="countryName"
                       className={formStyles.input}
                       defaultValue="India"
                       required

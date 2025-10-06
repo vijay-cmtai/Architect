@@ -118,6 +118,19 @@ const CustomizeFloorPlanPage = () => {
                       required
                     />
                   </div>
+                  {/* ++ FIX HERE: Added the missing countryName input field ++ */}
+                  <div>
+                    <label htmlFor="countryName" className={formStyles.label}>
+                      Country
+                    </label>
+                    <input
+                      type="text"
+                      id="countryName"
+                      name="countryName"
+                      className={formStyles.input}
+                      required
+                    />
+                  </div>
                   <div>
                     <label htmlFor="plotSize" className={formStyles.label}>
                       Your Plot Size (e.g., 30x40 ft)
