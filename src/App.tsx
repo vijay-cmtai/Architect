@@ -1,6 +1,8 @@
 import { Provider } from "react-redux";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { HelmetProvider } from "react-helmet-async";
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -96,247 +98,282 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <BrowserRouter>
-    <Provider store={store}>
-      <QueryClientProvider client={queryClient}>
-        <CartProvider>
-          <WishlistProvider>
-            <CurrencyProvider>
-              <TooltipProvider>
-                <BlackScreenshotGuard>
-                  <Toaster />
-                  <Sonner />
-                  <ScrollToTop />
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/products" element={<Products />} />
-                    <Route path="/product/:slug" element={<ProductDetail />} />
-                    <Route
-                      path="/professional-plan/:slug"
-                      element={<ProductDetail />}
-                    />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route
-                      path="/order-success/:orderId"
-                      element={<OrderSuccessPage />}
-                    />
-                    <Route path="/thank-you" element={<ThankYou />} />
-                    <Route path="/services" element={<ServicePage />} />
-                    <Route path="/about" element={<AboutUs />} />
-                    <Route path="/download" element={<DownloadsPage1 />} />
-                    <Route path="/careers" element={<CareersPage />} />
-                    <Route path="/contact" element={<ContactUs />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/apply" element={<ApplicationPage />} />
-                    <Route path="/terms" element={<TermsAndConditions />} />
-                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                    <Route path="/payment-policy" element={<PaymentPolicy />} />
-                    <Route path="/refund-policy" element={<RefundPolicy />} />
-                    <Route path="/blogs" element={<BlogsPage />} />
-                    <Route
-                      path="/blog/:slug"
-                      element={<SingleBlogPostPage />}
-                    />
-                    <Route
-                      path="/category/:categoryName"
-                      element={<BrowseProductsPage />}
-                    />
-                    <Route
-                      path="/plans/:regionName"
-                      element={<BrowseProductsPage />}
-                    />
-                    <Route
-                      path="/floor-plans"
-                      element={<BrowseProductsPage />}
-                    />
-                    <Route path="/3D-plans" element={<ThreeDPlansPage />} />
-                    <Route
-                      path="/interior-designs"
-                      element={<InteriorDesignsPage />}
-                    />
-                    <Route
-                      path="/house-designs-products"
-                      element={<ConstructionProductsPage />}
-                    />
-                    <Route
-                      path="/customize/floor-plans"
-                      element={<CustomizeRequestPage />}
-                    />
-                    <Route
-                      path="/customize/interior-designs"
-                      element={<InteriorDesignRequestPage />}
-                    />
-                    <Route
-                      path="/customize/3d-elevation"
-                      element={<ThreeDElevationPage />}
-                    />
-                    <Route
-                      path="/customize/3d-video-walkthrough"
-                      element={<ThreeDWalkthroughPage />}
-                    />
-                    <Route
-                      path="/corporate-inquiry/:packageType"
-                      element={<CorporateInquiryPage />}
-                    />
-                    <Route
-                      path="/brand-partners"
-                      element={<BrandPartnersSection />}
-                    />
-                    <Route path="/booking-form" element={<BookingPage />} />
-                    <Route
-                      path="/premium-booking-form"
-                      element={<PremiumBookingPage />}
-                    />
-                    <Route path="/gallery" element={<GalleryPage />} />
-
-                    <Route
-                      element={
-                        <ProtectedRoute allowedRoles={["user", "admin"]} />
-                      }
-                    >
-                      <Route path="/dashboard" element={<DashboardLayout />}>
-                        <Route index element={<DashboardPage />} />
-                        <Route path="orders" element={<OrdersPage />} />
-                        <Route path="downloads" element={<DownloadsPage />} />
-                        <Route path="addresses" element={<AddressesPage />} />
-                        <Route
-                          path="account-details"
-                          element={<AccountDetailsPage />}
-                        />
-                      </Route>
-                    </Route>
-
-                    <Route
-                      element={
-                        <ProtectedRoute
-                          allowedRoles={["professional", "admin"]}
-                        />
-                      }
-                    >
+    <HelmetProvider>
+      <Provider store={store}>
+        <QueryClientProvider client={queryClient}>
+          <CartProvider>
+            <WishlistProvider>
+              <CurrencyProvider>
+                <TooltipProvider>
+                  <BlackScreenshotGuard>
+                    <Toaster />
+                    <Sonner />
+                    <ScrollToTop />
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/products" element={<Products />} />
                       <Route
-                        path="/professional"
-                        element={<ProfessionalLayout />}
+                        path="/product/:slug"
+                        element={<ProductDetail />}
+                      />
+                      <Route
+                        path="/professional-plan/:slug"
+                        element={<ProductDetail />}
+                      />
+                      <Route path="/cart" element={<Cart />} />
+                      <Route path="/checkout" element={<Checkout />} />
+                      <Route
+                        path="/order-success/:orderId"
+                        element={<OrderSuccessPage />}
+                      />
+                      <Route path="/thank-you" element={<ThankYou />} />
+                      <Route path="/services" element={<ServicePage />} />
+                      <Route path="/about" element={<AboutUs />} />
+                      <Route path="/download" element={<DownloadsPage1 />} />
+                      <Route path="/careers" element={<CareersPage />} />
+                      <Route path="/contact" element={<ContactUs />} />
+                      <Route path="/register" element={<Register />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/apply" element={<ApplicationPage />} />
+                      <Route path="/terms" element={<TermsAndConditions />} />
+                      <Route
+                        path="/privacy-policy"
+                        element={<PrivacyPolicy />}
+                      />
+                      <Route
+                        path="/payment-policy"
+                        element={<PaymentPolicy />}
+                      />
+                      <Route path="/refund-policy" element={<RefundPolicy />} />
+                      <Route path="/blogs" element={<BlogsPage />} />
+                      <Route
+                        path="/blog/:slug"
+                        element={<SingleBlogPostPage />}
+                      />
+                      <Route
+                        path="/category/:categoryName"
+                        element={<BrowseProductsPage />}
+                      />
+                      <Route
+                        path="/plans/:regionName"
+                        element={<BrowseProductsPage />}
+                      />
+                      <Route
+                        path="/floor-plans"
+                        element={<BrowseProductsPage />}
+                      />
+                      <Route path="/3D-plans" element={<ThreeDPlansPage />} />
+                      <Route
+                        path="/interior-designs"
+                        element={<InteriorDesignsPage />}
+                      />
+                      <Route
+                        path="/house-designs-products"
+                        element={<ConstructionProductsPage />}
+                      />
+                      <Route
+                        path="/customize/floor-plans"
+                        element={<CustomizeRequestPage />}
+                      />
+                      <Route
+                        path="/customize/interior-designs"
+                        element={<InteriorDesignRequestPage />}
+                      />
+                      <Route
+                        path="/customize/3d-elevation"
+                        element={<ThreeDElevationPage />}
+                      />
+                      <Route
+                        path="/customize/3d-video-walkthrough"
+                        element={<ThreeDWalkthroughPage />}
+                      />
+                      <Route
+                        path="/corporate-inquiry/:packageType"
+                        element={<CorporateInquiryPage />}
+                      />
+                      <Route
+                        path="/brand-partners"
+                        element={<BrandPartnersSection />}
+                      />
+                      <Route path="/booking-form" element={<BookingPage />} />
+                      <Route
+                        path="/premium-booking-form"
+                        element={<PremiumBookingPage />}
+                      />
+                      <Route path="/gallery" element={<GalleryPage />} />
+
+                      <Route
+                        element={
+                          <ProtectedRoute allowedRoles={["user", "admin"]} />
+                        }
                       >
-                        <Route index element={<ProfessionalDashboardPage />} />
-                        <Route
-                          path="my-products"
-                          element={<MyProductsPage />}
-                        />
-                        <Route
-                          path="my-orders"
-                          element={<ProfessionalOrdersPage />}
-                        />
-                        <Route
-                          path="add-product"
-                          element={<AddProductPageProf />}
-                        />
-                        <Route path="profile" element={<ProfilePageProf />} />
+                        <Route path="/dashboard" element={<DashboardLayout />}>
+                          <Route index element={<DashboardPage />} />
+                          <Route path="orders" element={<OrdersPage />} />
+                          <Route path="downloads" element={<DownloadsPage />} />
+                          <Route path="addresses" element={<AddressesPage />} />
+                          <Route
+                            path="account-details"
+                            element={<AccountDetailsPage />}
+                          />
+                        </Route>
                       </Route>
-                    </Route>
 
-                    <Route
-                      element={
-                        <ProtectedRoute allowedRoles={["seller", "admin"]} />
-                      }
-                    >
-                      <Route path="/seller" element={<SellerLayout />}>
-                        <Route index element={<SellerDashboardPage />} />
+                      <Route
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={["professional", "admin"]}
+                          />
+                        }
+                      >
                         <Route
-                          path="products"
-                          element={<SellerProductsPage />}
-                        />
-                        <Route
-                          path="products/add"
-                          element={<SellerAddproduct />}
-                        />
-                        <Route path="profile" element={<SellerProfilePage />} />
-                        <Route
-                          path="inquiries"
-                          element={<SellerInquiryPage />}
-                        />
+                          path="/professional"
+                          element={<ProfessionalLayout />}
+                        >
+                          <Route
+                            index
+                            element={<ProfessionalDashboardPage />}
+                          />
+                          <Route
+                            path="my-products"
+                            element={<MyProductsPage />}
+                          />
+                          <Route
+                            path="my-orders"
+                            element={<ProfessionalOrdersPage />}
+                          />
+                          <Route
+                            path="add-product"
+                            element={<AddProductPageProf />}
+                          />
+                          <Route path="profile" element={<ProfilePageProf />} />
+                        </Route>
                       </Route>
-                    </Route>
 
-                    <Route
-                      element={<ProtectedRoute allowedRoles={["admin"]} />}
-                    >
-                      <Route path="/admin" element={<AdminLayout />}>
-                        <Route index element={<AdminDashboardPage />} />
-                        <Route path="products" element={<AllProductsPage />} />
-                        <Route
-                          path="products/add"
-                          element={<AddProductPage />}
-                        />
-                        <Route path="orders" element={<AdminOrdersPage />} />
-                        <Route path="customers" element={<CustomersPage />} />
-                        <Route path="reports" element={<ReportsPage />} />
-                        <Route path="settings" element={<SettingsPage />} />
-                        <Route path="users" element={<AllUsersPage />} />
-                        <Route path="users/add" element={<AddNewUserPage />} />
-                        <Route path="profile" element={<AdminProfilePage />} />
-                        <Route path="gallery" element={<ManageGalleryPage />} />
-                        <Route path="media" element={<MediaPage />} />
-                        <Route
-                          path="seller-enquiries"
-                          element={<SellerInquirypage />}
-                        />
-                        <Route
-                          path="gallery/add"
-                          element={<AddGalleryImagePage />}
-                        />
-                        <Route path="packages" element={<PackageListPage />} />
-                        <Route
-                          path="packages/add"
-                          element={<PackageEditPage />}
-                        />
-                        <Route
-                          path="packages/edit/:id"
-                          element={<PackageEditPage />}
-                        />
-                        <Route
-                          path="standard-requests"
-                          element={<StandardRequestsPage />}
-                        />
-                        <Route
-                          path="premium-requests"
-                          element={<PremiumRequestsPage />}
-                        />
-                        <Route
-                          path="customization-requests"
-                          element={<AdminCustomizationRequestsPage />}
-                        />
-                        <Route
-                          path="inquiries"
-                          element={<AllInquiriesPage />}
-                        />
-                        <Route
-                          path="inquiries-sc"
-                          element={<AllInquiriesSCPage />}
-                        />
-                        <Route path="blogs" element={<AdminBlogsPage />} />
-                        <Route
-                          path="blogs/add"
-                          element={<AdminAddEditBlogPage />}
-                        />
-                        <Route
-                          path="blogs/edit/:slug"
-                          element={<AdminAddEditBlogPage />}
-                        />
-                        <Route path="addvideos" element={<VideoUploadPage />} />
+                      <Route
+                        element={
+                          <ProtectedRoute allowedRoles={["seller", "admin"]} />
+                        }
+                      >
+                        <Route path="/seller" element={<SellerLayout />}>
+                          <Route index element={<SellerDashboardPage />} />
+                          <Route
+                            path="products"
+                            element={<SellerProductsPage />}
+                          />
+                          <Route
+                            path="products/add"
+                            element={<SellerAddproduct />}
+                          />
+                          <Route
+                            path="profile"
+                            element={<SellerProfilePage />}
+                          />
+                          <Route
+                            path="inquiries"
+                            element={<SellerInquiryPage />}
+                          />
+                        </Route>
                       </Route>
-                    </Route>
 
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                  <FloatingCurrencySwitcher />
-                </BlackScreenshotGuard>
-              </TooltipProvider>
-            </CurrencyProvider>
-          </WishlistProvider>
-        </CartProvider>
-      </QueryClientProvider>
-    </Provider>
+                      <Route
+                        element={<ProtectedRoute allowedRoles={["admin"]} />}
+                      >
+                        <Route path="/admin" element={<AdminLayout />}>
+                          <Route index element={<AdminDashboardPage />} />
+                          <Route
+                            path="products"
+                            element={<AllProductsPage />}
+                          />
+                          <Route
+                            path="products/add"
+                            element={<AddProductPage />}
+                          />
+                          <Route path="orders" element={<AdminOrdersPage />} />
+                          <Route path="customers" element={<CustomersPage />} />
+                          <Route path="reports" element={<ReportsPage />} />
+                          <Route path="settings" element={<SettingsPage />} />
+                          <Route path="users" element={<AllUsersPage />} />
+                          <Route
+                            path="users/add"
+                            element={<AddNewUserPage />}
+                          />
+                          <Route
+                            path="profile"
+                            element={<AdminProfilePage />}
+                          />
+                          <Route
+                            path="gallery"
+                            element={<ManageGalleryPage />}
+                          />
+                          <Route path="media" element={<MediaPage />} />
+                          <Route
+                            path="seller-enquiries"
+                            element={<SellerInquirypage />}
+                          />
+                          <Route
+                            path="gallery/add"
+                            element={<AddGalleryImagePage />}
+                          />
+                          <Route
+                            path="packages"
+                            element={<PackageListPage />}
+                          />
+                          <Route
+                            path="packages/add"
+                            element={<PackageEditPage />}
+                          />
+                          <Route
+                            path="packages/edit/:id"
+                            element={<PackageEditPage />}
+                          />
+                          <Route
+                            path="standard-requests"
+                            element={<StandardRequestsPage />}
+                          />
+                          <Route
+                            path="premium-requests"
+                            element={<PremiumRequestsPage />}
+                          />
+                          <Route
+                            path="customization-requests"
+                            element={<AdminCustomizationRequestsPage />}
+                          />
+                          <Route
+                            path="inquiries"
+                            element={<AllInquiriesPage />}
+                          />
+                          <Route
+                            path="inquiries-sc"
+                            element={<AllInquiriesSCPage />}
+                          />
+                          <Route path="blogs" element={<AdminBlogsPage />} />
+                          <Route
+                            path="blogs/add"
+                            element={<AdminAddEditBlogPage />}
+                          />
+                          <Route
+                            path="blogs/edit/:slug"
+                            element={<AdminAddEditBlogPage />}
+                          />
+                          <Route
+                            path="addvideos"
+                            element={<VideoUploadPage />}
+                          />
+                        </Route>
+                      </Route>
+
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                    <FloatingCurrencySwitcher />
+                  </BlackScreenshotGuard>
+                </TooltipProvider>
+              </CurrencyProvider>
+            </WishlistProvider>
+          </CartProvider>
+        </QueryClientProvider>
+      </Provider>
+    </HelmetProvider>
   </BrowserRouter>
 );
 export default App;
