@@ -166,12 +166,12 @@ const AllProductsPage: React.FC = () => {
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
-    setCurrentPage(1); // फिल्टर बदलने पर पेज 1 पर जाएं
+    setCurrentPage(1); 
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1); // सर्च बदलने पर पेज 1 पर जाएं
+    setCurrentPage(1); 
   };
 
   const handleClearFilters = () => {
@@ -442,5 +442,4 @@ const AllProductsPage: React.FC = () => {
     </>
   );
 };
-
 export default AllProductsPage;
