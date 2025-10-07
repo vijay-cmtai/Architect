@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import DisplayPrice from "@/components/DisplayPrice";
+import { Checkbox } from "@/components/ui/checkbox"; // Agar shadcn/ui use kar rahe hain to aese import karein, varna normal <input type="checkbox"> use karein. Main abhi normal input use kar raha hu taki dependency na badhe.
 
 declare global {
   interface Window {
@@ -49,6 +50,9 @@ const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState("Razorpay");
   const [paypalClientId, setPaypalClientId] = useState("");
   const [isPaypalSdkReady, setIsPaypalSdkReady] = useState(false);
+  // --- START: NEW STATE ADDED ---
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  // --- END: NEW STATE ADDED ---
 
   const orderSummary = useMemo(() => {
     if (!cartState.items || cartState.items.length === 0) {
@@ -58,18 +62,14 @@ const CheckoutPage = () => {
     let subtotal = 0;
     let totalTax = 0;
 
-    // --- START: CORRECTED TAX LOGIC ---
     cartState.items.forEach((item) => {
       const itemSubtotal = item.price * item.quantity;
       subtotal += itemSubtotal;
-
-      // Calculate tax for each item based on its taxRate
       const taxRate = (item.taxRate || 0) / 100;
       totalTax += itemSubtotal * taxRate;
     });
-    // --- END: CORRECTED TAX LOGIC ---
 
-    const shipping = 0; // Assuming free shipping
+    const shipping = 0;
     const finalTotal = subtotal + totalTax + shipping;
 
     return { subtotal, totalTax, shipping, finalTotal };
@@ -422,6 +422,31 @@ const CheckoutPage = () => {
                 </span>
               </div>
             </div>
+
+            {/* --- START: NEW CHECKBOX AND LINK ADDED --- */}
+            <div className="flex items-start space-x-2 mt-6">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mt-1"
+              />
+              <label htmlFor="terms" className="text-sm text-gray-600">
+                I have read and agree to the website's{" "}
+                <Link
+                  to="/terms"
+                  target="_blank" // Naye tab me kholne ke liye
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline font-medium"
+                >
+                  Terms and Conditions
+                </Link>
+                .
+              </label>
+            </div>
+            {/* --- END: NEW CHECKBOX AND LINK ADDED --- */}
+
             <div className="mt-6">
               {paymentMethod === "PayPal" ? (
                 isPaypalSdkReady ? (
@@ -432,7 +457,9 @@ const CheckoutPage = () => {
                       <Button
                         type="submit"
                         form="shipping-form"
-                        disabled={orderStatus === "loading"}
+                        // --- START: MODIFIED DISABLED LOGIC ---
+                        disabled={orderStatus === "loading" || !termsAccepted}
+                        // --- END: MODIFIED DISABLED LOGIC ---
                         className="w-full mb-2"
                       >
                         {orderStatus === "loading" && (
@@ -467,10 +494,13 @@ const CheckoutPage = () => {
                   type="submit"
                   form="shipping-form"
                   className="w-full btn-primary py-3 text-lg"
+                  // --- START: MODIFIED DISABLED LOGIC ---
                   disabled={
                     orderStatus === "loading" ||
-                    (paymentMethod === "Razorpay" && !isRazorpayLoaded)
+                    (paymentMethod === "Razorpay" && !isRazorpayLoaded) ||
+                    !termsAccepted
                   }
+                  // --- END: MODIFIED DISABLED LOGIC ---
                 >
                   {orderStatus === "loading" && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
