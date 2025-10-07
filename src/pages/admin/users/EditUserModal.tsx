@@ -34,12 +34,24 @@ const professionalSubRoles = [
   "Civil Structural Engineer",
   "Civil Design Engineer",
   "Interior Designer",
-  "Contractor", // Profession me bhi Contractor ho sakta hai
+  "Contractor",
   "Vastu Consultant",
   "Site Engineer",
 ];
 
-const EditUserModal = ({ isOpen, onClose, user }) => {
+interface EditUserModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  user: any;
+  onUserUpdate: () => void;
+}
+
+const EditUserModal: React.FC<EditUserModalProps> = ({
+  isOpen,
+  onClose,
+  user,
+  onUserUpdate,
+}) => {
   const dispatch: AppDispatch = useDispatch();
   const { actionStatus, error } = useSelector((state: RootState) => state.user);
 
@@ -55,23 +67,23 @@ const EditUserModal = ({ isOpen, onClose, user }) => {
   const [profession, setProfession] = useState("");
 
   useEffect(() => {
-    if (user) {
+    if (user && isOpen) {
       reset({
         name: user.name || user.businessName || user.companyName,
         email: user.email,
         phone: user.phone,
       });
-      setRole(user.role);
-      setStatus(user.status);
+      setRole(user.role || "");
+      setStatus(user.status || "");
       if (user.role === "professional") {
         setProfession(user.profession || "");
       } else {
         setProfession("");
       }
     }
-  }, [user, reset]);
+  }, [user, reset, isOpen]);
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data: any) => {
     const userData = { ...data, role, status };
 
     if (status === "Approved") {
@@ -84,29 +96,33 @@ const EditUserModal = ({ isOpen, onClose, user }) => {
       userData.profession = profession;
     }
 
-    dispatch(updateUserByAdmin({ userId: user._id, userData }));
-  };
-
-  useEffect(() => {
-    if (actionStatus === "succeeded" && isOpen) {
+    try {
+      await dispatch(
+        updateUserByAdmin({ userId: user._id, userData })
+      ).unwrap();
       toast.success("User updated successfully!");
       dispatch(resetActionStatus());
       onClose();
-    }
-    if (actionStatus === "failed" && isOpen) {
-      toast.error(String(error) || "Failed to update user.");
+      // Wait a bit before refreshing to ensure modal is closed
+      setTimeout(() => {
+        onUserUpdate();
+      }, 100);
+    } catch (err: any) {
+      toast.error(String(err) || "Failed to update user.");
       dispatch(resetActionStatus());
     }
-  }, [actionStatus, error, dispatch, onClose, isOpen]);
+  };
 
-  // ==========================================================
-  // ✨ BADLAV YAHAN HAI: "Contractor" ko condition me joda gaya hai ✨
-  // ==========================================================
   const needsApproval =
     role === "professional" || role === "seller" || role === "Contractor";
 
+  const isLoading = actionStatus === "loading";
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => !isLoading && !open && onClose()}
+    >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit User</DialogTitle>
@@ -123,6 +139,7 @@ const EditUserModal = ({ isOpen, onClose, user }) => {
             <Input
               id="name"
               {...register("name", { required: "Name is required." })}
+              disabled={isLoading}
             />
             {errors.name && typeof errors.name.message === "string" && (
               <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
@@ -134,6 +151,7 @@ const EditUserModal = ({ isOpen, onClose, user }) => {
               id="email"
               type="email"
               {...register("email", { required: "Email is required." })}
+              disabled={isLoading}
             />
             {errors.email && typeof errors.email.message === "string" && (
               <p className="text-red-500 text-xs mt-1">
@@ -143,11 +161,11 @@ const EditUserModal = ({ isOpen, onClose, user }) => {
           </div>
           <div>
             <Label htmlFor="phone">Phone</Label>
-            <Input id="phone" {...register("phone")} />
+            <Input id="phone" {...register("phone")} disabled={isLoading} />
           </div>
           <div>
             <Label>Role</Label>
-            <Select value={role} onValueChange={setRole}>
+            <Select value={role} onValueChange={setRole} disabled={isLoading}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -155,7 +173,6 @@ const EditUserModal = ({ isOpen, onClose, user }) => {
                 <SelectItem value="user">User</SelectItem>
                 <SelectItem value="professional">Professional</SelectItem>
                 <SelectItem value="seller">Seller</SelectItem>
-                {/* ✨ YAHAN "partner" ki jagah "Contractor" hai ✨ */}
                 <SelectItem value="Contractor">Contractor</SelectItem>
               </SelectContent>
             </Select>
@@ -164,7 +181,11 @@ const EditUserModal = ({ isOpen, onClose, user }) => {
           {role === "professional" && (
             <div>
               <Label>Profession</Label>
-              <Select value={profession} onValueChange={setProfession}>
+              <Select
+                value={profession}
+                onValueChange={setProfession}
+                disabled={isLoading}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a profession" />
                 </SelectTrigger>
@@ -182,7 +203,11 @@ const EditUserModal = ({ isOpen, onClose, user }) => {
           {needsApproval && (
             <div>
               <Label>Approval Status</Label>
-              <Select value={status} onValueChange={setStatus}>
+              <Select
+                value={status}
+                onValueChange={setStatus}
+                disabled={isLoading}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -196,15 +221,16 @@ const EditUserModal = ({ isOpen, onClose, user }) => {
           )}
 
           <DialogFooter className="pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isLoading}
+            >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              className="btn-primary"
-              disabled={actionStatus === "loading"}
-            >
-              {actionStatus === "loading" ? (
+            <Button type="submit" className="btn-primary" disabled={isLoading}>
+              {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
                 </>

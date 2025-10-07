@@ -269,6 +269,34 @@ export const createReview = createAsyncThunk<
   }
 );
 
+export const removeCsvImage = createAsyncThunk<
+  Product,
+  { productId: string; imageUrl: string },
+  { state: RootState; rejectValue: string }
+>(
+  "products/removeCsvImage",
+  async ({ productId, imageUrl }, { getState, rejectWithValue }) => {
+    try {
+      const token = getToken(getState);
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        data: { imageUrl },
+      };
+      const { data } = await axios.delete(
+        `${API_URL}/${productId}/csv-image`,
+        config
+      );
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to remove image"
+      );
+    }
+  }
+);
+
 const productSlice = createSlice({
   name: "products",
   initialState,
@@ -380,6 +408,21 @@ const productSlice = createSlice({
         state.actionStatus = "succeeded";
       })
       .addCase(createReview.rejected, actionRejected);
+    builder
+      .addCase(removeCsvImage.pending, actionPending)
+      .addCase(
+        removeCsvImage.fulfilled,
+        (state, action: PayloadAction<Product>) => {
+          state.actionStatus = "succeeded";
+          state.products = state.products.map((p) =>
+            p._id === action.payload._id ? action.payload : p
+          );
+          if (state.product?._id === action.payload._id) {
+            state.product = action.payload;
+          }
+        }
+      )
+      .addCase(removeCsvImage.rejected, actionRejected);
   },
 });
 

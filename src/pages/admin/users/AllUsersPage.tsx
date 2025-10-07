@@ -4,13 +4,32 @@ import { RootState, AppDispatch } from "@/lib/store";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useForm } from "react-hook-form";
 import {
   fetchUsers,
   deleteUserByAdmin,
+  updateUserByAdmin,
   resetActionStatus,
 } from "@/lib/features/users/userSlice";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   PlusCircle,
   Edit,
@@ -20,7 +39,17 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import EditUserModal from "./EditUserModal";
+
+const professionalSubRoles = [
+  "Architect",
+  "Junior Architect",
+  "Civil Structural Engineer",
+  "Civil Design Engineer",
+  "Interior Designer",
+  "Contractor",
+  "Vastu Consultant",
+  "Site Engineer",
+];
 
 const getRoleClass = (role: string) => {
   switch (role) {
@@ -60,7 +89,18 @@ const AllUsersPage = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [role, setRole] = useState("");
+  const [status, setStatus] = useState("");
+  const [profession, setProfession] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const USERS_PER_PAGE = 10;
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm();
 
   const handleFetchUsers = (page = 1) => {
     dispatch(fetchUsers({ page, limit: USERS_PER_PAGE }));
@@ -68,7 +108,7 @@ const AllUsersPage = () => {
 
   useEffect(() => {
     handleFetchUsers(currentPage);
-  }, [dispatch, currentPage]);
+  }, [currentPage]);
 
   useEffect(() => {
     if (actionStatus === "succeeded" && error) {
@@ -76,6 +116,26 @@ const AllUsersPage = () => {
       dispatch(resetActionStatus());
     }
   }, [actionStatus, error, dispatch]);
+
+  useEffect(() => {
+    if (selectedUser && isEditModalOpen) {
+      reset({
+        name:
+          selectedUser.name ||
+          selectedUser.businessName ||
+          selectedUser.companyName,
+        email: selectedUser.email,
+        phone: selectedUser.phone,
+      });
+      setRole(selectedUser.role || "");
+      setStatus(selectedUser.status || "");
+      if (selectedUser.role === "professional") {
+        setProfession(selectedUser.profession || "");
+      } else {
+        setProfession("");
+      }
+    }
+  }, [selectedUser, reset, isEditModalOpen]);
 
   const handleDelete = (userId: string) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
@@ -98,8 +158,62 @@ const AllUsersPage = () => {
 
   const handleCloseModal = () => {
     setIsEditModalOpen(false);
-    setSelectedUser(null);
+    setTimeout(() => {
+      setSelectedUser(null);
+      reset();
+    }, 200);
   };
+
+  const onSubmit = async (data: any) => {
+    if (!selectedUser) return;
+
+    setIsSubmitting(true);
+
+    const userData = { ...data, role, status };
+
+    if (status === "Approved") {
+      userData.isApproved = true;
+    } else {
+      userData.isApproved = false;
+    }
+
+    if (role === "professional") {
+      userData.profession = profession;
+    }
+
+    try {
+      await dispatch(
+        updateUserByAdmin({ userId: selectedUser._id, userData })
+      ).unwrap();
+
+      toast.success("User updated successfully!");
+
+      // Close modal immediately
+      setIsEditModalOpen(false);
+
+      // Clean up after animation
+      setTimeout(() => {
+        setSelectedUser(null);
+        reset();
+        setIsSubmitting(false);
+      }, 200);
+
+      // Fetch fresh data in background
+      setTimeout(() => {
+        handleFetchUsers(currentPage);
+      }, 300);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      toast.error(String(err) || "Failed to update user.");
+    }
+  };
+
+  const needsApproval =
+    role === "professional" || role === "seller" || role === "Contractor";
+
+  // Don't show loading if we already have data
+  const showLoading =
+    listStatus === "loading" && (!users || users.length === 0);
 
   return (
     <>
@@ -114,7 +228,7 @@ const AllUsersPage = () => {
         </div>
 
         <div className="bg-white rounded-xl shadow-md overflow-hidden border">
-          {listStatus === "loading" && !users.length ? (
+          {showLoading ? (
             <div className="p-12 text-center text-gray-500 flex items-center justify-center">
               <Loader2 className="mr-2 h-6 w-6 animate-spin" /> Loading Users...
             </div>
@@ -179,7 +293,10 @@ const AllUsersPage = () => {
                         </span>
                       </td>
                       <td className="p-4 text-gray-600">
-                        {format(new Date(user.createdAt), "dd MMM, yyyy")}
+                        {user.createdAt &&
+                        !isNaN(new Date(user.createdAt).getTime())
+                          ? format(new Date(user.createdAt), "dd MMM, yyyy")
+                          : "N/A"}
                       </td>
                       <td className="p-4 text-center">
                         <div className="flex justify-center gap-2">
@@ -187,6 +304,7 @@ const AllUsersPage = () => {
                             variant="outline"
                             size="icon"
                             onClick={() => handleEdit(user)}
+                            disabled={isSubmitting}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -195,7 +313,7 @@ const AllUsersPage = () => {
                             size="icon"
                             className="text-red-500 hover:text-red-500 hover:bg-red-50"
                             onClick={() => handleDelete(user._id)}
-                            disabled={actionStatus === "loading"}
+                            disabled={isSubmitting}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -237,13 +355,150 @@ const AllUsersPage = () => {
         )}
       </div>
 
+      {/* Edit User Modal */}
       {selectedUser && (
-        <EditUserModal
-          isOpen={isEditModalOpen}
-          onClose={handleCloseModal}
-          user={selectedUser}
-          onUserUpdate={() => handleFetchUsers(currentPage)}
-        />
+        <Dialog
+          open={isEditModalOpen}
+          onOpenChange={(open) => {
+            if (!open && !isSubmitting) {
+              handleCloseModal();
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit User</DialogTitle>
+              <DialogDescription>
+                Make changes to the user's profile. Click save when you're done.
+              </DialogDescription>
+            </DialogHeader>
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="space-y-4 pt-4 max-h-[80vh] overflow-y-auto pr-2"
+            >
+              <div>
+                <Label htmlFor="name">Full Name / Business Name</Label>
+                <Input
+                  id="name"
+                  {...register("name", { required: "Name is required." })}
+                  disabled={isSubmitting}
+                />
+                {errors.name && typeof errors.name.message === "string" && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  {...register("email", { required: "Email is required." })}
+                  disabled={isSubmitting}
+                />
+                {errors.email && typeof errors.email.message === "string" && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  {...register("phone")}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div>
+                <Label>Role</Label>
+                <Select
+                  value={role}
+                  onValueChange={setRole}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="professional">Professional</SelectItem>
+                    <SelectItem value="seller">Seller</SelectItem>
+                    <SelectItem value="Contractor">Contractor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {role === "professional" && (
+                <div>
+                  <Label>Profession</Label>
+                  <Select
+                    value={profession}
+                    onValueChange={setProfession}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a profession" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {professionalSubRoles.map((subRole) => (
+                        <SelectItem key={subRole} value={subRole}>
+                          {subRole}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {needsApproval && (
+                <div>
+                  <Label>Approval Status</Label>
+                  <Select
+                    value={status}
+                    onValueChange={setStatus}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Approved">Approved</SelectItem>
+                      <SelectItem value="Rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <DialogFooter className="pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCloseModal}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );

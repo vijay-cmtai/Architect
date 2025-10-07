@@ -36,6 +36,7 @@ import { MultiSelect as MultiSelectForProducts } from "@/components/ui/MultiSele
 import {
   updateProduct,
   fetchProducts,
+  removeCsvImage,
   Product,
 } from "@/lib/features/products/productSlice";
 import { RootState, AppDispatch } from "@/lib/store";
@@ -45,6 +46,9 @@ import {
   ChevronsUpDown,
   PlusCircle,
   XCircle,
+  Trash2,
+  File,
+  Download,
 } from "lucide-react";
 import { type CheckedState } from "@radix-ui/react-checkbox";
 
@@ -54,7 +58,6 @@ interface EditProductModalProps {
   product: Product | null;
 }
 
-// सभी फ़ील्ड्स को वैकल्पिक बनाने के लिए Partial का उपयोग करें
 interface IProductFormData {
   name?: string;
   description?: string;
@@ -191,7 +194,6 @@ const categories = [
   "Temple & Mosque",
 ];
 
-// Helper Component
 const MultiSelectCountry: React.FC<MultiSelectCountryProps> = ({
   selected,
   setSelected,
@@ -256,10 +258,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     handleSubmit,
     reset,
     control,
-    formState: { isSubmitting }, // errors हटा दिया गया है क्योंकि required नहीं है
+    formState: { isSubmitting },
   } = useForm<IProductFormData>();
 
-  // State Management
   const [mainImage, setMainImage] = useState<File | null>(null);
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
   const [planFiles, setPlanFiles] = useState<File[]>([]);
@@ -271,8 +272,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   const [isSale, setIsSale] = useState<boolean>(false);
   const [crossSell, setCrossSell] = useState<string[]>([]);
   const [upSell, setUpSell] = useState<string[]>([]);
+  const [deletingImage, setDeletingImage] = useState<string | null>(null);
 
-  // Initialize form data when product changes
   useEffect(() => {
     if (product) {
       const defaultValues: IProductFormData = {
@@ -348,6 +349,12 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
         .map((p) => ({ value: p._id, label: p.name || p.Name || "Untitled" }))
     : [];
 
+  const imageUrlsFromCsv = product?.Images
+    ? product.Images.split(",")
+        .map((url) => url.trim())
+        .filter(Boolean)
+    : [];
+
   const handleGalleryImagesChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -373,6 +380,21 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     setPlanFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
+  const handleRemoveCsvImage = async (imageUrl: string) => {
+    if (!product) return;
+    setDeletingImage(imageUrl);
+    try {
+      await dispatch(
+        removeCsvImage({ productId: product._id, imageUrl })
+      ).unwrap();
+      toast.success("Image removed successfully!");
+    } catch (error) {
+      toast.error(String(error) || "Failed to remove image.");
+    } finally {
+      setDeletingImage(null);
+    }
+  };
+
   const onSubmit = async (data: IProductFormData) => {
     if (!product) return;
 
@@ -380,7 +402,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
     Object.keys(data).forEach((key) => {
       const value = data[key as keyof IProductFormData];
-      // सिर्फ वही वैल्यू भेजें जो खाली न हो
       if (value !== undefined && value !== null && value !== "") {
         formData.append(key, String(value));
       }
@@ -664,7 +685,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 <CardHeader>
                   <CardTitle>Files</CardTitle>
                   <p className="text-sm text-gray-600">
-                    Upload new files to replace existing ones (optional)
+                    Upload new files to replace or add to existing ones
+                    (optional)
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -680,10 +702,46 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                     />
                     {product?.mainImage && (
                       <p className="text-sm text-gray-500 mt-1">
-                        Current: {product.mainImage}
+                        Current: {product.mainImage.split("/").pop()}
                       </p>
                     )}
                   </div>
+
+                  {imageUrlsFromCsv.length > 0 && (
+                    <div className="my-4 p-3 border rounded-md">
+                      <h4 className="text-sm font-medium mb-2">
+                        Current Product Images (from 'Images' field)
+                      </h4>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                        {imageUrlsFromCsv.map((imgUrl, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={imgUrl}
+                              alt={`Product image ${index + 1}`}
+                              className="w-full h-24 object-cover rounded-md"
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center transition-opacity">
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="h-8 w-8 opacity-0 group-hover:opacity-100"
+                                onClick={() => handleRemoveCsvImage(imgUrl)}
+                                disabled={deletingImage === imgUrl}
+                              >
+                                {deletingImage === imgUrl ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div>
                     <Label htmlFor="galleryImages">
                       Gallery Images (Up to 5)
@@ -713,40 +771,76 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   </div>
                   <div>
                     <Label htmlFor="planFileInput">Plan Files</Label>
-                    <Input
-                      id="planFileInput"
-                      type="file"
-                      multiple
-                      onChange={handlePlanFilesChange}
-                      className="hidden"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() =>
-                        document.getElementById("planFileInput")?.click()
-                      }
-                    >
-                      <PlusCircle className="mr-2 h-4 w-4" /> Add Files
-                    </Button>
-                    <div className="mt-2 space-y-2">
-                      {planFiles.map((file, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-2 bg-gray-100 rounded-md"
-                        >
-                          <span>{file.name}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemovePlanFile(index)}
-                          >
-                            <XCircle className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      ))}
+                    {product?.planFile && product.planFile.length > 0 && (
+                      <div className="my-2 p-3 border rounded-md space-y-2">
+                        <h4 className="text-sm font-medium">
+                          Current Plan Files
+                        </h4>
+                        {product.planFile.map((fileUrl, index) => {
+                          const fileName = fileUrl.split("/").pop();
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-2 bg-gray-50 rounded-md text-sm"
+                            >
+                              <div className="flex items-center gap-2">
+                                <File className="h-4 w-4 text-gray-500" />
+                                <span className="truncate">{fileName}</span>
+                              </div>
+                              <a
+                                href={fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 hover:bg-gray-200 rounded-full"
+                              >
+                                <Download className="h-4 w-4 text-blue-600" />
+                              </a>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <div className="mt-2">
+                      <Input
+                        id="planFileInput"
+                        type="file"
+                        multiple
+                        onChange={handlePlanFilesChange}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() =>
+                          document.getElementById("planFileInput")?.click()
+                        }
+                      >
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add New Files
+                      </Button>
                     </div>
+                    {planFiles.length > 0 && (
+                      <div className="mt-2 space-y-2">
+                        <h4 className="text-sm font-medium">
+                          New files to be uploaded:
+                        </h4>
+                        {planFiles.map((file, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-2 bg-blue-50 rounded-md"
+                          >
+                            <span>{file.name}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRemovePlanFile(index)}
+                            >
+                              <XCircle className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

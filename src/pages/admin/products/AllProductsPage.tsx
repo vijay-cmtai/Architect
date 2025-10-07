@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
   fetchProducts,
@@ -32,7 +32,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import EditProductModal from "./EditProductModal";
 import useDebounce from "@/hooks/useDebounce";
 
-// Fixed categories list
 const CATEGORIES = [
   "Modern Home Design",
   "Duplex House Plans",
@@ -61,19 +60,42 @@ const AllProductsPage: React.FC = () => {
   const { products, listStatus, actionStatus, error, pages, count } =
     useSelector((state: RootState) => state.products);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // URL से प्रारंभिक मान पढ़ें या डिफ़ॉल्ट सेट करें
+  const initialPage = parseInt(searchParams.get("page") || "1", 10);
+  const initialCategory = searchParams.get("category") || "all";
+  const initialSearchTerm = searchParams.get("search") || "";
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+
+  // States को URL से मिली वैल्यू से इनिशियलाइज़ करें
+  const [currentPage, setCurrentPage] = useState(initialPage);
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
+
   const [jumpToPage, setJumpToPage] = useState("");
-
-  // Filter states
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
-
-  // Debounce search term
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  // Fetch products with filters
+  // जब भी स्टेट बदले, URL को अपडेट करें
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (currentPage > 1) {
+      params.set("page", String(currentPage));
+    }
+    if (selectedCategory !== "all") {
+      params.set("category", selectedCategory);
+    }
+    if (debouncedSearchTerm) {
+      params.set("search", debouncedSearchTerm);
+    }
+
+    // `replace: true` ब्राउज़र हिस्ट्री को साफ रखता है
+    setSearchParams(params, { replace: true });
+  }, [currentPage, selectedCategory, debouncedSearchTerm, setSearchParams]);
+
+  // जब भी URL पर आधारित स्टेट बदले, प्रोडक्ट्स को फैच करें
   useEffect(() => {
     const params: any = {
       pageNumber: currentPage,
@@ -85,13 +107,6 @@ const AllProductsPage: React.FC = () => {
 
     dispatch(fetchProducts(params));
   }, [dispatch, currentPage, debouncedSearchTerm, selectedCategory]);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    if (currentPage !== 1) {
-      setCurrentPage(1);
-    }
-  }, [debouncedSearchTerm, selectedCategory]);
 
   useEffect(() => {
     if (actionStatus === "failed" && error) {
@@ -117,14 +132,18 @@ const AllProductsPage: React.FC = () => {
       dispatch(deleteProduct(productId)).then((res) => {
         if (res.type.endsWith("fulfilled")) {
           toast.success("Product deleted successfully!");
-          // Refresh current page
-          const params: any = {
-            pageNumber: currentPage,
-            limit: 12,
-          };
-          if (debouncedSearchTerm) params.searchTerm = debouncedSearchTerm;
-          if (selectedCategory !== "all") params.category = selectedCategory;
-          dispatch(fetchProducts(params));
+
+          if (products.length === 1 && currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+          } else {
+            const params: any = {
+              pageNumber: currentPage,
+              limit: 12,
+              searchTerm: debouncedSearchTerm,
+              category: selectedCategory,
+            };
+            dispatch(fetchProducts(params));
+          }
         }
       });
     }
@@ -143,6 +162,16 @@ const AllProductsPage: React.FC = () => {
         );
       }
     }
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setCurrentPage(1); 
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); 
   };
 
   const handleClearFilters = () => {
@@ -166,10 +195,8 @@ const AllProductsPage: React.FC = () => {
           Manage all your house plans and products here.
         </p>
 
-        {/* Filter Section */}
         <div className="bg-white rounded-xl shadow-md p-4 border">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Search Input */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
@@ -177,14 +204,12 @@ const AllProductsPage: React.FC = () => {
                 placeholder="Search by name, category, or plot size..."
                 className="pl-10"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
               />
             </div>
-
-            {/* Category Filter */}
             <Select
               value={selectedCategory}
-              onValueChange={setSelectedCategory}
+              onValueChange={handleCategoryChange}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select Category" />
@@ -199,8 +224,6 @@ const AllProductsPage: React.FC = () => {
               </SelectContent>
             </Select>
           </div>
-
-          {/* Filter Summary */}
           {(selectedCategory !== "all" || searchTerm) && (
             <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
               <span>
@@ -283,7 +306,9 @@ const AllProductsPage: React.FC = () => {
                     const productStatus =
                       product.status ||
                       (product.Published === 1 ? "Published" : "Draft");
-                    const productCategory = product.category || "N/A";
+                    const productCategory = Array.isArray(product.category)
+                      ? product.category.join(", ")
+                      : product.category || "N/A";
 
                     return (
                       <tr
@@ -366,7 +391,6 @@ const AllProductsPage: React.FC = () => {
                 Page {currentPage} of {totalPages} (Total: {count || 0}{" "}
                 products)
               </span>
-
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -378,7 +402,6 @@ const AllProductsPage: React.FC = () => {
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" /> Previous
                 </Button>
-
                 <div className="flex items-center gap-1 text-sm font-medium">
                   <span>Page</span>
                   <Input
@@ -393,7 +416,6 @@ const AllProductsPage: React.FC = () => {
                   />
                   <span>of {totalPages}</span>
                 </div>
-
                 <Button
                   variant="outline"
                   size="sm"
