@@ -47,6 +47,8 @@ import {
   PlusCircle,
   XCircle,
   Trash2,
+  File,
+  Download,
 } from "lucide-react";
 import { type CheckedState } from "@radix-ui/react-checkbox";
 
@@ -683,7 +685,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 <CardHeader>
                   <CardTitle>Files</CardTitle>
                   <p className="text-sm text-gray-600">
-                    Upload new files to replace existing ones (optional)
+                    Upload new files to replace or add to existing ones
+                    (optional)
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -699,7 +702,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                     />
                     {product?.mainImage && (
                       <p className="text-sm text-gray-500 mt-1">
-                        Current: {product.mainImage}
+                        Current: {product.mainImage.split("/").pop()}
                       </p>
                     )}
                   </div>
@@ -768,40 +771,76 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   </div>
                   <div>
                     <Label htmlFor="planFileInput">Plan Files</Label>
-                    <Input
-                      id="planFileInput"
-                      type="file"
-                      multiple
-                      onChange={handlePlanFilesChange}
-                      className="hidden"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() =>
-                        document.getElementById("planFileInput")?.click()
-                      }
-                    >
-                      <PlusCircle className="mr-2 h-4 w-4" /> Add Files
-                    </Button>
-                    <div className="mt-2 space-y-2">
-                      {planFiles.map((file, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-2 bg-gray-100 rounded-md"
-                        >
-                          <span>{file.name}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemovePlanFile(index)}
-                          >
-                            <XCircle className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      ))}
+                    {product?.planFile && product.planFile.length > 0 && (
+                      <div className="my-2 p-3 border rounded-md space-y-2">
+                        <h4 className="text-sm font-medium">
+                          Current Plan Files
+                        </h4>
+                        {product.planFile.map((fileUrl, index) => {
+                          const fileName = fileUrl.split("/").pop();
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-2 bg-gray-50 rounded-md text-sm"
+                            >
+                              <div className="flex items-center gap-2">
+                                <File className="h-4 w-4 text-gray-500" />
+                                <span className="truncate">{fileName}</span>
+                              </div>
+                              <a
+                                href={fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 hover:bg-gray-200 rounded-full"
+                              >
+                                <Download className="h-4 w-4 text-blue-600" />
+                              </a>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <div className="mt-2">
+                      <Input
+                        id="planFileInput"
+                        type="file"
+                        multiple
+                        onChange={handlePlanFilesChange}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() =>
+                          document.getElementById("planFileInput")?.click()
+                        }
+                      >
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add New Files
+                      </Button>
                     </div>
+                    {planFiles.length > 0 && (
+                      <div className="mt-2 space-y-2">
+                        <h4 className="text-sm font-medium">
+                          New files to be uploaded:
+                        </h4>
+                        {planFiles.map((file, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-2 bg-blue-50 rounded-md"
+                          >
+                            <span>{file.name}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRemovePlanFile(index)}
+                            >
+                              <XCircle className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
