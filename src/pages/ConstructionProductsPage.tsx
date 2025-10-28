@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import { toast } from "sonner";
@@ -8,12 +7,12 @@ import {
   Loader2,
   ServerCrash,
   Search,
-  Store,
   Package,
   ChevronLeft,
   ChevronRight,
   X,
   Send,
+  MapPin,
 } from "lucide-react";
 
 import { RootState, AppDispatch } from "@/lib/store";
@@ -37,7 +36,6 @@ import {
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-// --- INQUIRY MODAL COMPONENT ---
 const InquiryModal = ({ product, onClose }) => {
   const dispatch: AppDispatch = useDispatch();
   const { actionStatus, error } = useSelector(
@@ -154,7 +152,6 @@ const InquiryModal = ({ product, onClose }) => {
   );
 };
 
-// --- PRODUCT CARD COMPONENT ---
 const ProductCard = ({ product, onInquiryClick }) => (
   <motion.div
     layout
@@ -168,6 +165,10 @@ const ProductCard = ({ product, onInquiryClick }) => (
         alt={product.name}
         className="w-full h-56 object-cover"
       />
+      <div className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold text-gray-800 flex items-center gap-1">
+        <MapPin size={12} />
+        {product.city}
+      </div>
     </div>
     <div className="p-4 flex flex-col flex-grow">
       <p className="text-xs text-orange-600 font-semibold uppercase tracking-wider">
@@ -206,7 +207,6 @@ const ProductCard = ({ product, onInquiryClick }) => (
   </motion.div>
 );
 
-// --- MAIN MARKETPLACE PAGE COMPONENT ---
 const MarketplacePage = () => {
   const dispatch: AppDispatch = useDispatch();
   const { products, pagination, status, error } = useSelector(
@@ -215,18 +215,28 @@ const MarketplacePage = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCity, setSelectedCity] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
-    dispatch(fetchPublicSellerProducts(currentPage));
-  }, [dispatch, currentPage]);
+    const params = {
+      page: currentPage,
+      city: selectedCity || undefined,
+    };
+    dispatch(fetchPublicSellerProducts(params));
+  }, [dispatch, currentPage, selectedCity]);
 
   const handlePageChange = (newPage) => {
     if (newPage > 0 && pagination && newPage <= pagination.pages) {
       setCurrentPage(newPage);
     }
+  };
+
+  const handleFilterChange = (setter, value) => {
+    setter(value);
+    setCurrentPage(1);
   };
 
   const handleOpenInquiryModal = (product) => {
@@ -235,17 +245,23 @@ const MarketplacePage = () => {
   };
 
   const uniqueCategories = useMemo(() => {
-    if (!products || !Array.isArray(products)) return [];
     const categories = products.map((p) => p.category).filter(Boolean);
     return ["All", ...Array.from(new Set(categories)).sort()];
+  }, [products]);
+
+  const uniqueCities = useMemo(() => {
+    const cities = products.map((p) => p.city).filter(Boolean);
+    return ["All Cities", ...Array.from(new Set(cities)).sort()];
   }, [products]);
 
   const filteredProducts = useMemo(() => {
     if (!products || !Array.isArray(products)) return [];
     let items = products;
+
     if (selectedCategory !== "All") {
       items = items.filter((p) => p.category === selectedCategory);
     }
+
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       items = items.filter(
@@ -258,7 +274,6 @@ const MarketplacePage = () => {
     return items;
   }, [products, searchTerm, selectedCategory]);
 
-  // Error state handling
   if (status === "failed") {
     return (
       <div className="bg-white min-h-screen">
@@ -273,7 +288,14 @@ const MarketplacePage = () => {
           </h3>
           <p className="text-gray-600">{String(error)}</p>
           <Button
-            onClick={() => dispatch(fetchPublicSellerProducts(currentPage))}
+            onClick={() =>
+              dispatch(
+                fetchPublicSellerProducts({
+                  page: currentPage,
+                  city: selectedCity,
+                })
+              )
+            }
             className="mt-4"
           >
             Try Again
@@ -291,7 +313,6 @@ const MarketplacePage = () => {
       </Helmet>
       <Navbar />
       <main className="container mx-auto px-4 pt-8 pb-12">
-        {/* Hero Banner */}
         <div
           className="relative h-50 md:h-96 rounded-xl overflow-hidden mb-12 bg-cover bg-center"
           style={{ backgroundImage: "url(/marketplace.jpg)" }}
@@ -311,7 +332,6 @@ const MarketplacePage = () => {
           </div>
         </div>
 
-        {/* Search and Filter Section */}
         <div className="mb-12 p-6 bg-gray-50 rounded-xl shadow-sm border flex flex-col md:flex-row gap-6 items-center">
           <div className="w-full md:flex-1">
             <Label
@@ -328,20 +348,24 @@ const MarketplacePage = () => {
                 placeholder="Search for products, brands, or sellers..."
                 className="w-full h-12 pl-12 pr-4 rounded-lg text-base bg-white"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) =>
+                  handleFilterChange(setSearchTerm, e.target.value)
+                }
               />
             </div>
           </div>
-          <div className="w-full md:w-auto md:min-w-[250px]">
+          <div className="w-full md:w-auto md:min-w-[200px]">
             <Label
               htmlFor="category-filter"
               className="font-semibold text-gray-700"
             >
-              Filter by Category
+              Category
             </Label>
             <Select
               value={selectedCategory}
-              onValueChange={setSelectedCategory}
+              onValueChange={(value) =>
+                handleFilterChange(setSelectedCategory, value)
+              }
             >
               <SelectTrigger
                 id="category-filter"
@@ -358,9 +382,42 @@ const MarketplacePage = () => {
               </SelectContent>
             </Select>
           </div>
+          <div className="w-full md:w-auto md:min-w-[200px]">
+            <Label
+              htmlFor="city-filter"
+              className="font-semibold text-gray-700"
+            >
+              City
+            </Label>
+            <Select
+              value={selectedCity}
+              onValueChange={(value) =>
+                handleFilterChange(
+                  setSelectedCity,
+                  value === "all-cities" ? "" : value
+                )
+              }
+            >
+              <SelectTrigger
+                id="city-filter"
+                className="mt-2 h-12 text-base bg-white"
+              >
+                <SelectValue placeholder="All Cities" />
+              </SelectTrigger>
+              <SelectContent>
+                {uniqueCities.map((city) => (
+                  <SelectItem
+                    key={city}
+                    value={city === "All Cities" ? "all-cities" : city}
+                  >
+                    {city}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* Products Grid with Loading State */}
         {status === "loading" && products.length === 0 ? (
           <div className="flex justify-center items-center py-20">
             <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
@@ -387,12 +444,11 @@ const MarketplacePage = () => {
                   No Products Found
                 </h3>
                 <p className="text-gray-600">
-                  Try adjusting your search or filter criteria
+                  Try adjusting your search or filter criteria.
                 </p>
               </div>
             )}
 
-            {/* Pagination */}
             {pagination && pagination.pages > 1 && (
               <div className="flex justify-center items-center mt-12 space-x-4">
                 <Button
