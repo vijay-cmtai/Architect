@@ -33,7 +33,13 @@ const mainLinks = [
   { name: "Reports", path: "/admin/reports", icon: BarChart2 },
   { name: "Profile", path: "/admin/profile", icon: UserCircle },
   { name: "Videos", path: "/admin/addvideos", icon: PlusCircle },
+  {
+    name: "Seller Products",
+    path: "/admin/seller-products",
+    icon: Box,
+  },
   { name: "Media", path: "/admin/media", icon: FileText },
+
   {
     name: "Seller Enquiries",
     path: "/admin/seller-enquiries",

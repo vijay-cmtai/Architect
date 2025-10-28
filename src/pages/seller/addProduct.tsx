@@ -1,3 +1,5 @@
+// File: AddSellerProductPage.jsx
+
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
@@ -27,6 +29,7 @@ interface ICategoryBrand {
   name: string;
 }
 
+// <<< Form data ke interface mein city add karein >>>
 interface IFormData {
   name: string;
   description: string;
@@ -35,6 +38,7 @@ interface IFormData {
   countInStock: number;
   category: string;
   brand: string;
+  city: string; // <<< City yahan add ki gayi hai
 }
 
 const AddSellerProductPage = () => {
@@ -65,15 +69,11 @@ const AddSellerProductPage = () => {
         const { data: brandsData } = await axios.get(
           "/api/seller/products/brands"
         );
-
-        // --- YAHAN BADLAAV KIYA GAYA HAI ---
-        // Hamesha check karein ki data ek array hai, agar nahi to empty array use karein
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
         setBrands(Array.isArray(brandsData) ? brandsData : []);
       } catch (err) {
         console.error("Failed to fetch data:", err);
         toast.error("Could not fetch categories or brands.");
-        // Error hone par bhi empty array set karein taaki crash na ho
         setCategories([]);
         setBrands([]);
       }
@@ -108,6 +108,7 @@ const AddSellerProductPage = () => {
     }
 
     const formData = new FormData();
+    // Ab 'data' object mein city bhi hai, to woh automatically FormData mein add ho jayegi
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== "") {
         formData.append(key, String(value));
@@ -196,12 +197,25 @@ const AddSellerProductPage = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Organization</CardTitle>
-                <CardDescription>
-                  Select from list or type a new one.
-                </CardDescription>
+                <CardTitle>Organization & Location</CardTitle>
+                <CardDescription>Enter product details.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
+                {/* <<< YAHAN SE BADLAAV SHURU: CITY KA INPUT FIELD ADD KIYA GAYA HAI >>> */}
+                <div className="grid gap-2">
+                  <Label htmlFor="city">City</Label>
+                  <Input
+                    id="city"
+                    placeholder="e.g., Jaipur"
+                    {...register("city", { required: "City is required" })}
+                  />
+                  {errors.city && (
+                    <p className="text-xs text-red-500">
+                      {errors.city.message}
+                    </p>
+                  )}
+                </div>
+                {/* <<< BADLAAV YAHAN KHATAM >>> */}
                 <div className="grid gap-2">
                   <Label htmlFor="category">Category</Label>
                   <Input
@@ -210,7 +224,7 @@ const AddSellerProductPage = () => {
                     {...register("category", {
                       required: "Category is required",
                     })}
-                    placeholder="e.g., Electronics"
+                    placeholder="e.g., Cement"
                   />
                   <datalist id="categories-list">
                     {categories.map((cat) => (
@@ -229,7 +243,7 @@ const AddSellerProductPage = () => {
                     id="brand"
                     list="brands-list"
                     {...register("brand", { required: "Brand is required" })}
-                    placeholder="e.g., Apple"
+                    placeholder="e.g., Ambuja"
                   />
                   <datalist id="brands-list">
                     {brands.map((br) => (
