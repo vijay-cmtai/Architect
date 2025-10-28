@@ -93,6 +93,7 @@ import SellerAddproduct from "./pages/seller/addProduct";
 import SellerProfilePage from "./pages/seller/profile";
 import SellerInquiryPage from "./pages/seller/SellerInquiriesPage";
 import MediaPage from "./pages/admin/MediaPage";
+import SellerProductPage from "./pages/admin/SellerProductPage";
 
 const queryClient = new QueryClient();
 
@@ -359,6 +360,10 @@ const App = () => (
                           <Route
                             path="addvideos"
                             element={<VideoUploadPage />}
+                          />
+                          <Route
+                            path="seller-products"
+                            element={<SellerProductPage />}
                           />
                         </Route>
                       </Route>
