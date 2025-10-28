@@ -221,7 +221,7 @@ const InteriorDesignRequestPage: React.FC = () => {
                     </h3>
                     <div className="my-4">
                       <span className="text-6xl font-bold text-orange-500">
-                        ₹Custom
+                        ₹14999-19999 started
                       </span>
                       <p className="text-lg text-gray-600">Price</p>
                     </div>
@@ -256,7 +256,7 @@ const InteriorDesignRequestPage: React.FC = () => {
                     </h3>
                     <div className="my-4">
                       <span className="text-7xl font-bold text-orange-500">
-                        ₹40
+                        ₹30
                       </span>
                       <p className="text-lg text-gray-600">Per sqft</p>
                     </div>
