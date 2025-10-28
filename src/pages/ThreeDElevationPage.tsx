@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, store } from "@/lib/store";
 import { toast } from "sonner";
-import { Helmet } from "react-helmet-async"; // Helmet को import करें
+import { Helmet } from "react-helmet-async"; 
 import {
   submitCustomizationRequest,
   resetStatus,
@@ -223,7 +223,7 @@ const ThreeDElevationPage: React.FC = () => {
                     </h3>
                     <div className="my-4">
                       <span className="text-7xl font-bold text-orange-500">
-                        ₹5
+                        ₹3
                       </span>
                       <p className="text-lg text-gray-600">Per sq.ft.</p>
                     </div>
@@ -253,7 +253,7 @@ const ThreeDElevationPage: React.FC = () => {
                     </h3>
                     <div className="my-4">
                       <span className="text-7xl font-bold text-orange-500">
-                        ₹10
+                        ₹7.5
                       </span>
                       <p className="text-lg text-gray-600">Per sqft</p>
                     </div>
