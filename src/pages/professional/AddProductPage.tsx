@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from "react";
+// File: src/pages/professional/AddProductPage.tsx
+
+// <<< YAHAN BADLAAV KIYA GAYA HAI >>>
+import React, { useState, useEffect } from "react"; // useState aur useEffect ko import kiya gaya
+
 import { useForm, Controller } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
@@ -6,12 +10,12 @@ import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-
 import {
-  createPlan,
-  resetPlanActionStatus,
-} from "@/lib/features/professional/professionalPlanSlice";
-import { fetchProducts } from "@/lib/features/products/productSlice";
+  createProduct,
+  resetProductState,
+  fetchProducts,
+} from "@/lib/features/products/productSlice";
+// UI Components
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,9 +50,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MultiSelect as MultiSelectForProducts } from "@/components/ui/MultiSelectDropdown";
-
 // Interface for form data
-interface IPlanFormData {
+interface IProductFormData {
   name: string;
   description: string;
   productNo: string;
@@ -72,7 +75,6 @@ interface IPlanFormData {
   salePrice?: number;
   taxRate?: number;
 }
-
 // Static Data
 const countries = [
   { value: "India", label: "India" },
@@ -85,7 +87,6 @@ const countries = [
   { value: "United Kingdom", label: "United Kingdom" },
   { value: "Australia", label: "Australia" },
 ].sort((a, b) => a.label.localeCompare(b.label));
-
 const categories = [
   "Residential House",
   "Commercial House Plan",
@@ -110,13 +111,17 @@ const categories = [
   "Schools and Colleges Plans",
   "Temple & Mosque",
 ];
-
 // Helper component for multi-select country dropdown
 const MultiSelectCountry = ({
   selected,
   setSelected,
   options,
   placeholder,
+}: {
+  selected: string[];
+  setSelected: React.Dispatch<React.SetStateAction<string[]>>;
+  options: { value: string; label: string }[];
+  placeholder: string;
 }) => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
@@ -159,14 +164,14 @@ const quillModules = {
   ],
 };
 
-const AddPlanPage = () => {
+const AddProductPage = () => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
-  const { actionStatus, error } = useSelector(
-    (state: RootState) => state.professionalPlans
+
+  const { actionStatus, error, products } = useSelector(
+    (state: RootState) => state.products
   );
   const { userInfo } = useSelector((state: RootState) => state.user);
-  const { products } = useSelector((state: RootState) => state.products);
 
   const {
     register,
@@ -174,7 +179,7 @@ const AddPlanPage = () => {
     control,
     formState: { errors },
     reset,
-  } = useForm<IPlanFormData>();
+  } = useForm<IProductFormData>();
 
   const [mainImage, setMainImage] = useState<File | null>(null);
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
@@ -189,18 +194,25 @@ const AddPlanPage = () => {
   const [upSell, setUpSell] = useState<string[]>([]);
 
   useEffect(() => {
-    dispatch(fetchProducts({}));
+    dispatch(fetchProducts({ limit: 1000 }));
+    return () => {
+      dispatch(resetProductState());
+    };
   }, [dispatch]);
 
   const productOptions = products.map((p) => ({ value: p._id, label: p.name }));
 
-  const handleFileChange = (setter, files, maxFiles = 1) => {
+  const handleFileChange = (
+    setter: (files: any) => void,
+    files: FileList | null,
+    maxFiles = 1
+  ) => {
     if (files) {
       if (maxFiles === 1) {
         setter(files[0]);
       } else {
         if (files.length > maxFiles) {
-          toast.error(`You can only upload a maximum of ${maxFiles} images.`);
+          toast.error(`You can only upload a maximum of ${maxFiles} files.`);
           return;
         }
         setter(Array.from(files));
@@ -212,17 +224,22 @@ const AddPlanPage = () => {
     setPlanFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: IProductFormData) => {
     if (selectedCountries.length === 0 || !propertyType || !planType) {
-      return toast.error("Country, Property Type, and Plan Type are required.");
+      toast.error("Country, Property Type, and Plan Type are required.");
+      return;
     }
     if (!mainImage || planFiles.length === 0) {
-      return toast.error("Main image and at least one plan file are required.");
+      toast.error("Main image and at least one plan file are required.");
+      return;
     }
 
     const formData = new FormData();
     Object.keys(data).forEach((key) => {
-      if (data[key]) formData.append(key, data[key]);
+      const value = data[key as keyof IProductFormData];
+      if (value !== undefined && value !== null && value !== "") {
+        formData.append(key, String(value));
+      }
     });
 
     formData.append("country", selectedCountries.join(","));
@@ -238,22 +255,16 @@ const AddPlanPage = () => {
     galleryImages.forEach((file) => formData.append("galleryImages", file));
     planFiles.forEach((file) => formData.append("planFile", file));
 
-    dispatch(createPlan(formData));
+    dispatch(createProduct(formData))
+      .unwrap()
+      .then(() => {
+        toast.success("Product submitted for review successfully!");
+        navigate("/professional/my-products");
+      })
+      .catch((rejectedValue) => {
+        toast.error(String(rejectedValue) || "Failed to create product.");
+      });
   };
-
-  useEffect(() => {
-    if (actionStatus === "succeeded") {
-      toast.success("Plan submitted for review successfully!");
-      dispatch(resetPlanActionStatus());
-      reset();
-      // Reset all states...
-      navigate("/professional/my-products");
-    }
-    if (actionStatus === "failed") {
-      toast.error(String(error) || "Failed to create plan.");
-      dispatch(resetPlanActionStatus());
-    }
-  }, [actionStatus, error, dispatch, navigate, reset]);
 
   if (userInfo && userInfo.role === "professional" && !userInfo.isApproved) {
     return (
@@ -267,8 +278,8 @@ const AddPlanPage = () => {
           </CardHeader>
           <CardContent>
             <p className="text-gray-600 mb-6">
-              Your professional account is under review. You can add plans once
-              your account is approved.
+              Your professional account is under review. You can add products
+              once your account is approved.
             </p>
             <Button asChild>
               <Link to="/professional/dashboard">Go to Dashboard</Link>
@@ -283,7 +294,7 @@ const AddPlanPage = () => {
     <div className="container mx-auto px-4 py-8">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-800">Add New Plan</h1>
+          <h1 className="text-3xl font-bold text-gray-800">Add New Product</h1>
           <Button type="submit" disabled={actionStatus === "loading"}>
             {actionStatus === "loading" && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -295,11 +306,11 @@ const AddPlanPage = () => {
           <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Plan Information</CardTitle>
+                <CardTitle>Product Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Plan Title*</Label>
+                  <Label htmlFor="name">Product Title*</Label>
                   <Input
                     id="name"
                     {...register("name", { required: "Title is required" })}
@@ -317,7 +328,12 @@ const AddPlanPage = () => {
                     control={control}
                     rules={{ required: "Description is required" }}
                     render={({ field }) => (
-                      <ReactQuill theme="snow" {...field} />
+                      <ReactQuill
+                        theme="snow"
+                        {...field}
+                        value={field.value || ""}
+                        modules={quillModules}
+                      />
                     )}
                   />
                   {errors.description && (
@@ -342,7 +358,7 @@ const AddPlanPage = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Plan Specifications</CardTitle>
+                <CardTitle>Product Specifications</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
@@ -481,7 +497,7 @@ const AddPlanPage = () => {
               <CardHeader>
                 <CardTitle>SEO & Marketing</CardTitle>
                 <CardDescription>
-                  Improve search visibility for this plan.
+                  Improve search visibility for this product.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -581,7 +597,7 @@ const AddPlanPage = () => {
                     onChange={(e) =>
                       setPlanFiles((prev) => [
                         ...prev,
-                        ...Array.from(e.target.files),
+                        ...Array.from(e.target.files || []),
                       ])
                     }
                     className="hidden"
@@ -601,7 +617,7 @@ const AddPlanPage = () => {
                         key={index}
                         className="flex items-center justify-between p-2 bg-gray-100 rounded-md"
                       >
-                        <span>{file.name}</span>
+                        <span className="truncate pr-2">{file.name}</span>
                         <Button
                           type="button"
                           variant="ghost"
@@ -662,7 +678,7 @@ const AddPlanPage = () => {
                     checked={isSale}
                     onCheckedChange={(checked) => setIsSale(checked === true)}
                   />
-                  <Label htmlFor="isSale">This plan is on sale</Label>
+                  <Label htmlFor="isSale">This product is on sale</Label>
                 </div>
               </CardContent>
             </Card>
@@ -742,5 +758,4 @@ const AddPlanPage = () => {
     </div>
   );
 };
-
-export default AddPlanPage;
+export default AddProductPage;

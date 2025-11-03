@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/lib/store";
+import { fetchSellerDashboardData } from "@/lib/features/sellerdashboard/sellerDashboardSlice";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -11,103 +14,86 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import {
-  DollarSign,
-  ShoppingCart,
+  MessageSquare,
   Users,
-  Package, // Changed from BookOpen for "Products"
+  Package,
+  Loader2,
+  ServerCrash,
 } from "lucide-react";
 
-// --- Mock Data (Dummy Data for UI) ---
-// Backend se data fetch karne ki jagah, hum yahaan static data use kar rahe hain.
-const mockSellerInfo = {
-  name: "Creative Art Hub", // Seller ka naam
-};
-
-const mockSummary = {
-  totalRevenue: 54250,
-  totalOrders: 125,
-  totalBuyers: 89, // "Customers" ko "Buyers" kar diya hai
-  totalProducts: 25,
-  recentOrders: [
-    {
-      _id: "order1",
-      user: { name: "Aarav Sharma" },
-      createdAt: "2023-10-26T10:00:00Z",
-      isPaid: true,
-      totalPrice: 2500,
-    },
-    {
-      _id: "order2",
-      user: { name: "Priya Singh" },
-      createdAt: "2023-10-25T14:30:00Z",
-      isPaid: true,
-      totalPrice: 1200,
-    },
-    {
-      _id: "order3",
-      user: { name: "Rohan Verma" },
-      createdAt: "2023-10-25T09:15:00Z",
-      isPaid: false,
-      totalPrice: 3150,
-    },
-    {
-      _id: "order4",
-      user: { name: "Sneha Gupta" },
-      createdAt: "2023-10-24T18:45:00Z",
-      isPaid: true,
-      totalPrice: 899,
-    },
-  ],
-};
-// --- End of Mock Data ---
-
 const SellerDashboardPage = () => {
-  // useEffect, useDispatch, useSelector ko hata diya gaya hai.
-  // Ab component seedhe mock data use karega.
+  const dispatch: AppDispatch = useDispatch();
+  const { userInfo } = useSelector((state: RootState) => state.user);
+  const { stats, recentInquiries, status, error } = useSelector(
+    (state: RootState) => state.sellerDashboard
+  );
+
+  useEffect(() => {
+    dispatch(fetchSellerDashboardData());
+  }, [dispatch]);
+
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+        <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
+      </div>
+    );
+  }
+
+  if (status === "failed") {
+    return (
+      <div className="text-center py-20">
+        <ServerCrash className="mx-auto h-16 w-16 text-red-500 mb-4" />
+        <h3 className="text-2xl font-bold text-gray-800 mb-2">
+          Failed to Load Dashboard
+        </h3>
+        <p className="text-gray-600">{String(error)}</p>
+        <Button
+          onClick={() => dispatch(fetchSellerDashboardData())}
+          className="mt-4"
+        >
+          Try Again
+        </Button>
+      </div>
+    );
+  }
 
   const summaryCards = [
     {
-      title: "Total Revenue",
-      value: `₹${mockSummary.totalRevenue.toLocaleString()}`,
-      icon: DollarSign,
-    },
-    {
-      title: "Total Orders",
-      value: mockSummary.totalOrders.toLocaleString(),
-      icon: ShoppingCart,
-    },
-    {
-      title: "Total Buyers",
-      value: mockSummary.totalBuyers.toLocaleString(),
-      icon: Users,
-    },
-    {
       title: "Total Products",
-      value: mockSummary.totalProducts.toLocaleString(),
-      icon: Package, // Icon updated for products
+      value: stats?.totalProducts?.toLocaleString() || "0",
+      icon: Package,
+    },
+    {
+      title: "Total Inquiries",
+      value: stats?.totalInquiries?.toLocaleString() || "0",
+      icon: MessageSquare,
+    },
+    {
+      title: "Unique Buyers",
+      value: stats?.totalBuyers?.toLocaleString() || "0",
+      icon: Users,
     },
   ];
 
   return (
     <div className="space-y-8 p-4 md:p-6">
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Seller Dashboard</h1>
           <p className="mt-1 text-gray-600">
-            Welcome back, {mockSellerInfo.name || "Seller"}! Here's a summary of
-            your store.
+            Welcome back, {userInfo?.businessName || userInfo?.name || "Seller"}
+            !
           </p>
         </div>
-        <Link to="/seller/reports">
+        <Link to="/seller/products/add">
           <Button className="bg-orange-500 hover:bg-orange-600 w-full sm:w-auto">
-            Generate Report
+            Add New Product
           </Button>
         </Link>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {summaryCards.map((card) => (
           <div
             key={card.title}
@@ -126,46 +112,48 @@ const SellerDashboardPage = () => {
         ))}
       </div>
 
-      {/* Recent Orders Table */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Recent Orders</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          Recent Inquiries
+        </h2>
         <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
           <Table>
             <TableHeader className="bg-gray-50">
               <TableRow>
-                <TableHead className="w-[200px]">Customer</TableHead>
+                <TableHead>Customer</TableHead>
+                <TableHead>Product</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockSummary.recentOrders &&
-              mockSummary.recentOrders.length > 0 ? (
-                mockSummary.recentOrders.map((order) => (
-                  <TableRow key={order._id} className="hover:bg-gray-50">
+              {recentInquiries && recentInquiries.length > 0 ? (
+                recentInquiries.map((inquiry) => (
+                  <TableRow key={inquiry._id} className="hover:bg-gray-50">
                     <TableCell>
                       <div className="font-medium text-gray-900">
-                        {order.user?.name || "N/A"}
+                        {inquiry.name}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {inquiry.email}
                       </div>
                     </TableCell>
                     <TableCell className="text-gray-600">
-                      {new Date(order.createdAt).toLocaleDateString("en-IN")}
+                      {inquiry.product?.name || "N/A"}
+                    </TableCell>
+                    <TableCell className="text-gray-600">
+                      {new Date(inquiry.createdAt).toLocaleDateString("en-IN")}
                     </TableCell>
                     <TableCell>
-                      {order.isPaid ? (
-                        <Badge
-                          variant="default"
-                          className="bg-green-100 text-green-800"
-                        >
-                          Paid
-                        </Badge>
-                      ) : (
-                        <Badge variant="destructive">Not Paid</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      ₹{order.totalPrice.toLocaleString()}
+                      <Badge
+                        variant={
+                          inquiry.status === "Pending"
+                            ? "destructive"
+                            : "default"
+                        }
+                      >
+                        {inquiry.status}
+                      </Badge>
                     </TableCell>
                   </TableRow>
                 ))
@@ -175,16 +163,16 @@ const SellerDashboardPage = () => {
                     colSpan={4}
                     className="text-center py-10 text-gray-500"
                   >
-                    No recent orders found.
+                    No recent inquiries found.
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
           <div className="mt-4 p-4 text-center border-t">
-            <Link to="/seller/orders">
+            <Link to="/seller/inquiries">
               <Button variant="link" className="text-orange-600 font-semibold">
-                View All Orders
+                View All Inquiries
               </Button>
             </Link>
           </div>

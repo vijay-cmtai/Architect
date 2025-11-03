@@ -94,6 +94,7 @@ import SellerProfilePage from "./pages/seller/profile";
 import SellerInquiryPage from "./pages/seller/SellerInquiriesPage";
 import MediaPage from "./pages/admin/MediaPage";
 import SellerProductPage from "./pages/admin/SellerProductPage";
+import AdminManagePlansPage from "./pages/admin/AdminManagePlansPage";
 
 const queryClient = new QueryClient();
 
@@ -364,6 +365,10 @@ const App = () => (
                           <Route
                             path="seller-products"
                             element={<SellerProductPage />}
+                          />
+                          <Route
+                            path="managesellerplans"
+                            element={<AdminManagePlansPage />}
                           />
                         </Route>
                       </Route>

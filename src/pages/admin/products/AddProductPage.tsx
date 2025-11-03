@@ -1,9 +1,9 @@
-// File: components/AddProductPage.tsx
+// File: components/professional/AddPlanPage.tsx
 
 import React, { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -12,7 +12,7 @@ import {
   createProduct,
   resetProductState,
   fetchProducts,
-} from "@/lib/features/products/productSlice";
+} from "@/lib/features/products/productSlice"; // Using the main product slice
 import { RootState, AppDispatch } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ import {
   PlusCircle,
   XCircle,
   ChevronsUpDown,
+  ShieldAlert,
 } from "lucide-react";
 import {
   Select,
@@ -45,13 +46,13 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuSeparator, // <-- Ise import karein
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MultiSelect as MultiSelectForProducts } from "@/components/ui/MultiSelectDropdown";
 
-// --- Type definitions ---
-interface IProductFormData {
+// --- Type definitions (same as admin) ---
+interface IPlanFormData {
   name: string;
   description?: string;
   youtubeLink?: string;
@@ -81,10 +82,10 @@ interface MultiSelectProps {
   options: any[];
   placeholder: string;
   isObject?: boolean;
-  canSelectAll?: boolean; // <-- Naya prop add kiya hai
+  canSelectAll?: boolean;
 }
 
-// --- Static Data (same as before) ---
+// --- Static Data (same as admin) ---
 const countries = [
   { value: "India", label: "India" },
   { value: "Pakistan", label: "Pakistan" },
@@ -198,25 +199,22 @@ const quillModules = {
   ],
 };
 
-// --- HELPER COMPONENT (SELECT ALL FUNCTIONALITY KE SAATH) ---
+// --- HELPER COMPONENT (same as admin) ---
 const MultiSelectDropdown: React.FC<MultiSelectProps> = ({
   selected,
   setSelected,
   options,
   placeholder,
   isObject = false,
-  canSelectAll = false, // Default value false hai
+  canSelectAll = false,
 }) => {
   const allValues = options.map((option) => (isObject ? option.value : option));
   const areAllSelected =
     allValues.length > 0 && selected.length === allValues.length;
 
   const handleSelectAll = () => {
-    if (areAllSelected) {
-      setSelected([]); // Agar sab selected hain, to sabko deselect kardo
-    } else {
-      setSelected(allValues); // Warna sabko select kardo
-    }
+    if (areAllSelected) setSelected([]);
+    else setSelected(allValues);
   };
 
   const handleSelect = (value: string) => {
@@ -239,7 +237,6 @@ const MultiSelectDropdown: React.FC<MultiSelectProps> = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-60 overflow-y-auto">
-        {/* --- SELECT ALL KA BUTTON YAHAN HAI --- */}
         {canSelectAll && (
           <>
             <DropdownMenuCheckboxItem
@@ -252,7 +249,6 @@ const MultiSelectDropdown: React.FC<MultiSelectProps> = ({
             <DropdownMenuSeparator />
           </>
         )}
-        {/* --- Options List --- */}
         {options.map((option) => {
           const value = isObject ? option.value : option;
           const label = isObject ? option.label : option;
@@ -273,13 +269,13 @@ const MultiSelectDropdown: React.FC<MultiSelectProps> = ({
 };
 
 // --- MAIN COMPONENT ---
-const AddProductPage: React.FC = () => {
-  // ... (sara state aur logic same rahega) ...
+const AddPlanPage: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
   const { actionStatus, error, products } = useSelector(
     (state: RootState) => state.products
   );
+  const { userInfo } = useSelector((state: RootState) => state.user);
 
   const {
     register,
@@ -287,7 +283,7 @@ const AddProductPage: React.FC = () => {
     control,
     formState: { errors },
     reset,
-  } = useForm<IProductFormData>();
+  } = useForm<IPlanFormData>();
 
   const [mainImage, setMainImage] = useState<File | null>(null);
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
@@ -304,13 +300,13 @@ const AddProductPage: React.FC = () => {
 
   useEffect(() => {
     if (!products || products.length === 0) {
-      dispatch(fetchProducts({}));
+      dispatch(fetchProducts({ limit: 1000 }));
     }
   }, [dispatch, products]);
 
   useEffect(() => {
     if (actionStatus === "succeeded") {
-      toast.success("Product created successfully!");
+      toast.success("Plan submitted for review successfully!");
       dispatch(resetProductState());
       reset();
       setMainImage(null);
@@ -325,10 +321,10 @@ const AddProductPage: React.FC = () => {
       setIsSale(false);
       setCrossSell([]);
       setUpSell([]);
-      navigate("/admin/products");
+      navigate("/professional/my-products");
     }
     if (actionStatus === "failed") {
-      toast.error(String(error) || "Failed to create product.");
+      toast.error(String(error) || "Failed to submit plan.");
       dispatch(resetProductState());
     }
   }, [actionStatus, error, dispatch, navigate, reset]);
@@ -348,33 +344,31 @@ const AddProductPage: React.FC = () => {
       setGalleryImages(files);
     }
   };
+
   const handlePlanFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setPlanFiles((prev) => [...prev, ...Array.from(e.target.files)]);
       e.target.value = "";
     }
   };
+
   const handleRemovePlanFile = (indexToRemove: number) => {
     setPlanFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
-  const onSubmit = (data: IProductFormData) => {
+  const onSubmit = (data: IPlanFormData) => {
     const formData = new FormData();
     Object.keys(data).forEach((key) => {
-      const value = data[key as keyof IProductFormData];
+      const value = data[key as keyof IPlanFormData];
       if (value !== undefined && value !== null && value !== "") {
         formData.append(key, String(value));
       }
     });
 
-    if (selectedCategories.length > 0) {
-      selectedCategories.forEach((category) =>
-        formData.append("category", category)
-      );
-    }
-    if (selectedCountries.length > 0) {
+    if (selectedCategories.length > 0)
+      formData.append("category", selectedCategories.join(","));
+    if (selectedCountries.length > 0)
       formData.append("country", selectedCountries.join(","));
-    }
     if (propertyType) formData.append("propertyType", propertyType);
     if (direction) formData.append("direction", direction);
     if (planType) formData.append("planType", planType);
@@ -383,22 +377,44 @@ const AddProductPage: React.FC = () => {
     if (upSell.length > 0) formData.append("upSellProducts", upSell.join(","));
     if (mainImage) formData.append("mainImage", mainImage);
     if (headerImage) formData.append("headerImage", headerImage);
-    if (galleryImages.length > 0) {
+    if (galleryImages.length > 0)
       galleryImages.forEach((file) => formData.append("galleryImages", file));
-    }
-    if (planFiles.length > 0) {
+    if (planFiles.length > 0)
       planFiles.forEach((file) => formData.append("planFile", file));
-    }
 
     formData.append("isSale", String(isSale));
     dispatch(createProduct(formData));
   };
 
+  if (userInfo && userInfo.role === "professional" && !userInfo.isApproved) {
+    return (
+      <div className="container mx-auto flex items-center justify-center min-h-[60vh]">
+        <Card className="w-full max-w-lg text-center p-6">
+          <CardHeader>
+            <CardTitle className="text-2xl flex items-center justify-center gap-3">
+              <ShieldAlert className="h-10 w-10 text-yellow-500" />
+              Account Pending Approval
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-6">
+              Your professional account is under review. You can add plans once
+              your account is approved.
+            </p>
+            <Button asChild>
+              <Link to="/professional/dashboard">Go to Dashboard</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-800">Add New Product</h1>
+          <h1 className="text-3xl font-bold text-gray-800">Add New Plan</h1>
           <Button
             type="submit"
             className="btn-primary"
@@ -407,18 +423,19 @@ const AddProductPage: React.FC = () => {
             {actionStatus === "loading" && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}
-            Publish Product
+            Submit for Review
           </Button>
         </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Product Information</CardTitle>
+                <CardTitle>Plan Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Product Title*</Label>
+                  <Label htmlFor="name">Plan Title*</Label>
                   <Input
                     id="name"
                     {...register("name", { required: "Title is required" })}
@@ -463,15 +480,15 @@ const AddProductPage: React.FC = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Product Specifications</CardTitle>
+                <CardTitle>Plan Specifications</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="productNo">Product Number*</Label>
+                  <Label htmlFor="productNo">Plan Number*</Label>
                   <Input
                     id="productNo"
                     {...register("productNo", {
-                      required: "Product No. is required",
+                      required: "Plan No. is required",
                     })}
                   />
                   {errors.productNo && (
@@ -481,63 +498,56 @@ const AddProductPage: React.FC = () => {
                   )}
                 </div>
                 <div>
-                  {" "}
-                  <Label htmlFor="city">City</Label>{" "}
+                  <Label htmlFor="city">City</Label>
                   <Input
                     id="city"
                     {...register("city")}
                     placeholder="e.g., Mumbai, Delhi"
-                  />{" "}
+                  />
                 </div>
                 <div>
-                  {" "}
-                  <Label htmlFor="plotSize">Plot Size</Label>{" "}
-                  <Input id="plotSize" {...register("plotSize")} />{" "}
+                  <Label htmlFor="plotSize">Plot Size</Label>
+                  <Input id="plotSize" {...register("plotSize")} />
                 </div>
                 <div>
-                  {" "}
-                  <Label htmlFor="plotArea">Plot Area (sqft)</Label>{" "}
+                  <Label htmlFor="plotArea">Plot Area (sqft)</Label>
                   <Input
                     id="plotArea"
                     type="number"
                     {...register("plotArea", { valueAsNumber: true })}
-                  />{" "}
+                  />
                 </div>
                 <div>
-                  {" "}
-                  <Label htmlFor="rooms">Rooms (BHK)</Label>{" "}
+                  <Label htmlFor="rooms">Rooms (BHK)</Label>
                   <Input
                     id="rooms"
                     type="number"
                     {...register("rooms", { valueAsNumber: true })}
-                  />{" "}
+                  />
                 </div>
                 <div>
-                  {" "}
-                  <Label htmlFor="bathrooms">Bathrooms</Label>{" "}
+                  <Label htmlFor="bathrooms">Bathrooms</Label>
                   <Input
                     id="bathrooms"
                     type="number"
                     {...register("bathrooms", { valueAsNumber: true })}
-                  />{" "}
+                  />
                 </div>
                 <div>
-                  {" "}
-                  <Label htmlFor="kitchen">Kitchen</Label>{" "}
+                  <Label htmlFor="kitchen">Kitchen</Label>
                   <Input
                     id="kitchen"
                     type="number"
                     {...register("kitchen", { valueAsNumber: true })}
-                  />{" "}
+                  />
                 </div>
                 <div>
-                  {" "}
-                  <Label htmlFor="floors">Floors</Label>{" "}
+                  <Label htmlFor="floors">Floors</Label>
                   <Input
                     id="floors"
                     type="number"
                     {...register("floors", { valueAsNumber: true })}
-                  />{" "}
+                  />
                 </div>
                 <div>
                   <Label>Facing Direction</Label>
@@ -546,20 +556,25 @@ const AddProductPage: React.FC = () => {
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="North">North</SelectItem>{" "}
-                      <SelectItem value="South">South</SelectItem>{" "}
-                      <SelectItem value="East">East</SelectItem>{" "}
-                      <SelectItem value="West">West</SelectItem>{" "}
-                      <SelectItem value="North-East">North-East</SelectItem>{" "}
-                      <SelectItem value="North-West">North-West</SelectItem>{" "}
-                      <SelectItem value="South-East">South-East</SelectItem>{" "}
-                      <SelectItem value="South-West">South-West</SelectItem>
+                      {[
+                        "North",
+                        "South",
+                        "East",
+                        "West",
+                        "North-East",
+                        "North-West",
+                        "South-East",
+                        "South-West",
+                      ].map((d) => (
+                        <SelectItem key={d} value={d}>
+                          {d}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="md:col-span-3">
                   <Label htmlFor="country">Country</Label>
-                  {/* --- YAHAN `canSelectAll` PROP ADD KIYA HAI --- */}
                   <MultiSelectDropdown
                     selected={selectedCountries}
                     setSelected={setSelectedCountries}
@@ -581,68 +596,62 @@ const AddProductPage: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  {" "}
-                  <Label htmlFor="seoTitle">SEO Title</Label>{" "}
+                  <Label htmlFor="seoTitle">SEO Title</Label>
                   <Input
                     id="seoTitle"
                     {...register("seoTitle")}
                     placeholder="A catchy title for search engines"
-                  />{" "}
+                  />
                 </div>
                 <div>
-                  {" "}
-                  <Label htmlFor="seoAltText">Main Image Alt Text</Label>{" "}
+                  <Label htmlFor="seoAltText">Main Image Alt Text</Label>
                   <Input
                     id="seoAltText"
                     {...register("seoAltText")}
                     placeholder="Describe the main image for SEO"
-                  />{" "}
+                  />
                 </div>
                 <div>
-                  {" "}
-                  <Label htmlFor="seoDescription">Meta Description</Label>{" "}
+                  <Label htmlFor="seoDescription">Meta Description</Label>
                   <Textarea
                     id="seoDescription"
                     rows={3}
                     {...register("seoDescription")}
                     placeholder="A brief summary for search engines"
-                  />{" "}
+                  />
                 </div>
                 <div>
-                  {" "}
-                  <Label htmlFor="seoKeywords">Keywords</Label>{" "}
+                  <Label htmlFor="seoKeywords">Keywords</Label>
                   <Input
                     id="seoKeywords"
                     {...register("seoKeywords")}
                     placeholder="Comma-separated, e.g., house plan, 3bhk"
-                  />{" "}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4 pt-2">
                   <div>
-                    {" "}
                     <Label htmlFor="crossSellProducts">
                       Cross-Sell Products (Optional)
-                    </Label>{" "}
+                    </Label>
                     <MultiSelectForProducts
                       options={productOptions}
                       selected={crossSell}
                       onChange={setCrossSell}
                       className="mt-1"
                       placeholder="Select related products..."
-                    />{" "}
+                    />
                   </div>
                   <div>
-                    {" "}
                     <Label htmlFor="upSellProducts">
                       Up-Sell Products (Optional)
-                    </Label>{" "}
+                    </Label>
                     <MultiSelectForProducts
                       options={productOptions}
                       selected={upSell}
                       onChange={setUpSell}
                       className="mt-1"
                       placeholder="Select premium alternatives..."
-                    />{" "}
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -650,37 +659,31 @@ const AddProductPage: React.FC = () => {
 
             {planType === "Construction Products" && (
               <Card>
-                {" "}
                 <CardHeader>
-                  {" "}
-                  <CardTitle>Contact Information</CardTitle>{" "}
-                </CardHeader>{" "}
+                  <CardTitle>Contact Information</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
-                  {" "}
                   <div>
-                    {" "}
-                    <Label htmlFor="contactName">Contact Name</Label>{" "}
-                    <Input id="contactName" {...register("contactName")} />{" "}
-                  </div>{" "}
+                    <Label htmlFor="contactName">Contact Name</Label>
+                    <Input id="contactName" {...register("contactName")} />
+                  </div>
                   <div>
-                    {" "}
-                    <Label htmlFor="contactEmail">Contact Email</Label>{" "}
+                    <Label htmlFor="contactEmail">Contact Email</Label>
                     <Input
                       id="contactEmail"
                       type="email"
                       {...register("contactEmail")}
-                    />{" "}
-                  </div>{" "}
+                    />
+                  </div>
                   <div>
-                    {" "}
-                    <Label htmlFor="contactPhone">Contact Phone</Label>{" "}
+                    <Label htmlFor="contactPhone">Contact Phone</Label>
                     <Input
                       id="contactPhone"
                       type="tel"
                       {...register("contactPhone")}
-                    />{" "}
-                  </div>{" "}
-                </CardContent>{" "}
+                    />
+                  </div>
+                </CardContent>
               </Card>
             )}
 
@@ -693,43 +696,39 @@ const AddProductPage: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  {" "}
-                  <Label htmlFor="mainImage">Main Image</Label>{" "}
+                  <Label htmlFor="mainImage">Main Image*</Label>
                   <Input
                     id="mainImage"
                     type="file"
                     onChange={(e) =>
                       setMainImage(e.target.files ? e.target.files[0] : null)
                     }
-                  />{" "}
+                    required
+                  />
                 </div>
                 <div>
-                  {" "}
                   <Label htmlFor="galleryImages">
                     Gallery Images (Up to 5)
-                  </Label>{" "}
+                  </Label>
                   <Input
                     id="galleryImages"
                     type="file"
                     multiple
                     onChange={handleGalleryImagesChange}
-                  />{" "}
+                  />
                 </div>
                 <div>
-                  {" "}
-                  <Label htmlFor="headerImage">
-                    Downloadable Header Image
-                  </Label>{" "}
+                  <Label htmlFor="headerImage">Downloadable Header Image</Label>
                   <Input
                     id="headerImage"
                     type="file"
                     onChange={(e) =>
                       setHeaderImage(e.target.files ? e.target.files[0] : null)
                     }
-                  />{" "}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="planFileInput">Plan Files</Label>
+                  <Label htmlFor="planFileInput">Plan Files*</Label>
                   <Input
                     id="planFileInput"
                     type="file"
@@ -744,8 +743,7 @@ const AddProductPage: React.FC = () => {
                       document.getElementById("planFileInput")?.click()
                     }
                   >
-                    {" "}
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Files{" "}
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Files
                   </Button>
                   <div className="mt-2 space-y-2">
                     {planFiles.map((file, index) => (
@@ -753,17 +751,15 @@ const AddProductPage: React.FC = () => {
                         key={index}
                         className="flex items-center justify-between p-2 bg-gray-100 rounded-md"
                       >
-                        {" "}
-                        <span>{file.name}</span>{" "}
+                        <span>{file.name}</span>
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
                           onClick={() => handleRemovePlanFile(index)}
                         >
-                          {" "}
-                          <XCircle className="h-4 w-4 text-red-500" />{" "}
-                        </Button>{" "}
+                          <XCircle className="h-4 w-4 text-red-500" />
+                        </Button>
                       </div>
                     ))}
                   </div>
@@ -795,33 +791,30 @@ const AddProductPage: React.FC = () => {
                   )}
                 </div>
                 <div>
-                  {" "}
-                  <Label htmlFor="salePrice">Sale Price (₹)</Label>{" "}
+                  <Label htmlFor="salePrice">Sale Price (₹)</Label>
                   <Input
                     id="salePrice"
                     type="number"
                     {...register("salePrice", { valueAsNumber: true })}
-                  />{" "}
+                  />
                 </div>
                 <div>
-                  {" "}
-                  <Label htmlFor="taxRate">Tax Rate (%)</Label>{" "}
+                  <Label htmlFor="taxRate">Tax Rate (%)</Label>
                   <Input
                     id="taxRate"
                     type="number"
                     {...register("taxRate", { valueAsNumber: true })}
-                  />{" "}
+                  />
                 </div>
                 <div className="flex items-center space-x-2 pt-2">
-                  {" "}
                   <Checkbox
                     id="isSale"
                     checked={isSale}
                     onCheckedChange={(checked: CheckedState) =>
                       setIsSale(checked === true)
                     }
-                  />{" "}
-                  <Label htmlFor="isSale">This product is on sale</Label>{" "}
+                  />
+                  <Label htmlFor="isSale">This plan is on sale</Label>
                 </div>
               </CardContent>
             </Card>
@@ -838,13 +831,13 @@ const AddProductPage: React.FC = () => {
                       <SelectValue placeholder="Select Plan Type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Floor Plans">Floor Plans</SelectItem>{" "}
+                      <SelectItem value="Floor Plans">Floor Plans</SelectItem>
                       <SelectItem value="Floor Plan + 3D Elevations">
                         Floor Plans + 3D Elevations
-                      </SelectItem>{" "}
+                      </SelectItem>
                       <SelectItem value="Interior Designs">
                         Interior Designs
-                      </SelectItem>{" "}
+                      </SelectItem>
                       <SelectItem value="Construction Products">
                         Construction Products
                       </SelectItem>
@@ -868,8 +861,8 @@ const AddProductPage: React.FC = () => {
                       <SelectValue placeholder="Select Type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Residential">Residential</SelectItem>{" "}
-                      <SelectItem value="Commercial">Commercial</SelectItem>{" "}
+                      <SelectItem value="Residential">Residential</SelectItem>
+                      <SelectItem value="Commercial">Commercial</SelectItem>
                       <SelectItem value="Rental">Rental</SelectItem>
                     </SelectContent>
                   </Select>
@@ -883,4 +876,4 @@ const AddProductPage: React.FC = () => {
   );
 };
 
-export default AddProductPage;
+export default AddPlanPage;

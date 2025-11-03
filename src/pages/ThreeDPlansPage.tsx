@@ -11,6 +11,7 @@ import {
   Lock,
   ChevronLeft,
   ChevronRight,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -33,8 +34,8 @@ import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalP
 import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
 import { RootState, AppDispatch } from "@/lib/store";
 import useDebounce from "@/hooks/useDebounce";
-import { useCurrency } from "@/contexts/CurrencyContext"; // Currency Context जोड़ा गया
-import DisplayPrice from "@/components/DisplayPrice"; // DisplayPrice कंपोनेंट जोड़ा गया
+import { useCurrency } from "@/contexts/CurrencyContext";
+import DisplayPrice from "@/components/DisplayPrice";
 
 const slugify = (text: any) => {
   if (!text) return "";
@@ -47,195 +48,263 @@ const slugify = (text: any) => {
     .replace(/\-\-+/g, "-");
 };
 
-const FilterSidebar = ({ filters, setFilters }: any) => (
-  <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-white rounded-xl shadow-lg h-fit border border-gray-200 sticky top-24">
-    <h3 className="text-xl font-bold mb-4 flex items-center text-gray-800">
-      <Filter className="w-5 h-5 mr-2 text-gray-500" />
-      Filters
-    </h3>
-    <div className="space-y-6">
-      <div>
-        <Label htmlFor="plotSize" className="font-semibold text-gray-600">
-          Plot Size
-        </Label>
-        <Select
-          value={filters.plotSize}
-          onValueChange={(value) =>
-            setFilters((prev: any) => ({ ...prev, plotSize: value }))
-          }
+const FilterSidebar = ({ filters, setFilters, isOpen, onClose }: any) => (
+  <>
+    {/* Mobile Overlay */}
+    {isOpen && (
+      <div
+        className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+        onClick={onClose}
+      />
+    )}
+
+    {/* Sidebar */}
+    <aside
+      className={`
+        fixed lg:sticky top-0 left-0 h-screen lg:h-fit
+        w-full sm:w-80 lg:w-1/4 xl:w-1/5
+        p-4 sm:p-6 bg-white rounded-none lg:rounded-xl
+        shadow-2xl lg:shadow-lg border-0 lg:border border-gray-200
+        lg:top-24 z-50 lg:z-0
+        transform transition-transform duration-300 ease-in-out
+        ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        overflow-y-auto
+      `}
+    >
+      {/* Mobile Header */}
+      <div className="flex items-center justify-between mb-4 lg:hidden">
+        <h3 className="text-xl font-bold text-gray-800 flex items-center">
+          <Filter className="w-5 h-5 mr-2 text-gray-500" />
+          Filters
+        </h3>
+        <button
+          onClick={onClose}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
         >
-          <SelectTrigger
-            id="plotSize"
-            className="mt-2 bg-gray-100 border-transparent h-12"
-          >
-            <SelectValue placeholder="Select Size" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Sizes</SelectItem>
-            <SelectItem value="30x40">30x40</SelectItem>
-            <SelectItem value="40x60">40x60</SelectItem>
-            <SelectItem value="50x80">50x80</SelectItem>
-            <SelectItem value="29x36">29x36</SelectItem>
-          </SelectContent>
-        </Select>
+          <X className="w-5 h-5" />
+        </button>
       </div>
-      <div>
-        <Label htmlFor="plotArea" className="font-semibold text-gray-600">
-          Plot Area (sqft)
-        </Label>
-        <Select
-          value={filters.plotArea}
-          onValueChange={(value) =>
-            setFilters((prev: any) => ({ ...prev, plotArea: value }))
-          }
+
+      {/* Desktop Header */}
+      <h3 className="hidden lg:flex text-xl font-bold mb-4 items-center text-gray-800">
+        <Filter className="w-5 h-5 mr-2 text-gray-500" />
+        Filters
+      </h3>
+
+      <div className="space-y-4 sm:space-y-6">
+        <div>
+          <Label
+            htmlFor="plotSize"
+            className="font-semibold text-gray-600 text-sm"
+          >
+            Plot Size
+          </Label>
+          <Select
+            value={filters.plotSize}
+            onValueChange={(value) =>
+              setFilters((prev: any) => ({ ...prev, plotSize: value }))
+            }
+          >
+            <SelectTrigger
+              id="plotSize"
+              className="mt-2 bg-gray-100 border-transparent h-11"
+            >
+              <SelectValue placeholder="Select Size" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Sizes</SelectItem>
+              <SelectItem value="30x40">30x40</SelectItem>
+              <SelectItem value="40x60">40x60</SelectItem>
+              <SelectItem value="50x80">50x80</SelectItem>
+              <SelectItem value="29x36">29x36</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label
+            htmlFor="plotArea"
+            className="font-semibold text-gray-600 text-sm"
+          >
+            Plot Area (sqft)
+          </Label>
+          <Select
+            value={filters.plotArea}
+            onValueChange={(value) =>
+              setFilters((prev: any) => ({ ...prev, plotArea: value }))
+            }
+          >
+            <SelectTrigger
+              id="plotArea"
+              className="mt-2 bg-gray-100 border-transparent h-11"
+            >
+              <SelectValue placeholder="Select Area" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Areas</SelectItem>
+              <SelectItem value="500-1000">500-1000</SelectItem>
+              <SelectItem value="1000-2000">1000-2000</SelectItem>
+              <SelectItem value="2000+">2000+</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="bhk" className="font-semibold text-gray-600 text-sm">
+            Rooms (BHK)
+          </Label>
+          <Select
+            value={filters.bhk}
+            onValueChange={(value) =>
+              setFilters((prev: any) => ({ ...prev, bhk: value }))
+            }
+          >
+            <SelectTrigger
+              id="bhk"
+              className="mt-2 bg-gray-100 border-transparent h-11"
+            >
+              <SelectValue placeholder="Select Rooms" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All BHKs</SelectItem>
+              <SelectItem value="1">1 BHK</SelectItem>
+              <SelectItem value="2">2 BHK</SelectItem>
+              <SelectItem value="3">3 BHK</SelectItem>
+              <SelectItem value="4">4+ BHK</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label
+            htmlFor="direction"
+            className="font-semibold text-gray-600 text-sm"
+          >
+            Direction
+          </Label>
+          <Select
+            value={filters.direction}
+            onValueChange={(value) =>
+              setFilters((prev: any) => ({ ...prev, direction: value }))
+            }
+          >
+            <SelectTrigger
+              id="direction"
+              className="mt-2 bg-gray-100 border-transparent h-11"
+            >
+              <SelectValue placeholder="Select Direction" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Directions</SelectItem>
+              <SelectItem value="East">East</SelectItem>
+              <SelectItem value="West">West</SelectItem>
+              <SelectItem value="North">North</SelectItem>
+              <SelectItem value="South">South</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label
+            htmlFor="floors"
+            className="font-semibold text-gray-600 text-sm"
+          >
+            Floors
+          </Label>
+          <Select
+            value={filters.floors}
+            onValueChange={(value) =>
+              setFilters((prev: any) => ({ ...prev, floors: value }))
+            }
+          >
+            <SelectTrigger
+              id="floors"
+              className="mt-2 bg-gray-100 border-transparent h-11"
+            >
+              <SelectValue placeholder="Select Floors" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Floors</SelectItem>
+              <SelectItem value="1">1</SelectItem>
+              <SelectItem value="2">2</SelectItem>
+              <SelectItem value="3">3+</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label
+            htmlFor="propertyType"
+            className="font-semibold text-gray-600 text-sm"
+          >
+            Property Type
+          </Label>
+          <Select
+            value={filters.propertyType}
+            onValueChange={(value) =>
+              setFilters((prev: any) => ({ ...prev, propertyType: value }))
+            }
+          >
+            <SelectTrigger
+              id="propertyType"
+              className="mt-2 bg-gray-100 border-transparent h-11"
+            >
+              <SelectValue placeholder="Select Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="Residential">Residential</SelectItem>
+              <SelectItem value="Commercial">Commercial</SelectItem>
+              <SelectItem value="Rental">Rental</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label className="font-semibold text-gray-600 text-sm">
+            Budget: ₹{filters.budget[0].toLocaleString()} - ₹
+            {filters.budget[1].toLocaleString()}
+          </Label>
+          <Slider
+            value={filters.budget}
+            onValueChange={(value) =>
+              setFilters((prev: any) => ({ ...prev, budget: value }))
+            }
+            max={100000}
+            min={500}
+            step={500}
+            className="mt-3"
+          />
+        </div>
+
+        <Button
+          onClick={() => {
+            setFilters({
+              plotArea: "all",
+              plotSize: "all",
+              bhk: "all",
+              direction: "all",
+              floors: "all",
+              propertyType: "all",
+              budget: [500, 100000],
+            });
+            onClose();
+          }}
+          variant="outline"
+          className="w-full"
         >
-          <SelectTrigger
-            id="plotArea"
-            className="mt-2 bg-gray-100 border-transparent h-12"
-          >
-            <SelectValue placeholder="Select Area" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Areas</SelectItem>
-            <SelectItem value="500-1000">500-1000</SelectItem>
-            <SelectItem value="1000-2000">1000-2000</SelectItem>
-            <SelectItem value="2000+">2000+</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label htmlFor="bhk" className="font-semibold text-gray-600">
-          Rooms (BHK)
-        </Label>
-        <Select
-          value={filters.bhk}
-          onValueChange={(value) =>
-            setFilters((prev: any) => ({ ...prev, bhk: value }))
-          }
+          Clear Filters
+        </Button>
+
+        {/* Mobile Apply Button */}
+        <Button
+          onClick={onClose}
+          className="w-full lg:hidden bg-teal-600 hover:bg-teal-700 text-white"
         >
-          <SelectTrigger
-            id="bhk"
-            className="mt-2 bg-gray-100 border-transparent h-12"
-          >
-            <SelectValue placeholder="Select Rooms" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All BHKs</SelectItem>
-            <SelectItem value="1">1 BHK</SelectItem>
-            <SelectItem value="2">2 BHK</SelectItem>
-            <SelectItem value="3">3 BHK</SelectItem>
-            <SelectItem value="4">4+ BHK</SelectItem>
-          </SelectContent>
-        </Select>
+          Apply Filters
+        </Button>
       </div>
-      <div>
-        <Label htmlFor="direction" className="font-semibold text-gray-600">
-          Direction
-        </Label>
-        <Select
-          value={filters.direction}
-          onValueChange={(value) =>
-            setFilters((prev: any) => ({ ...prev, direction: value }))
-          }
-        >
-          <SelectTrigger
-            id="direction"
-            className="mt-2 bg-gray-100 border-transparent h-12"
-          >
-            <SelectValue placeholder="Select Direction" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Directions</SelectItem>
-            <SelectItem value="East">East</SelectItem>
-            <SelectItem value="West">West</SelectItem>
-            <SelectItem value="North">North</SelectItem>
-            <SelectItem value="South">South</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label htmlFor="floors" className="font-semibold text-gray-600">
-          Floors
-        </Label>
-        <Select
-          value={filters.floors}
-          onValueChange={(value) =>
-            setFilters((prev: any) => ({ ...prev, floors: value }))
-          }
-        >
-          <SelectTrigger
-            id="floors"
-            className="mt-2 bg-gray-100 border-transparent h-12"
-          >
-            <SelectValue placeholder="Select Floors" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Floors</SelectItem>
-            <SelectItem value="1">1</SelectItem>
-            <SelectItem value="2">2</SelectItem>
-            <SelectItem value="3">3+</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label htmlFor="propertyType" className="font-semibold text-gray-600">
-          Property Type
-        </Label>
-        <Select
-          value={filters.propertyType}
-          onValueChange={(value) =>
-            setFilters((prev: any) => ({ ...prev, propertyType: value }))
-          }
-        >
-          <SelectTrigger
-            id="propertyType"
-            className="mt-2 bg-gray-100 border-transparent h-12"
-          >
-            <SelectValue placeholder="Select Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="Residential">Residential</SelectItem>
-            <SelectItem value="Commercial">Commercial</SelectItem>
-            <SelectItem value="Rental">Rental</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label className="font-semibold text-gray-600">
-          Budget: ₹{filters.budget[0].toLocaleString()} - ₹
-          {filters.budget[1].toLocaleString()}
-        </Label>
-        <Slider
-          value={filters.budget}
-          onValueChange={(value) =>
-            setFilters((prev: any) => ({ ...prev, budget: value }))
-          }
-          max={100000}
-          min={500}
-          step={500}
-          className="mt-3"
-        />
-      </div>
-      <Button
-        onClick={() =>
-          setFilters({
-            plotArea: "all",
-            plotSize: "all",
-            bhk: "all",
-            direction: "all",
-            floors: "all",
-            propertyType: "all",
-            budget: [500, 100000],
-          })
-        }
-        variant="outline"
-        className="w-full"
-      >
-        Clear Filters
-      </Button>
-    </div>
-  </aside>
+    </aside>
+  </>
 );
 
 const ProductCard = ({ plan, userOrders }: any) => {
@@ -243,7 +312,7 @@ const ProductCard = ({ plan, userOrders }: any) => {
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { userInfo } = useSelector((state: RootState) => state.user);
   const { toast } = useToast();
-  const { symbol, rate } = useCurrency(); // Currency हुक जोड़ा गया
+  const { symbol, rate } = useCurrency();
 
   const productName =
     plan.name || plan.planName || plan.Name || "Untitled Plan";
@@ -387,95 +456,105 @@ const ProductCard = ({ plan, userOrders }: any) => {
             />
           </div>
           <div className="absolute inset-2 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md"></div>
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-gray-900/80 text-white text-xs font-bold px-4 py-2 rounded-md shadow-lg text-center">
-            <p>{plotSize}</p>
-            <p className="text-xs font-normal">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-gray-900/80 text-white text-xs font-bold px-3 sm:px-4 py-2 rounded-md shadow-lg text-center max-w-[90%]">
+            <p className="truncate">{plotSize}</p>
+            <p className="text-[10px] sm:text-xs font-normal">
               {hasPurchased ? "Download now" : "Purchase to download"}
             </p>
           </div>
         </Link>
         {isSale && (
-          <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-md shadow">
+          <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-2 sm:px-3 py-1 rounded-md shadow">
             Sale!
           </div>
         )}
         {hasPurchased && (
-          <div className="absolute top-2 right-12 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md z-10">
+          <div className="absolute top-2 right-12 sm:right-14 bg-green-500 text-white text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-1 rounded-full shadow-md z-10">
             Purchased
           </div>
         )}
-        <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
           <button
             onClick={handleWishlistToggle}
-            className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-gray-600 hover:text-red-500 hover:scale-110"}`}
+            className={`w-8 h-8 sm:w-9 sm:h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-gray-600 hover:text-red-500 hover:scale-110"}`}
             aria-label="Toggle Wishlist"
           >
             <Heart
-              className="w-5 h-5"
+              className="w-4 h-4 sm:w-5 sm:h-5"
               fill={isWishlisted ? "currentColor" : "none"}
             />
           </button>
         </div>
       </div>
-      <div className="p-4 grid grid-cols-3 gap-2 border-t text-center text-sm">
-        <div>
-          <p className="text-xs text-gray-500">Plot Area</p>
-          <p className="font-bold">{plotArea} sqft</p>
+
+      <div className="p-3 sm:p-4 grid grid-cols-3 gap-1 sm:gap-2 border-t text-center text-xs sm:text-sm">
+        <div className="p-1">
+          <p className="text-[10px] sm:text-xs text-gray-500">Plot Area</p>
+          <p className="font-bold text-xs sm:text-sm">{plotArea} sqft</p>
         </div>
-        <div className="bg-teal-50 p-2 rounded-md">
-          <p className="text-xs text-gray-500">Rooms</p>
-          <p className="font-bold">{rooms}</p>
+        <div className="bg-teal-50 p-1 sm:p-2 rounded-md">
+          <p className="text-[10px] sm:text-xs text-gray-500">Rooms</p>
+          <p className="font-bold text-xs sm:text-sm">{rooms}</p>
         </div>
-        <div className="bg-teal-50 p-2 rounded-md">
-          <p className="text-xs text-gray-500">Bathrooms</p>
-          <p className="font-bold">{plan.bathrooms || "N/A"}</p>
+        <div className="bg-teal-50 p-1 sm:p-2 rounded-md">
+          <p className="text-[10px] sm:text-xs text-gray-500">Bathrooms</p>
+          <p className="font-bold text-xs sm:text-sm">
+            {plan.bathrooms || "N/A"}
+          </p>
         </div>
-        <div>
-          <p className="text-xs text-gray-500">Kitchen</p>
-          <p className="font-bold">{plan.kitchen || "N/A"}</p>
+        <div className="p-1">
+          <p className="text-[10px] sm:text-xs text-gray-500">Kitchen</p>
+          <p className="font-bold text-xs sm:text-sm">
+            {plan.kitchen || "N/A"}
+          </p>
         </div>
-        <div>
-          <p className="text-xs text-gray-500">Floors</p>
-          <p className="font-bold">{floors}</p>
+        <div className="p-1">
+          <p className="text-[10px] sm:text-xs text-gray-500">Floors</p>
+          <p className="font-bold text-xs sm:text-sm">{floors}</p>
         </div>
-        <div>
-          <p className="text-xs text-gray-500">Direction</p>
-          <p className="font-bold">{direction}</p>
+        <div className="p-1">
+          <p className="text-[10px] sm:text-xs text-gray-500">Direction</p>
+          <p className="font-bold text-xs sm:text-sm">{direction}</p>
         </div>
       </div>
-      <div className="p-4 border-t">
-        <p className="text-xs text-gray-500 uppercase">{category}</p>
-        <div className="mt-2 text-xs text-gray-600 space-y-1">
+
+      <div className="p-3 sm:p-4 border-t">
+        <p className="text-[10px] sm:text-xs text-gray-500 uppercase">
+          {category}
+        </p>
+        <div className="mt-2 text-[10px] sm:text-xs text-gray-600 space-y-1">
           {plan.productNo && (
             <div className="flex justify-between items-center">
               <span className="font-semibold">Product No:</span>
-              <span>{plan.productNo}</span>
+              <span className="text-right">{plan.productNo}</span>
             </div>
           )}
           {city && (
             <div className="flex justify-between items-center">
               <span className="font-semibold">City:</span>
-              <span className="text-right font-bold text-teal-700">{city}</span>
+              <span className="text-right font-bold text-teal-700 truncate max-w-[60%]">
+                {city}
+              </span>
             </div>
           )}
         </div>
-        <h3 className="text-lg font-bold text-teal-800 mt-1 truncate">
+        <h3 className="text-base sm:text-lg font-bold text-teal-800 mt-1 truncate">
           {productName}
         </h3>
-        {/* --- Price Display Section Updated --- */}
-        <div className="flex items-baseline gap-2 mt-1 flex-wrap">
+
+        <div className="flex items-baseline gap-1 sm:gap-2 mt-1 flex-wrap">
           {isSale && parseFloat(String(regularPrice)) > 0 && (
-            <s className="text-md text-gray-400">
+            <s className="text-sm sm:text-md text-gray-400">
               <DisplayPrice inrPrice={parseFloat(String(regularPrice))} />
             </s>
           )}
-          <span className="text-xl font-bold text-gray-800">
+          <span className="text-lg sm:text-xl font-bold text-gray-800">
             <DisplayPrice inrPrice={parseFloat(String(displayPrice))} />
           </span>
           {isSale &&
             parseFloat(String(regularPrice)) > 0 &&
             parseFloat(String(displayPrice)) > 0 && (
-              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-semibold">
+              <span className="text-[10px] sm:text-xs bg-green-100 text-green-800 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-semibold">
                 SAVE {symbol}
                 {(
                   (parseFloat(String(regularPrice)) -
@@ -489,28 +568,29 @@ const ProductCard = ({ plan, userOrders }: any) => {
             )}
         </div>
       </div>
-      <div className="p-4 pt-0 mt-auto space-y-2">
+
+      <div className="p-3 sm:p-4 pt-0 mt-auto space-y-2">
         <Link to={linkTo}>
           <Button
             variant="outline"
-            className="w-full bg-gray-800 text-white hover:bg-gray-700"
+            className="w-full bg-gray-800 text-white hover:bg-gray-700 h-9 sm:h-10 text-sm"
           >
             Read more
           </Button>
         </Link>
         <Button
-          className={`w-full text-white rounded-md ${hasPurchased ? "bg-teal-500 hover:bg-teal-600" : "bg-gray-400 cursor-not-allowed"}`}
+          className={`w-full text-white rounded-md h-9 sm:h-10 text-sm ${hasPurchased ? "bg-teal-500 hover:bg-teal-600" : "bg-gray-400 cursor-not-allowed"}`}
           onClick={handleDownload}
           disabled={!hasPurchased}
         >
           {hasPurchased ? (
             <>
-              <Download className="mr-2 h-4 w-4" />
+              <Download className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
               Download
             </>
           ) : (
             <>
-              <Lock className="mr-2 h-4 w-4" />
+              <Lock className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
               Purchase to Download
             </>
           )}
@@ -551,6 +631,7 @@ const ThreeDPlansPage = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const [jumpToPage, setJumpToPage] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const debouncedFilters = useDebounce(filters, 300);
 
@@ -626,67 +707,94 @@ const ThreeDPlansPage = () => {
   };
 
   return (
-    <div className="bg-gray-50">
+    <div className="bg-gray-50 min-h-screen">
       <Navbar />
-      <main className="container mx-auto px-4 py-12">
-        <div className="flex flex-col lg:flex-row gap-12">
-          <FilterSidebar filters={filters} setFilters={setFilters} />
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-12">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-12">
+          <FilterSidebar
+            filters={filters}
+            setFilters={setFilters}
+            isOpen={isFilterOpen}
+            onClose={() => setIsFilterOpen(false)}
+          />
+
           <div className="w-full lg:w-3/4 xl:w-4/5">
-            <div className="flex flex-wrap gap-4 justify-between items-center mb-6 border-b pb-4">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-800">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between items-start sm:items-center mb-4 sm:mb-6 border-b pb-3 sm:pb-4">
+              <div className="w-full sm:w-auto">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">
                   {pageTitle}
                 </h1>
-                <p className="text-gray-500 text-sm">
-                  Showing {combinedProducts.length} of {totalCount} results on
-                  page {currentPage} of {totalPages}
+                <p className="text-gray-500 text-xs sm:text-sm mt-1">
+                  Showing {combinedProducts.length} of {totalCount} results
+                  <span className="hidden sm:inline">
+                    {" "}
+                    on page {currentPage} of {totalPages}
+                  </span>
                 </p>
               </div>
-              <div className="w-full sm:w-48">
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="newest">Sort by latest</SelectItem>
-                    <SelectItem value="price-low">
-                      Price: Low to High
-                    </SelectItem>
-                    <SelectItem value="price-high">
-                      Price: High to Low
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button
+                  onClick={() => setIsFilterOpen(true)}
+                  variant="outline"
+                  className="lg:hidden flex-1 sm:flex-none h-10"
+                >
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filters
+                </Button>
+
+                <div className="flex-1 sm:w-48">
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="bg-white h-10">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="newest">Sort by latest</SelectItem>
+                      <SelectItem value="price-low">
+                        Price: Low to High
+                      </SelectItem>
+                      <SelectItem value="price-high">
+                        Price: High to Low
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
+
             {isLoading && (
-              <div className="flex justify-center items-center h-96">
-                <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
+              <div className="flex justify-center items-center h-64 sm:h-96">
+                <Loader2 className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-orange-500" />
               </div>
             )}
+
             {isError && (
-              <div className="text-center py-20">
-                <ServerCrash className="mx-auto h-12 w-12 text-red-500" />
-                <h3 className="mt-4 text-xl font-semibold text-red-500">
+              <div className="text-center py-12 sm:py-20">
+                <ServerCrash className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-red-500" />
+                <h3 className="mt-4 text-lg sm:text-xl font-semibold text-red-500">
                   Failed to Load Plans
                 </h3>
-                <p className="mt-2 text-gray-500">{errorMessage}</p>
+                <p className="mt-2 text-sm sm:text-base text-gray-500">
+                  {errorMessage}
+                </p>
               </div>
             )}
 
             {!isLoading && !isError && (
               <>
                 {combinedProducts.length === 0 ? (
-                  <div className="text-center py-20">
-                    <h3 className="text-xl font-semibold">No Plans Found</h3>
-                    <p className="mt-2 text-gray-500">
+                  <div className="text-center py-12 sm:py-20">
+                    <h3 className="text-lg sm:text-xl font-semibold">
+                      No Plans Found
+                    </h3>
+                    <p className="mt-2 text-sm sm:text-base text-gray-500">
                       Try adjusting your filters to see more results.
                     </p>
                   </div>
                 ) : (
                   <motion.div
                     layout
-                    className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"
                   >
                     {combinedProducts.map((plan) => (
                       <ProductCard
@@ -699,32 +807,40 @@ const ThreeDPlansPage = () => {
                 )}
 
                 {totalPages > 1 && (
-                  <div className="mt-12 flex flex-wrap justify-center items-center gap-3 sm:gap-4">
-                    <Button
-                      variant="outline"
-                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                      disabled={currentPage === 1}
-                    >
-                      <ChevronLeft className="w-4 h-4 mr-2" />
-                      Previous
-                    </Button>
-                    <span className="font-medium text-gray-700">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        setCurrentPage((p) => Math.min(p + 1, totalPages))
-                      }
-                      disabled={currentPage === totalPages}
-                    >
-                      Next
-                      <ChevronRight className="w-4 h-4 ml-2" />
-                    </Button>
+                  <div className="mt-8 sm:mt-12 flex flex-col sm:flex-row flex-wrap justify-center items-center gap-3 sm:gap-4">
+                    <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center">
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          setCurrentPage((p) => Math.max(p - 1, 1))
+                        }
+                        disabled={currentPage === 1}
+                        className="h-9 sm:h-10 px-3 sm:px-4 text-sm"
+                      >
+                        <ChevronLeft className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Previous</span>
+                      </Button>
+
+                      <span className="font-medium text-gray-700 text-sm sm:text-base px-2">
+                        {currentPage} / {totalPages}
+                      </span>
+
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          setCurrentPage((p) => Math.min(p + 1, totalPages))
+                        }
+                        disabled={currentPage === totalPages}
+                        className="h-9 sm:h-10 px-3 sm:px-4 text-sm"
+                      >
+                        <span className="hidden sm:inline">Next</span>
+                        <ChevronRight className="w-4 h-4 sm:ml-2" />
+                      </Button>
+                    </div>
 
                     <form
                       onSubmit={handlePageJump}
-                      className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0"
+                      className="flex items-center gap-2 w-full sm:w-auto justify-center"
                     >
                       <Input
                         type="number"
@@ -733,10 +849,14 @@ const ThreeDPlansPage = () => {
                         value={jumpToPage}
                         onChange={(e) => setJumpToPage(e.target.value)}
                         placeholder="Go to..."
-                        className="w-24 h-10"
+                        className="w-20 sm:w-24 h-9 sm:h-10 text-sm"
                         aria-label="Jump to page"
                       />
-                      <Button type="submit" variant="outline" className="h-10">
+                      <Button
+                        type="submit"
+                        variant="outline"
+                        className="h-9 sm:h-10 text-sm"
+                      >
                         Go
                       </Button>
                     </form>

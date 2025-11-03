@@ -1,3 +1,5 @@
+// File: src/lib/features/products/productSlice.ts
+
 import axios from "axios";
 import {
   createSlice,
@@ -8,31 +10,14 @@ import {
 import { RootState } from "@/lib/store";
 
 const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/products`;
-
 const getToken = (getState: () => RootState) => {
   const { user } = getState();
   return user.userInfo?.token;
 };
 
-interface Review {
-  _id: string;
-  name: string;
-  rating: number;
-  comment: string;
-  user: string;
-  createdAt: string;
-}
-
-interface SeoData {
-  title?: string;
-  description?: string;
-  keywords?: string;
-  altText?: string;
-}
-
 export interface Product {
   _id: string;
-  user?: string;
+  user?: any;
   createdAt?: string;
   updatedAt?: string;
   name: string;
@@ -56,46 +41,15 @@ export interface Product {
   planFile?: string[];
   galleryImages?: string[];
   youtubeLink?: string;
-  reviews?: Review[];
+  reviews?: any[];
   rating?: number;
   numReviews?: number;
-  seo?: SeoData;
+  seo?: any;
   taxRate?: number;
   crossSellProducts?: Product[];
   upSellProducts?: Product[];
   productNo?: string | number;
-  ID?: number;
-  Type?: string;
-  SKU?: string;
-  Name?: string;
-  Published?: number;
-  "Is featured?"?: number;
-  "Visibility in catalog"?: string;
-  "Short description"?: string;
-  "Regular price"?: number;
-  "Sale price"?: number;
-  "Tax status"?: string;
-  "Tax class"?: number;
-  "In stock?"?: number;
-  Categories?: string;
-  Tags?: string;
-  Images?: string;
-  Upsells?: string;
-  "Cross-sells"?: string;
-  Position?: number;
-  "Attribute 1 name"?: string;
-  "Attribute 1 value(s)"?: string;
-  "Attribute 2 name"?: string;
-  "Attribute 2 value(s)"?: string;
-  "Attribute 3 name"?: string;
-  "Attribute 3 value(s)"?: string;
-  "Attribute 4 name"?: string;
-  "Attribute 4 value(s)"?: string;
-  "Attribute 5 name"?: string;
-  "Attribute 5 value(s)"?: string;
-  "Download 1 URL"?: string;
-  "Download 2 URL"?: string;
-  "Download 3 URL"?: string;
+  status?: "Published" | "Pending Review" | "Draft" | "Rejected";
   [key: string]: any;
 }
 
@@ -108,6 +62,7 @@ interface FetchProductsResponse {
 
 interface ProductState {
   products: Product[];
+  myProducts: Product[];
   product: Product | null;
   page: number;
   pages: number;
@@ -116,8 +71,10 @@ interface ProductState {
   actionStatus: "idle" | "loading" | "succeeded" | "failed";
   error: any;
 }
+
 const initialState: ProductState = {
   products: [],
+  myProducts: [],
   product: null,
   page: 1,
   pages: 1,
@@ -138,6 +95,40 @@ export const fetchProducts = createAsyncThunk<
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message || "Failed to fetch products"
+    );
+  }
+});
+
+export const fetchAdminProducts = createAsyncThunk<
+  Product[],
+  void,
+  { state: RootState; rejectValue: string }
+>("products/fetchAdmin", async (_, { getState, rejectWithValue }) => {
+  try {
+    const token = getToken(getState);
+    const config = { headers: { Authorization: `Bearer ${token}` } };
+    const { data } = await axios.get(`${API_URL}/admin`, config);
+    return data.products;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message || "Failed to fetch admin products"
+    );
+  }
+});
+
+export const fetchMyProducts = createAsyncThunk<
+  Product[],
+  void,
+  { state: RootState; rejectValue: string }
+>("products/fetchMy", async (_, { getState, rejectWithValue }) => {
+  try {
+    const token = getToken(getState);
+    const config = { headers: { Authorization: `Bearer ${token}` } };
+    const { data } = await axios.get(`${API_URL}/myproducts`, config);
+    return data.products;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message || "Failed to fetch your products"
     );
   }
 });
@@ -269,6 +260,7 @@ export const createReview = createAsyncThunk<
   }
 );
 
+// === NEW FUNCTION ADDED HERE ===
 export const removeCsvImage = createAsyncThunk<
   Product,
   { productId: string; imageUrl: string },
@@ -279,9 +271,7 @@ export const removeCsvImage = createAsyncThunk<
     try {
       const token = getToken(getState);
       const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         data: { imageUrl },
       };
       const { data } = await axios.delete(
@@ -302,127 +292,85 @@ const productSlice = createSlice({
   initialState,
   reducers: {
     resetProductState: (state) => {
-      state.product = null;
       state.actionStatus = "idle";
       state.error = null;
     },
   },
   extraReducers: (builder) => {
-    const actionPending = (state: ProductState) => {
-      state.actionStatus = "loading";
-      state.error = null;
-    };
-    const actionRejected = (state: ProductState, action: AnyAction) => {
-      state.actionStatus = "failed";
-      state.error = action.payload;
-    };
-
-    builder.addCase(fetchProducts.pending, (state) => {
-      state.listStatus = "loading";
-    });
-    builder.addCase(
-      fetchProducts.fulfilled,
-      (state, action: PayloadAction<FetchProductsResponse>) => {
-        state.listStatus = "succeeded";
+    builder
+      .addCase(fetchProducts.fulfilled, (state, action) => {
         state.products = action.payload.products;
         state.page = action.payload.page;
         state.pages = action.payload.pages;
         state.count = action.payload.count;
-      }
-    );
-    builder.addCase(fetchProducts.rejected, (state, action: AnyAction) => {
-      state.listStatus = "failed";
-      state.error = action.payload;
-    });
-
-    builder.addCase(fetchProductById.pending, (state) => {
-      state.listStatus = "loading";
-    });
-    builder.addCase(
-      fetchProductById.fulfilled,
-      (state, action: PayloadAction<Product>) => {
-        state.listStatus = "succeeded";
-        state.product = action.payload;
-      }
-    );
-    builder.addCase(fetchProductById.rejected, (state, action: AnyAction) => {
-      state.listStatus = "failed";
-      state.error = action.payload;
-    });
-
-    builder.addCase(fetchProductBySlug.pending, (state) => {
-      state.listStatus = "loading";
-    });
-    builder.addCase(
-      fetchProductBySlug.fulfilled,
-      (state, action: PayloadAction<Product>) => {
-        state.listStatus = "succeeded";
-        state.product = action.payload;
-      }
-    );
-    builder.addCase(fetchProductBySlug.rejected, (state, action: AnyAction) => {
-      state.listStatus = "failed";
-      state.error = action.payload;
-    });
-
-    builder
-      .addCase(createProduct.pending, actionPending)
-      .addCase(
-        createProduct.fulfilled,
-        (state, action: PayloadAction<Product>) => {
-          state.actionStatus = "succeeded";
-          state.products.unshift(action.payload);
-        }
-      )
-      .addCase(createProduct.rejected, actionRejected);
-    builder
-      .addCase(updateProduct.pending, actionPending)
-      .addCase(
-        updateProduct.fulfilled,
-        (state, action: PayloadAction<Product>) => {
-          state.actionStatus = "succeeded";
-          state.products = state.products.map((p) =>
-            p._id === action.payload._id ? action.payload : p
-          );
-          if (state.product?._id === action.payload._id) {
-            state.product = action.payload;
-          }
-        }
-      )
-      .addCase(updateProduct.rejected, actionRejected);
-    builder
-      .addCase(deleteProduct.pending, actionPending)
-      .addCase(
-        deleteProduct.fulfilled,
-        (state, action: PayloadAction<string>) => {
-          state.actionStatus = "succeeded";
-          state.products = state.products.filter(
-            (p) => p._id !== action.payload
-          );
-        }
-      )
-      .addCase(deleteProduct.rejected, actionRejected);
-    builder
-      .addCase(createReview.pending, actionPending)
-      .addCase(createReview.fulfilled, (state) => {
-        state.actionStatus = "succeeded";
       })
-      .addCase(createReview.rejected, actionRejected);
-    builder
-      .addCase(removeCsvImage.pending, actionPending)
-      .addCase(
-        removeCsvImage.fulfilled,
-        (state, action: PayloadAction<Product>) => {
-          state.actionStatus = "succeeded";
-          state.products = state.products.map((p) =>
-            p._id === action.payload._id ? action.payload : p
-          );
-          if (state.product?._id === action.payload._id) {
-            state.product = action.payload;
+      .addCase(fetchAdminProducts.fulfilled, (state, action) => {
+        state.products = action.payload;
+      })
+      .addCase(fetchMyProducts.fulfilled, (state, action) => {
+        state.myProducts = action.payload;
+      })
+      .addCase(createProduct.fulfilled, (state, action) => {
+        state.myProducts.unshift(action.payload);
+      })
+      .addCase(updateProduct.fulfilled, (state, action) => {
+        state.product = action.payload;
+        state.products = state.products.map((p) =>
+          p._id === action.payload._id ? action.payload : p
+        );
+        state.myProducts = state.myProducts.map((p) =>
+          p._id === action.payload._id ? action.payload : p
+        );
+      })
+      .addCase(deleteProduct.fulfilled, (state, action) => {
+        state.products = state.products.filter((p) => p._id !== action.payload);
+        state.myProducts = state.myProducts.filter(
+          (p) => p._id !== action.payload
+        );
+      })
+      // === NEW HANDLER ADDED HERE ===
+      .addCase(removeCsvImage.fulfilled, (state, action) => {
+        const updatedProduct = action.payload;
+        state.product = updatedProduct;
+        state.products = state.products.map((p) =>
+          p._id === updatedProduct._id ? updatedProduct : p
+        );
+        state.myProducts = state.myProducts.map((p) =>
+          p._id === updatedProduct._id ? updatedProduct : p
+        );
+      })
+      .addMatcher(
+        (action) => action.type.endsWith("/pending"),
+        (state, action) => {
+          if (action.type.includes("fetch")) {
+            state.listStatus = "loading";
+          } else {
+            state.actionStatus = "loading";
           }
         }
       )
-      .addCase(removeCsvImage.rejected, actionRejected);
+      .addMatcher(
+        (action) => action.type.endsWith("/fulfilled"),
+        (state) => {
+          if (state.listStatus === "loading") {
+            state.listStatus = "succeeded";
+          }
+          if (state.actionStatus === "loading") {
+            state.actionStatus = "succeeded";
+          }
+        }
+      )
+      .addMatcher(
+        (action) => action.type.endsWith("/rejected"),
+        (state, action) => {
+          if (state.listStatus === "loading") {
+            state.listStatus = "failed";
+          } else {
+            state.actionStatus = "failed";
+          }
+          state.error = action.payload;
+        }
+      );
   },
 });
 

@@ -62,7 +62,6 @@ const AllProductsPage: React.FC = () => {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // URL से प्रारंभिक मान पढ़ें या डिफ़ॉल्ट सेट करें
   const initialPage = parseInt(searchParams.get("page") || "1", 10);
   const initialCategory = searchParams.get("category") || "all";
   const initialSearchTerm = searchParams.get("search") || "";
@@ -70,7 +69,6 @@ const AllProductsPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  // States को URL से मिली वैल्यू से इनिशियलाइज़ करें
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
@@ -78,7 +76,6 @@ const AllProductsPage: React.FC = () => {
   const [jumpToPage, setJumpToPage] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  // जब भी स्टेट बदले, URL को अपडेट करें
   useEffect(() => {
     const params = new URLSearchParams();
     if (currentPage > 1) {
@@ -90,12 +87,9 @@ const AllProductsPage: React.FC = () => {
     if (debouncedSearchTerm) {
       params.set("search", debouncedSearchTerm);
     }
-
-    // `replace: true` ब्राउज़र हिस्ट्री को साफ रखता है
     setSearchParams(params, { replace: true });
   }, [currentPage, selectedCategory, debouncedSearchTerm, setSearchParams]);
 
-  // जब भी URL पर आधारित स्टेट बदले, प्रोडक्ट्स को फैच करें
   useEffect(() => {
     const params: any = {
       pageNumber: currentPage,
@@ -108,12 +102,25 @@ const AllProductsPage: React.FC = () => {
     dispatch(fetchProducts(params));
   }, [dispatch, currentPage, debouncedSearchTerm, selectedCategory]);
 
+  // <<< YAHAN BADLAAV KIYA GAYA HAI >>>
   useEffect(() => {
+    // Update successful
+    if (actionStatus === "succeeded") {
+      // Yeh check isliye taaki delete ke success par ye na chale
+      if (isEditModalOpen) {
+        toast.success("Product updated successfully!");
+        handleCloseModal();
+      }
+      dispatch(resetProductState());
+    }
+
+    // Action failed
     if (actionStatus === "failed" && error) {
       toast.error(String(error));
       dispatch(resetProductState());
     }
-  }, [actionStatus, error, dispatch]);
+  }, [actionStatus, error, dispatch, isEditModalOpen]);
+  // <<< BADLAAV KHATAM >>>
 
   const totalPages = pages || 1;
 
@@ -132,18 +139,12 @@ const AllProductsPage: React.FC = () => {
       dispatch(deleteProduct(productId)).then((res) => {
         if (res.type.endsWith("fulfilled")) {
           toast.success("Product deleted successfully!");
-
           if (products.length === 1 && currentPage > 1) {
             setCurrentPage(currentPage - 1);
-          } else {
-            const params: any = {
-              pageNumber: currentPage,
-              limit: 12,
-              searchTerm: debouncedSearchTerm,
-              category: selectedCategory,
-            };
-            dispatch(fetchProducts(params));
           }
+          // Note: Re-fetch for delete is handled by the main useEffect
+          // when currentPage changes or implicitly by the logic above.
+          // Or we can force it, but letting state drive it is cleaner.
         }
       });
     }
@@ -166,12 +167,12 @@ const AllProductsPage: React.FC = () => {
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
 
   const handleClearFilters = () => {
@@ -442,4 +443,5 @@ const AllProductsPage: React.FC = () => {
     </>
   );
 };
+
 export default AllProductsPage;

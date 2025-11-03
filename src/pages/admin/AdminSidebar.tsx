@@ -45,6 +45,11 @@ const mainLinks = [
     path: "/admin/seller-enquiries",
     icon: Briefcase,
   },
+  {
+    name: "Professional Plans",
+    path: "/admin/managesellerplans",
+    icon: Briefcase,
+  },
 ];
 
 const requestLinks = [

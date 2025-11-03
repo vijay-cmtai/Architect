@@ -1,16 +1,18 @@
+// File: src/pages/professional/MyProductsPage.tsx
+
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
-  fetchMyPlans,
-  deletePlan,
-  updatePlan,
-  resetPlanActionStatus,
-} from "@/lib/features/professional/professionalPlanSlice";
+  fetchMyProducts,
+  deleteProduct,
+  updateProduct,
+  resetProductState,
+  Product,
+} from "@/lib/features/products/productSlice";
 import { RootState, AppDispatch } from "@/lib/store";
-import { Plan } from "@/lib/features/professional/professionalPlanSlice"; // Import the Plan interface
 
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Edit, Trash2, Loader2, PackageOpen } from "lucide-react";
@@ -22,18 +24,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import EditPlanModal from "@/pages/professional/EditPlanModal"; // Ensure this path is correct
+import EditProductModal from "./EditPlanModal";
 
-// Helper function to get status color and style
-const getStatusClass = (status: string) => {
+const getStatusClass = (status?: string) => {
   switch (status) {
     case "Published":
-    case "Approved":
       return "bg-green-100 text-green-800";
     case "Pending Review":
       return "bg-yellow-100 text-yellow-800";
     case "Draft":
       return "bg-gray-100 text-gray-700";
+    case "Rejected":
+      return "bg-red-100 text-red-800";
     default:
       return "bg-gray-100 text-gray-700";
   }
@@ -42,61 +44,69 @@ const getStatusClass = (status: string) => {
 const MyProductsPage = () => {
   const dispatch: AppDispatch = useDispatch();
 
+  // === YAHAN BADLAV KIYA GAYA HAI ===
+  // Hum 'myProducts' state ko le rahe hain aur use 'products' naam de rahe hain
+  // taaki baaki code mein badlav na karna pade.
   const {
-    plans: myPlans,
+    myProducts: products, // Sahi state 'myProducts' hai
     listStatus,
     actionStatus,
     error,
-  } = useSelector((state: RootState) => state.professionalPlans);
+  } = useSelector((state: RootState) => state.products);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
-    // Fetches only the plans for the logged-in professional
-    if (listStatus === "idle") {
-      dispatch(fetchMyPlans());
+    dispatch(fetchMyProducts());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (actionStatus === "succeeded") {
+      dispatch(fetchMyProducts());
+      dispatch(resetProductState());
     }
-  }, [listStatus, dispatch]);
-
-  useEffect(() => {
     if (actionStatus === "failed" && error) {
       toast.error(String(error) || "An action failed. Please try again.");
-      dispatch(resetPlanActionStatus());
+      dispatch(resetProductState());
     }
   }, [actionStatus, error, dispatch]);
 
-  const handleDelete = (planId: string) => {
+  const handleDelete = (productId: string) => {
     if (
-      window.confirm("Are you sure you want to permanently delete this plan?")
+      window.confirm(
+        "Are you sure you want to permanently delete this product?"
+      )
     ) {
-      dispatch(deletePlan(planId)).then((result) => {
-        if (deletePlan.fulfilled.match(result)) {
-          toast.success("Plan deleted successfully!");
+      dispatch(deleteProduct(productId)).then((result) => {
+        if (deleteProduct.fulfilled.match(result)) {
+          toast.success("Product deleted successfully!");
         }
       });
     }
   };
 
-  const handleEdit = (plan: Plan) => {
-    setSelectedPlan(plan);
+  const handleEdit = (product: Product) => {
+    setSelectedProduct(product);
     setIsEditModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsEditModalOpen(false);
-    setSelectedPlan(null);
+    setSelectedProduct(null);
+    dispatch(fetchMyProducts());
   };
 
-  const handleStatusChange = (planId: string, newStatus: string) => {
+  const handleStatusChange = (productId: string, newStatus: string) => {
     const formData = new FormData();
     formData.append("status", newStatus);
-
-    dispatch(updatePlan({ planId, planData: formData })).then((result) => {
-      if (updatePlan.fulfilled.match(result)) {
-        toast.success(`Plan status updated to "${newStatus}"`);
+    dispatch(updateProduct({ productId, productData: formData })).then(
+      (result) => {
+        if (updateProduct.fulfilled.match(result)) {
+          toast.success(`Product status updated to "${newStatus}"`);
+        }
       }
-    });
+    );
   };
 
   return (
@@ -119,29 +129,34 @@ const MyProductsPage = () => {
         </div>
 
         <div className="bg-white rounded-xl shadow-md border overflow-hidden">
-          {listStatus === "loading" ? (
+          {listStatus === "loading" && (
             <div className="p-12 flex items-center justify-center text-gray-500">
               <Loader2 className="mr-2 h-6 w-6 animate-spin" /> Loading Your
-              Plans...
+              Products...
             </div>
-          ) : !myPlans || myPlans.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">
-              <PackageOpen className="mx-auto h-12 w-12 text-gray-400" />
-              <p className="mt-4 font-semibold text-lg">No Plans Found</p>
-              <p className="mt-1">You haven't uploaded any plans yet.</p>
-              <Link to="/professional/add-product">
-                <Button variant="link" className="mt-2">
-                  Create your first plan
-                </Button>
-              </Link>
-            </div>
-          ) : (
+          )}
+
+          {listStatus === "succeeded" &&
+            (!products || products.length === 0) && (
+              <div className="p-12 text-center text-gray-500">
+                <PackageOpen className="mx-auto h-12 w-12 text-gray-400" />
+                <p className="mt-4 font-semibold text-lg">No Products Found</p>
+                <p className="mt-1">You haven't uploaded any products yet.</p>
+                <Link to="/professional/add-product">
+                  <Button variant="link" className="mt-2">
+                    Create your first product
+                  </Button>
+                </Link>
+              </div>
+            )}
+
+          {listStatus === "succeeded" && products && products.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead className="bg-gray-50 border-b">
                   <tr>
                     <th className="p-4 font-semibold text-sm text-gray-600">
-                      Plan
+                      Product
                     </th>
                     <th className="p-4 font-semibold text-sm text-gray-600">
                       Status
@@ -158,68 +173,85 @@ const MyProductsPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {myPlans.map((plan) => (
-                    <tr key={plan._id} className="border-t hover:bg-gray-50">
+                  {products.map((product) => (
+                    <tr key={product._id} className="border-t hover:bg-gray-50">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <Avatar className="rounded-md h-12 w-12">
                             <AvatarImage
-                              src={plan.mainImage}
-                              alt={plan.name}
+                              src={product.mainImage}
+                              alt={product.name}
                               className="object-cover"
                             />
                             <AvatarFallback className="font-bold">
-                              {plan.name
-                                ? plan.name.charAt(0).toUpperCase()
+                              {product.name
+                                ? product.name.charAt(0).toUpperCase()
                                 : "P"}
                             </AvatarFallback>
                           </Avatar>
                           <div>
                             <p className="font-medium text-gray-800">
-                              {plan.name}
+                              {product.name}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {plan.productNo}
+                              {product.productNo}
                             </p>
                           </div>
                         </div>
                       </td>
+
                       <td className="p-4">
-                        <Select
-                          value={plan.status}
-                          onValueChange={(newStatus) =>
-                            handleStatusChange(plan._id, newStatus)
-                          }
-                        >
-                          <SelectTrigger
-                            className={`w-[150px] text-xs font-semibold rounded-full border-0 focus:ring-0 ${getStatusClass(plan.status || "")}`}
+                        {product.status === "Published" ||
+                        product.status === "Rejected" ? (
+                          <div
+                            className={`w-fit px-3 py-1 text-xs font-semibold rounded-full ${getStatusClass(
+                              product.status
+                            )}`}
                           >
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Approved">Approved</SelectItem>
-                            <SelectItem value="Pending Review">
-                              Pending Review
-                            </SelectItem>
-                            <SelectItem value="Draft">Draft</SelectItem>
-                          </SelectContent>
-                        </Select>
+                            {product.status}
+                          </div>
+                        ) : (
+                          <Select
+                            value={product.status}
+                            onValueChange={(newStatus) =>
+                              handleStatusChange(product._id, newStatus)
+                            }
+                            disabled={actionStatus === "loading"}
+                          >
+                            <SelectTrigger
+                              className={`w-[150px] text-xs font-semibold rounded-full border-0 focus:ring-0 ${getStatusClass(
+                                product.status
+                              )}`}
+                            >
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Pending Review">
+                                Pending Review
+                              </SelectItem>
+                              <SelectItem value="Draft">Draft</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
                       </td>
+
                       <td className="p-4 text-gray-800 font-medium">
-                        ₹{plan.price.toLocaleString()}
+                        ₹{product.price.toLocaleString()}
                       </td>
+
                       <td className="p-4 text-gray-600">
-                        {plan.createdAt
-                          ? format(new Date(plan.createdAt), "dd MMM, yyyy")
+                        {product.createdAt
+                          ? format(new Date(product.createdAt), "dd MMM, yyyy")
                           : "N/A"}
                       </td>
+
                       <td className="p-4 text-center">
                         <div className="flex justify-center gap-2">
                           <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => handleEdit(plan)}
-                            aria-label="Edit Plan"
+                            onClick={() => handleEdit(product)}
+                            aria-label="Edit Product"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -227,9 +259,9 @@ const MyProductsPage = () => {
                             variant="outline"
                             size="icon"
                             className="text-red-500 hover:text-red-500 hover:bg-red-50"
-                            onClick={() => handleDelete(plan._id)}
+                            onClick={() => handleDelete(product._id)}
                             disabled={actionStatus === "loading"}
-                            aria-label="Delete Plan"
+                            aria-label="Delete Product"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -241,14 +273,27 @@ const MyProductsPage = () => {
               </table>
             </div>
           )}
+
+          {listStatus === "failed" && (
+            <div className="p-12 text-center text-red-500">
+              <p className="font-semibold">Failed to load products</p>
+              <p className="text-sm mt-1">{error}</p>
+              <Button
+                onClick={() => dispatch(fetchMyProducts())}
+                className="mt-4"
+              >
+                Retry
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
-      {selectedPlan && (
-        <EditPlanModal
+      {selectedProduct && (
+        <EditProductModal
           isOpen={isEditModalOpen}
           onClose={handleCloseModal}
-          plan={selectedPlan}
+          product={selectedProduct}
         />
       )}
     </>

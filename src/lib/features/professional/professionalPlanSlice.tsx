@@ -9,7 +9,6 @@ import { RootState } from "@/lib/store";
 
 const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/professional-plans`;
 
-// Helper to get token from state
 const getToken = (state: RootState) => {
   const { user } = state;
   return (
@@ -19,7 +18,6 @@ const getToken = (state: RootState) => {
   );
 };
 
-// --- Interfaces ---
 interface Review {
   _id: string;
   name: string;
@@ -37,6 +35,7 @@ interface SeoData {
 
 export interface Plan {
   _id: string;
+  user?: { _id: string; name: string; email: string };
   planName: string;
   name: string;
   description: string;
@@ -96,8 +95,6 @@ const initialState: ProfessionalPlanState = {
   error: null,
 };
 
-// --- ASYNC THUNKS ---
-
 export const fetchAllApprovedPlans = createAsyncThunk<
   PaginatedPlanResponse,
   { [key: string]: any },
@@ -130,6 +127,27 @@ export const fetchMyPlans = createAsyncThunk<
     );
   }
 });
+
+export const fetchAllPlansForAdmin = createAsyncThunk<
+  Plan[],
+  void,
+  { state: RootState }
+>(
+  "professionalPlans/fetchAllForAdmin",
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const token = getToken(getState());
+      if (!token) return rejectWithValue("Authentication token not found.");
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const { data } = await axios.get(`${API_URL}/admin/all`, config);
+      return Array.isArray(data) ? data : [];
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch plans for admin"
+      );
+    }
+  }
+);
 
 export const fetchPlanById = createAsyncThunk<
   Plan,
@@ -261,8 +279,6 @@ export const createPlanReview = createAsyncThunk<
   }
 );
 
-// --- SLICE DEFINITION ---
-
 const professionalPlanSlice = createSlice({
   name: "professionalPlans",
   initialState,
@@ -279,7 +295,6 @@ const professionalPlanSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Helper functions for pending/rejected states
     const listPending = (state: ProfessionalPlanState) => {
       state.listStatus = "loading";
       state.error = null;
@@ -300,7 +315,6 @@ const professionalPlanSlice = createSlice({
       state.error = action.payload;
     };
 
-    // Fetch All Plans (Updated for pagination)
     builder.addCase(fetchAllApprovedPlans.pending, listPending);
     builder.addCase(
       fetchAllApprovedPlans.fulfilled,
@@ -313,7 +327,6 @@ const professionalPlanSlice = createSlice({
     );
     builder.addCase(fetchAllApprovedPlans.rejected, listRejected);
 
-    // Fetch My Plans
     builder.addCase(fetchMyPlans.pending, listPending);
     builder.addCase(
       fetchMyPlans.fulfilled,
@@ -324,14 +337,22 @@ const professionalPlanSlice = createSlice({
     );
     builder.addCase(fetchMyPlans.rejected, listRejected);
 
-    // Fetch Plan by ID or Slug
+    builder.addCase(fetchAllPlansForAdmin.pending, listPending);
+    builder.addCase(
+      fetchAllPlansForAdmin.fulfilled,
+      (state, action: PayloadAction<Plan[]>) => {
+        state.listStatus = "succeeded";
+        state.plans = action.payload;
+      }
+    );
+    builder.addCase(fetchAllPlansForAdmin.rejected, listRejected);
+
     const fetchSinglePlanFulfilled = (
       state: ProfessionalPlanState,
       action: PayloadAction<Plan>
     ) => {
       state.listStatus = "succeeded";
       state.plan = action.payload;
-      // Also add/update it in the main list if it's not there
       const index = state.plans.findIndex((p) => p._id === action.payload._id);
       if (index !== -1) {
         state.plans[index] = action.payload;
@@ -348,7 +369,6 @@ const professionalPlanSlice = createSlice({
       .addCase(fetchPlanBySlug.fulfilled, fetchSinglePlanFulfilled)
       .addCase(fetchPlanBySlug.rejected, listRejected);
 
-    // Create Plan
     builder.addCase(createPlan.pending, actionPending);
     builder.addCase(
       createPlan.fulfilled,
@@ -359,7 +379,6 @@ const professionalPlanSlice = createSlice({
     );
     builder.addCase(createPlan.rejected, actionRejected);
 
-    // Update Plan
     builder.addCase(updatePlan.pending, actionPending);
     builder.addCase(
       updatePlan.fulfilled,
@@ -375,7 +394,6 @@ const professionalPlanSlice = createSlice({
     );
     builder.addCase(updatePlan.rejected, actionRejected);
 
-    // Delete Plan
     builder.addCase(deletePlan.pending, actionPending);
     builder.addCase(
       deletePlan.fulfilled,
@@ -389,7 +407,6 @@ const professionalPlanSlice = createSlice({
     );
     builder.addCase(deletePlan.rejected, actionRejected);
 
-    // Create Review
     builder.addCase(createPlanReview.pending, actionPending);
     builder.addCase(createPlanReview.fulfilled, (state) => {
       state.actionStatus = "succeeded";
