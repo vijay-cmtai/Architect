@@ -34,6 +34,7 @@ import house1 from "@/assets/house-1.jpg";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import DisplayPrice from "@/components/DisplayPrice";
 
+// --- Icon Components (No Changes) ---
 const FacebookIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -140,13 +141,12 @@ const ThreadsIcon = () => (
 const StarRating = ({ rating, text }: { rating: number; text?: string }) => (
   <div className="flex items-center gap-2">
     <div className="flex">
-      {" "}
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
           className={`h-5 w-5 ${rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
         />
-      ))}{" "}
+      ))}
     </div>
     {text && <span className="text-sm text-gray-600">{text}</span>}
   </div>
@@ -164,38 +164,25 @@ const slugify = (text: any) => {
 };
 
 const DetailPage = () => {
-  // <<< STEP 1: Saare hooks component ke shuru mein hone chahiye, kisi bhi condition se pehle >>>
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
   const location = useLocation();
   const dispatch: AppDispatch = useDispatch();
-  const { toast } = useToast();
-  const { symbol, rate } = useCurrency();
+
   const isProfessionalPlan = location.pathname.includes("/professional-plan/");
+  const productIdFromSlug = slug?.split("-").pop();
+
   const {
     product: singleProduct,
     listStatus: adminListStatus,
-    actionStatus: adminActionStatus,
     products: adminProducts,
   } = useSelector((state: RootState) => state.products);
   const {
     plan: singlePlan,
     listStatus: profListStatus,
-    actionStatus: profActionStatus,
     plans: professionalPlans,
   } = useSelector((state: RootState) => state.professionalPlans);
-  const { userInfo } = useSelector((state: RootState) => state.user);
-  const { addItem } = useCart();
-  const [quantity, setQuantity] = useState(1);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
-  const [isZooming, setIsZooming] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [currentUrl, setCurrentUrl] = useState("");
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const productIdFromSlug = slug?.split("-").pop();
+
+  const listStatus = isProfessionalPlan ? profListStatus : adminListStatus;
 
   useEffect(() => {
     if (slug) {
@@ -207,17 +194,13 @@ const DetailPage = () => {
     }
   }, [slug, dispatch, isProfessionalPlan]);
 
-  useEffect(() => {
-    setCurrentUrl(window.location.href);
-  }, []);
-
   const displayData: any = useMemo(() => {
     if (isProfessionalPlan) {
-      return singlePlan && singlePlan._id === productIdFromSlug
+      return singlePlan?._id === productIdFromSlug
         ? singlePlan
         : professionalPlans.find((p) => p._id === productIdFromSlug);
     }
-    return singleProduct && singleProduct._id === productIdFromSlug
+    return singleProduct?._id === productIdFromSlug
       ? singleProduct
       : adminProducts.find((p) => p._id === productIdFromSlug);
   }, [
@@ -229,21 +212,82 @@ const DetailPage = () => {
     productIdFromSlug,
   ]);
 
-  const productImages = useMemo(() => {
-    if (!displayData) return [house1];
-    let allImages: string[] = [];
-    if (displayData.mainImage) allImages.push(displayData.mainImage);
-    if (displayData.Images && typeof displayData.Images === "string") {
-      allImages.push(
-        ...displayData.Images.split(",").map((url: string) => url.trim())
-      );
-    }
-    if (displayData.galleryImages && Array.isArray(displayData.galleryImages)) {
-      allImages.push(...displayData.galleryImages);
-    }
-    const uniqueImages = [...new Set(allImages.filter(Boolean))];
-    return uniqueImages.length > 0 ? uniqueImages : [house1];
-  }, [displayData]);
+  if (listStatus === "loading" || listStatus === "idle") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!displayData || listStatus === "failed") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="text-center py-20">
+          <ServerCrash className="mx-auto h-16 w-16 text-destructive" />
+          <h2 className="mt-4 text-2xl font-bold">Item Not Found</h2>
+          <p className="mt-2 text-muted-foreground">
+            The item you are looking for does not exist.
+          </p>
+          <Button asChild className="mt-6">
+            <Link to="/products">Back to Products</Link>
+          </Button>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  return <ProductDetailContent product={displayData} />;
+};
+
+const ProductDetailContent = ({ product }: { product: any }) => {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch: AppDispatch = useDispatch();
+  const { toast } = useToast();
+  const { symbol, rate } = useCurrency();
+  const { addItem } = useCart();
+
+  const [quantity, setQuantity] = useState(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [isZooming, setIsZooming] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const isProfessionalPlan = location.pathname.includes("/professional-plan/");
+  const productIdFromSlug = slug?.split("-").pop();
+
+  const { userInfo } = useSelector((state: RootState) => state.user);
+  const { actionStatus: adminActionStatus, products: adminProducts } =
+    useSelector((state: RootState) => state.products);
+  const { actionStatus: profActionStatus, plans: professionalPlans } =
+    useSelector((state: RootState) => state.professionalPlans);
+
+  const displayData = product;
+
+  // ===================================================================
+  // START: SOCIAL SHARING LOGIC UPDATE
+  // ===================================================================
+
+  // Backend URL from environment variables for sharing links
+  const backendApiUrl =
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+  // This is the URL that will be shared. It points to your backend's /share route.
+  const shareUrl = `${backendApiUrl}/share/${isProfessionalPlan ? "professional-plan" : "product"}/${slug}`;
+
+  // This is the frontend URL for canonical tags and internal use.
+  const canonicalUrl = `${window.location.origin}${location.pathname}`;
+
+  // ===================================================================
+  // END: SOCIAL SHARING LOGIC UPDATE
+  // ===================================================================
 
   const allProductsAndPlans = useMemo(() => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
@@ -280,39 +324,6 @@ const DetailPage = () => {
       });
   }, [allProductsAndPlans, displayData, productIdFromSlug]);
 
-  // <<< STEP 2: Ab jab saare hooks call ho chuke hain, tab loading/error states check karein >>>
-  const listStatus = isProfessionalPlan ? profListStatus : adminListStatus;
-
-  if (listStatus === "loading" || listStatus === "idle") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-12 h-12 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!displayData || listStatus === "failed") {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="text-center py-20">
-          <ServerCrash className="mx-auto h-16 w-16 text-destructive" />
-          <h2 className="mt-4 text-2xl font-bold">Item Not Found</h2>
-          <p className="mt-2 text-muted-foreground">
-            {" "}
-            The item you are looking for does not exist.{" "}
-          </p>
-          <Button asChild className="mt-6">
-            {" "}
-            <Link to="/products">Back to Products</Link>{" "}
-          </Button>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  // <<< STEP 3: Ab jab hum sure hain ki 'displayData' hai, tab uspar dependent variables banayein >>>
   const productName =
     displayData.name ||
     displayData.planName ||
@@ -330,7 +341,6 @@ const DetailPage = () => {
     (displayData.salePrice > 0
       ? displayData.salePrice
       : displayData?.["Sale price"]) ?? null;
-  const taxRate = displayData.taxRate || 0;
   const isSale =
     (salePrice !== null &&
       parseFloat(String(salePrice)) > 0 &&
@@ -338,6 +348,7 @@ const DetailPage = () => {
     displayData.isSale ||
     false;
   const currentPrice = isSale ? salePrice : regularPrice;
+  const taxRate = displayData.taxRate || 0;
   const plotSize =
     displayData.plotSize || displayData["Attribute 1 value(s)"] || "N/A";
   const plotArea =
@@ -355,65 +366,25 @@ const DetailPage = () => {
     (displayData["Attribute 5 name"] === "Kitchen"
       ? displayData["Attribute 5 value(s)"]
       : "N/A");
-
   const actionStatus = isProfessionalPlan
     ? profActionStatus
     : adminActionStatus;
-  const canonicalUrl = `${window.location.origin}${location.pathname}`;
-  const encodedUrl = encodeURIComponent(currentUrl);
-  const encodedTitle = encodeURIComponent(productName);
-  const encodedImage = encodeURIComponent(productImages[selectedImageIndex]);
-  const phoneNumber = "+918815939484";
-  const socialPlatforms = [
-    {
-      name: "Facebook",
-      icon: <FacebookIcon />,
-      color: "bg-blue-800",
-      href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-    },
-    {
-      name: "WhatsApp",
-      icon: <WhatsAppIcon />,
-      color: "bg-green-500",
-      href: `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`,
-    },
-    {
-      name: "Twitter",
-      icon: <TwitterIcon />,
-      color: "bg-black",
-      href: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
-    },
-    {
-      name: "LinkedIn",
-      icon: <LinkedinIcon />,
-      color: "bg-sky-700",
-      href: `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`,
-    },
-    {
-      name: "Pinterest",
-      icon: <PinterestIcon />,
-      color: "bg-red-600",
-      href: `https://pinterest.com/pin/create/button/?url=${encodedUrl}&media=${encodedImage}&description=${encodedTitle}`,
-    },
-    {
-      name: "Telegram",
-      icon: <TelegramIcon />,
-      color: "bg-sky-500",
-      href: `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`,
-    },
-    {
-      name: "Threads",
-      icon: <ThreadsIcon />,
-      color: "bg-black",
-      href: `https://www.threads.net/share?url=${encodedUrl}&text=${encodedTitle}`,
-    },
-    {
-      name: "Call Us",
-      icon: <PhoneIcon />,
-      color: "bg-gray-700",
-      href: `tel:${phoneNumber}`,
-    },
-  ];
+
+  const productImages = useMemo(() => {
+    if (!displayData) return [house1];
+    let allImages: string[] = [];
+    if (displayData.mainImage) allImages.push(displayData.mainImage);
+    if (displayData.Images && typeof displayData.Images === "string") {
+      allImages.push(
+        ...displayData.Images.split(",").map((url: string) => url.trim())
+      );
+    }
+    if (displayData.galleryImages && Array.isArray(displayData.galleryImages)) {
+      allImages.push(...displayData.galleryImages);
+    }
+    const uniqueImages = [...new Set(allImages.filter(Boolean))];
+    return uniqueImages.length > 0 ? uniqueImages : [house1];
+  }, [displayData]);
 
   const handleAddToCart = () => {
     addItem({
@@ -430,7 +401,6 @@ const DetailPage = () => {
       description: `${quantity} x ${productName} has been added.`,
     });
   };
-
   const handleBuyNow = () => {
     addItem({
       productId: displayData._id,
@@ -443,11 +413,24 @@ const DetailPage = () => {
     });
     navigate("/checkout");
   };
-
-  const whatsappMessage = `Hello, I'm interested in modifying this plan: *${productName}*. \nProduct Link: ${currentUrl}`;
-  const encodedWhatsappMessage = encodeURIComponent(whatsappMessage);
-  const whatsappLink = `https://wa.me/${phoneNumber.replace("+", "")}?text=${encodedWhatsappMessage}`;
-
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const xPercent = (x / rect.width) * 100;
+    const yPercent = (y / rect.height) * 100;
+    setPosition({ x: xPercent, y: yPercent });
+  };
+  const handleScroll = (direction: "left" | "right") => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = scrollContainerRef.current.clientWidth * 0.8;
+      if (direction === "left") {
+        scrollContainerRef.current.scrollLeft -= scrollAmount;
+      } else {
+        scrollContainerRef.current.scrollLeft += scrollAmount;
+      }
+    }
+  };
   const handleReviewSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!rating || !comment) {
@@ -490,27 +473,72 @@ const DetailPage = () => {
       });
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const xPercent = (x / rect.width) * 100;
-    const yPercent = (y / rect.height) * 100;
-    setPosition({ x: xPercent, y: yPercent });
-  };
+  const encodedTitle = encodeURIComponent(productName);
 
-  const handleScroll = (direction: "left" | "right") => {
-    if (scrollContainerRef.current) {
-      const scrollAmount = scrollContainerRef.current.clientWidth * 0.8;
-      if (direction === "left") {
-        scrollContainerRef.current.scrollLeft -= scrollAmount;
-      } else {
-        scrollContainerRef.current.scrollLeft += scrollAmount;
-      }
-    }
-  };
+  // Create absolute image URL for Pinterest
+  const absoluteMainImageUrl = productImages[selectedImageIndex].startsWith(
+    "http"
+  )
+    ? productImages[selectedImageIndex]
+    : `${backendApiUrl}${productImages[selectedImageIndex]}`; // Assumes image path starts with '/' like '/uploads/...'
+  const encodedImage = encodeURIComponent(absoluteMainImageUrl);
 
-  // <<< STEP 4: Baaki ka poora component (JSX) waise hi rahega >>>
+  const phoneNumber = "+918815939484";
+  const whatsappMessage = `Hello, I'm interested in modifying this plan: *${productName}*. \nProduct Link: ${canonicalUrl}`;
+  const encodedWhatsappMessage = encodeURIComponent(whatsappMessage);
+  const whatsappLink = `https://wa.me/${phoneNumber.replace("+", "")}?text=${encodedWhatsappMessage}`;
+
+  const socialPlatforms = [
+    {
+      name: "Facebook",
+      icon: <FacebookIcon />,
+      color: "bg-blue-800",
+      href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+    },
+    {
+      name: "WhatsApp",
+      icon: <WhatsAppIcon />,
+      color: "bg-green-500",
+      href: `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodeURIComponent(shareUrl)}`,
+    },
+    {
+      name: "Twitter",
+      icon: <TwitterIcon />,
+      color: "bg-black",
+      href: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodedTitle}`,
+    },
+    {
+      name: "LinkedIn",
+      icon: <LinkedinIcon />,
+      color: "bg-sky-700",
+      href: `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(shareUrl)}&title=${encodedTitle}`,
+    },
+    {
+      name: "Pinterest",
+      icon: <PinterestIcon />,
+      color: "bg-red-600",
+      href: `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(shareUrl)}&media=${encodedImage}&description=${encodedTitle}`,
+    },
+    {
+      name: "Telegram",
+      icon: <TelegramIcon />,
+      color: "bg-sky-500",
+      href: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodedTitle}`,
+    },
+    {
+      name: "Threads",
+      icon: <ThreadsIcon />,
+      color: "bg-black",
+      href: `https://www.threads.net/share?url=${encodeURIComponent(shareUrl)}&text=${encodedTitle}`,
+    },
+    {
+      name: "Call Us",
+      icon: <PhoneIcon />,
+      color: "bg-gray-700",
+      href: `tel:${phoneNumber}`,
+    },
+  ];
+
   return (
     <div
       className="min-h-screen bg-gray-50"
@@ -568,12 +596,12 @@ const DetailPage = () => {
           <Link to="/" className="hover:text-primary">
             {" "}
             Home{" "}
-          </Link>
+          </Link>{" "}
           <span>/</span>
           <Link to="/products" className="hover:text-primary">
             {" "}
             Products{" "}
-          </Link>
+          </Link>{" "}
           <span>/</span>
           <span className="text-gray-800 font-medium">{productName}</span>
         </nav>
@@ -940,7 +968,7 @@ const DetailPage = () => {
             </div>
           </div>
         </div>
-        {relatedProducts.length > 0 && (
+        {relatedProducts && relatedProducts.length > 0 && (
           <div className="border-t pt-16 mt-16">
             <h2 className="text-3xl font-extrabold text-gray-800 mb-8 text-center">
               {" "}
