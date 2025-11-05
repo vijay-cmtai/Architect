@@ -277,7 +277,7 @@ const ProductDetailContent = ({ product }: { product: any }) => {
 
   // Backend URL from environment variables for sharing links
   const backendApiUrl =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+    import.meta.env.VITE_BACKEND_URL||"http://localhost:5000";
 
   // This is the URL that will be shared. It points to your backend's /share route.
   const shareUrl = `${backendApiUrl}/share/${isProfessionalPlan ? "professional-plan" : "product"}/${slug}`;
