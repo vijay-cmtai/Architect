@@ -42,21 +42,17 @@ const Navbar = () => {
 
   const { userInfo } = useSelector((state: RootState) => state.user);
 
-  // <<< BADLAAV 1: 'seller' ko allowed roles ki list mein add karein >>>
   const isUserAllowed =
     userInfo &&
     ["user", "admin", "professional", "seller"].includes(userInfo.role);
-  // <<< BADLAAV KHATAM >>>
 
   const showCartAndWishlist = !userInfo || userInfo?.role === "user";
 
   const getDashboardPath = () => {
     if (!userInfo) return "/login"; // Guard clause for safety
     switch (userInfo.role) {
-      // <<< BADLAAV 2: Seller ke liye dashboard ka path add karein >>>
       case "seller":
         return "/seller";
-      // <<< BADLAAV KHATAM >>>
       case "professional":
         return "/professional";
       case "admin":
@@ -139,9 +135,6 @@ const Navbar = () => {
 
             <div className="flex items-center">
               <div className="hidden lg:flex items-center space-x-5">
-                <button className="text-gray-600 hover:text-orange-600 transition-colors">
-                  <Search className="w-5 h-5" />
-                </button>
                 {showCartAndWishlist && (
                   <>
                     <button
