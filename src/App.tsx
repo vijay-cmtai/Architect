@@ -1,16 +1,13 @@
-import { FC, useState } from "react";
+import { FC } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Provider } from "react-redux";
-import { store } from "./redux/store";
+import { store } from "@/redux/store"; // Path is already corrected
 
-// --- YEH NAYA COMPONENT IMPORT KAREIN ---
-import WelcomePopup from "./components/WelcomePopup";
-
-// Guards, Layouts, Pages... (baaki saare imports waise hi rahenge)
+// Guards, Layouts, Pages...
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import RoleBasedRoute from "./components/auth/RoleBasedRoute";
 import PublicLayout from "./layouts/PublicLayout";
@@ -22,7 +19,6 @@ import ServicesLayout from "./pages/ServicesLayout";
 import ScrollToTop from "./components/ScrollToTop";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-// ... (apke baaki saare page imports)
 import PropertyDetails from "./pages/PropertyDetails";
 import Buy from "./pages/Buy";
 import Rent from "./pages/Rent";
@@ -49,17 +45,6 @@ import HotDeals from "./pages/HotDeals";
 const queryClient = new QueryClient();
 
 const App: FC = () => {
-  // Check session storage to decide if popup should show.
-  // We use a function here so it only runs once on initial render.
-  const [isWelcomeComplete, setIsWelcomeComplete] = useState(
-    () => !!sessionStorage.getItem("welcomePopupShown")
-  );
-
-  const handleWelcomeComplete = () => {
-    sessionStorage.setItem("welcomePopupShown", "true");
-    setIsWelcomeComplete(true);
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -67,89 +52,83 @@ const App: FC = () => {
         <Sonner richColors position="top-right" />
         <Provider store={store}>
           <BrowserRouter>
-            {/* Conditional Rendering: Pehle popup, fir website */}
-            {!isWelcomeComplete ? (
-              <WelcomePopup onComplete={handleWelcomeComplete} />
-            ) : (
-              <>
-                <ScrollToTop />
-                <Routes>
-                  {/* --- Yahan aapke saare routes rahenge --- */}
-                  <Route element={<PublicLayout />}>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/property/:id" element={<PropertyDetails />} />
-                    <Route path="/buy" element={<Buy />} />
-                    <Route path="/rent" element={<Rent />} />
-                    <Route path="/commercial" element={<Commercial />} />
-                    <Route path="/new-projects" element={<NewProjects />} />
-                    <Route path="/wishlist" element={<Wishlist />} />
-                    <Route
-                      path="/property-services"
-                      element={<PropertyServices />}
-                    />
-                    <Route path="/about-us" element={<AboutUs />} />
-                    <Route path="/contact-us" element={<ContactUs />} />
-                    <Route path="/press" element={<Press />} />
-                    <Route path="/careers" element={<Careers />} />
-                    <Route path="/blog" element={<Blog />} />
-                    <Route path="/blog/:slug" element={<BlogPost />} />
-                    <Route path="/hot-deals" element={<HotDeals />} />
-                    <Route
-                      path="/investor-relations"
-                      element={<InvestorRelations />}
-                    />
-                    <Route path="/services" element={<ServicesLayout />}>
-                      <Route index element={<HomeLoans />} />
-                      <Route path="home-loans" element={<HomeLoans />} />
-                      <Route
-                        path="property-management"
-                        element={<PropertyManagement />}
-                      />
-                      <Route
-                        path="legal-services"
-                        element={<LegalServices />}
-                      />
-                      <Route
-                        path="interior-design"
-                        element={<InteriorDesign />}
-                      />
-                    </Route>
-                  </Route>
-
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
+            {/* Pop-up logic has been removed. The website will now load directly. */}
+            <ScrollToTop />
+            <Routes>
+              {/* --- Yahan aapke saare routes rahenge --- */}
+              <Route element={<PublicLayout />}>
+                <Route path="/" element={<Index />} />
+                <Route path="/property/:id" element={<PropertyDetails />} />
+                <Route path="/buy" element={<Buy />} />
+                <Route path="/rent" element={<Rent />} />
+                <Route path="/commercial" element={<Commercial />} />
+                <Route path="/new-projects" element={<NewProjects />} />
+                <Route path="/wishlist" element={<Wishlist />} />
+                <Route
+                  path="/property-services"
+                  element={<PropertyServices />}
+                />
+                <Route path="/about-us" element={<AboutUs />} />
+                <Route path="/contact-us" element={<ContactUs />} />
+                <Route path="/press" element={<Press />} />
+                <Route path="/careers" element={<Careers />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/:slug" element={<BlogPost />} />
+                <Route path="/hot-deals" element={<HotDeals />} />
+                <Route
+                  path="/investor-relations"
+                  element={<InvestorRelations />}
+                />
+                <Route path="/services" element={<ServicesLayout />}>
+                  <Route index element={<HomeLoans />} />
+                  <Route path="home-loans" element={<HomeLoans />} />
                   <Route
-                    path="/reset-password/:token"
-                    element={<ResetPassword />}
+                    path="property-management"
+                    element={<PropertyManagement />}
                   />
+                  <Route
+                    path="legal-services"
+                    element={<LegalServices />}
+                  />
+                  <Route
+                    path="interior-design"
+                    element={<InteriorDesign />}
+                  />
+                </Route>
+              </Route>
 
-                  <Route element={<ProtectedRoute />}>
-                    <Route
-                      element={<RoleBasedRoute allowedRoles={["Admin"]} />}
-                    >
-                      <Route path="/admin/*" element={<AdminLayout />} />
-                    </Route>
-                    <Route
-                      element={<RoleBasedRoute allowedRoles={["Company"]} />}
-                    >
-                      <Route path="/company/*" element={<CompanyLayout />} />
-                    </Route>
-                    <Route
-                      element={<RoleBasedRoute allowedRoles={["Associate"]} />}
-                    >
-                      <Route path="/broker/*" element={<BrokerLayout />} />
-                    </Route>
-                    <Route
-                      element={<RoleBasedRoute allowedRoles={["Customer"]} />}
-                    >
-                      <Route path="/users/*" element={<UserLayout />} />
-                    </Route>
-                  </Route>
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route
+                path="/reset-password/:token"
+                element={<ResetPassword />}
+              />
 
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </>
-            )}
+              <Route element={<ProtectedRoute />}>
+                <Route
+                  element={<RoleBasedRoute allowedRoles={["Admin"]} />}
+                >
+                  <Route path="/admin/*" element={<AdminLayout />} />
+                </Route>
+                <Route
+                  element={<RoleBasedRoute allowedRoles={["Company"]} />}
+                >
+                  <Route path="/company/*" element={<CompanyLayout />} />
+                </Route>
+                <Route
+                  element={<RoleBasedRoute allowedRoles={["Associate"]} />}
+                >
+                  <Route path="/broker/*" element={<BrokerLayout />} />
+                </Route>
+                <Route
+                  element={<RoleBasedRoute allowedRoles={["Customer"]} />}
+                >
+                  <Route path="/users/*" element={<UserLayout />} />
+                </Route>
+              </Route>
+
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </BrowserRouter>
         </Provider>
       </TooltipProvider>
