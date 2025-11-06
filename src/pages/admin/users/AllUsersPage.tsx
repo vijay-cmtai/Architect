@@ -92,6 +92,8 @@ const AllUsersPage = () => {
   const [role, setRole] = useState("");
   const [status, setStatus] = useState("");
   const [profession, setProfession] = useState("");
+  // <<< BADLAAV 1: NAYA STATE ADD KAREIN >>>
+  const [contractorType, setContractorType] = useState("Normal");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const USERS_PER_PAGE = 10;
 
@@ -129,6 +131,8 @@ const AllUsersPage = () => {
       });
       setRole(selectedUser.role || "");
       setStatus(selectedUser.status || "");
+      // <<< BADLAAV 2: useEffect MEIN NAYE STATE KO SET KAREIN >>>
+      setContractorType(selectedUser.contractorType || "Normal");
       if (selectedUser.role === "professional") {
         setProfession(selectedUser.profession || "");
       } else {
@@ -169,7 +173,7 @@ const AllUsersPage = () => {
 
     setIsSubmitting(true);
 
-    const userData = { ...data, role, status };
+    const userData: any = { ...data, role, status };
 
     if (status === "Approved") {
       userData.isApproved = true;
@@ -181,24 +185,25 @@ const AllUsersPage = () => {
       userData.profession = profession;
     }
 
+    // <<< BADLAAV 3: onSubmit FUNCTION MEIN DATA ADD KAREIN >>>
+    if (role === "Contractor") {
+      userData.contractorType = contractorType;
+    }
+
     try {
       await dispatch(
         updateUserByAdmin({ userId: selectedUser._id, userData })
       ).unwrap();
 
       toast.success("User updated successfully!");
-
-      // Close modal immediately
       setIsEditModalOpen(false);
 
-      // Clean up after animation
       setTimeout(() => {
         setSelectedUser(null);
         reset();
         setIsSubmitting(false);
       }, 200);
 
-      // Fetch fresh data in background
       setTimeout(() => {
         handleFetchUsers(currentPage);
       }, 300);
@@ -211,13 +216,13 @@ const AllUsersPage = () => {
   const needsApproval =
     role === "professional" || role === "seller" || role === "Contractor";
 
-  // Don't show loading if we already have data
   const showLoading =
     listStatus === "loading" && (!users || users.length === 0);
 
   return (
     <>
       <div className="space-y-6">
+        {/* Table and other UI elements... (No changes here) */}
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold text-gray-800">All Users</h1>
           <Link to="/admin/users/add">
@@ -276,18 +281,14 @@ const AllUsersPage = () => {
                       <td className="p-4 text-gray-600">{user.email}</td>
                       <td className="p-4">
                         <span
-                          className={`capitalize px-2 py-1 text-xs font-semibold rounded-full ${getRoleClass(
-                            user.role
-                          )}`}
+                          className={`capitalize px-2 py-1 text-xs font-semibold rounded-full ${getRoleClass(user.role)}`}
                         >
                           {user.role}
                         </span>
                       </td>
                       <td className="p-4">
                         <span
-                          className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusClass(
-                            user.status
-                          )}`}
+                          className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusClass(user.status)}`}
                         >
                           {user.status}
                         </span>
@@ -447,6 +448,26 @@ const AllUsersPage = () => {
                           {subRole}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* <<< BADLAAV 4: YEH NAYA DROPDOWN ADD KAREIN >>> */}
+              {role === "Contractor" && (
+                <div>
+                  <Label>Contractor Type</Label>
+                  <Select
+                    value={contractorType}
+                    onValueChange={setContractorType}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select contractor type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Normal">Normal</SelectItem>
+                      <SelectItem value="Premium">Premium</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
