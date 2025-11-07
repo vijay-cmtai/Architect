@@ -14,7 +14,6 @@ import {
   fetchNotifications,
   markNotificationAsRead,
 } from "@/lib/features/notifications/notificationSlice";
-
 interface NotificationType {
   _id: string;
   message: string;
