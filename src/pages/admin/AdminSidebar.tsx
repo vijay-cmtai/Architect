@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/features/users/userSlice";
+import NotificationBell from "../../components/NotificationBell";
 
 const mainLinks = [
   { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
@@ -189,23 +190,23 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
           <Link to="/admin">
             <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
           </Link>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="lg:hidden text-gray-400 hover:text-white"
-            aria-label="Close sidebar"
-          >
-            <X className="h-6 w-6" />
-          </button>
+          <div className="flex items-center space-x-1">
+            <NotificationBell />
+            <button
+              onClick={() => setIsOpen(false)}
+              className="lg:hidden text-gray-400 hover:text-white"
+              aria-label="Close sidebar"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
         </div>
         <nav className="flex-grow overflow-y-auto pr-2">
           {mainLinks.map(renderNavLink)}
           {renderSubMenu("Products", ShoppingBag, "products", productLinks)}
           {renderSubMenu("Blog", PenSquare, "blogs", blogLinks)}
           {renderSubMenu("Gallery", Image, "gallery", galleryLinks)}
-
-          {/* ✨ नया पैकेज सब-मेन्यू ✨ */}
           {renderSubMenu("Packages", Package, "packages", packageLinks)}
-
           {renderSubMenu("Users", Users, "users", userLinks)}
           {renderSubMenu("Requests", Building, "requests", requestLinks)}
           {renderSubMenu("Inquiries", HelpCircle, "inquiries", inquiryLinks)}

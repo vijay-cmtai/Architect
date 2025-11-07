@@ -139,9 +139,9 @@ const Navbar = () => {
 
             <div className="flex items-center">
               <div className="hidden lg:flex items-center space-x-5">
-                <button className="text-gray-600 hover:text-orange-600 transition-colors">
+                {/* <button className="text-gray-600 hover:text-orange-600 transition-colors">
                   <Search className="w-5 h-5" />
-                </button>
+                </button> */}
                 {showCartAndWishlist && (
                   <>
                     <button

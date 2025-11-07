@@ -53,7 +53,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
   onUserUpdate,
 }) => {
   const dispatch: AppDispatch = useDispatch();
-  const { actionStatus, error } = useSelector((state: RootState) => state.user);
+  const { actionStatus } = useSelector((state: RootState) => state.user);
 
   const {
     register,
@@ -65,9 +65,11 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
   const [role, setRole] = useState("");
   const [status, setStatus] = useState("");
   const [profession, setProfession] = useState("");
+  const [contractorType, setContractorType] = useState("Normal");
 
   useEffect(() => {
     if (user && isOpen) {
+      // Jab bhi modal khule, user ke data se state set karo
       reset({
         name: user.name || user.businessName || user.companyName,
         email: user.email,
@@ -75,6 +77,8 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
       });
       setRole(user.role || "");
       setStatus(user.status || "");
+      setContractorType(user.contractorType || "Normal"); // Yahan user se data set ho raha hai
+
       if (user.role === "professional") {
         setProfession(user.profession || "");
       } else {
@@ -84,7 +88,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
   }, [user, reset, isOpen]);
 
   const onSubmit = async (data: any) => {
-    const userData = { ...data, role, status };
+    const userData: any = { ...data, role, status };
 
     if (status === "Approved") {
       userData.isApproved = true;
@@ -96,6 +100,11 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
       userData.profession = profession;
     }
 
+    // Yeh important hai: Jab role 'Contractor' ho, tabhi type ko data mein bhejo
+    if (role === "Contractor") {
+      userData.contractorType = contractorType;
+    }
+
     try {
       await dispatch(
         updateUserByAdmin({ userId: user._id, userData })
@@ -103,7 +112,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
       toast.success("User updated successfully!");
       dispatch(resetActionStatus());
       onClose();
-      // Wait a bit before refreshing to ensure modal is closed
       setTimeout(() => {
         onUserUpdate();
       }, 100);
@@ -195,6 +203,28 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
                       {subRole}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* ========================================================== */}
+          {/* ===> YEH WALA SECTION AAPKE CODE MEIN MISSING HAI <=== */}
+          {/* ========================================================== */}
+          {role === "Contractor" && (
+            <div>
+              <Label>Contractor Type</Label>
+              <Select
+                value={contractorType}
+                onValueChange={setContractorType}
+                disabled={isLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select contractor type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Normal">Normal</SelectItem>
+                  <SelectItem value="Premium">Premium</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -24,6 +24,7 @@ import sellerinquiryReducer from "./features/sellerinquiries/sellerinquirySlice"
 import sellerReducer from "./features/seller/sellerProductSlice";
 import mediaReducer from "./features/media/mediaSlice";
 import sellerDashboardReducer from "./features/sellerdashboard/sellerDashboardSlice";
+import notificationReducer from "./features/notifications/notificationSlice";
 
 export const store = configureStore({
   reducer: {
@@ -49,6 +50,7 @@ export const store = configureStore({
     sellerInquiries: sellerinquiryReducer,
     media: mediaReducer,
     sellerDashboard: sellerDashboardReducer,
+    notifications: notificationReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

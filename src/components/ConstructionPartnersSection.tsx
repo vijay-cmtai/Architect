@@ -1,4 +1,4 @@
-"use client"; // This component is interactive
+"use client";
 
 import React, {
   useState,
@@ -34,11 +34,11 @@ import {
   ChevronRight,
   Star,
   Briefcase,
-  Paintbrush, // Icon for Interior
-  HardHat, // Icon for Building
+  Paintbrush,
+  HardHat,
 } from "lucide-react";
 
-// --- Type Definitions ---
+// <<< DATA BADLAV: Type mein naya field add kiya gaya >>>
 type ContractorType = {
   _id: string;
   name: string;
@@ -51,20 +51,138 @@ type ContractorType = {
   phone?: string;
   profession?: string;
   status?: string;
+  contractorType?: "Normal" | "Premium";
 };
 
-type ContactModalProps = {
+const ContactModal: FC<{
   isOpen: boolean;
   onClose: () => void;
   user: ContractorType | null;
+}> = ({ isOpen, onClose, user }) => {
+  const dispatch: AppDispatch = useDispatch();
+  const { actionStatus } = useSelector((state: RootState) => state.inquiries);
+
+  if (!isOpen || !user) return null;
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const inquiryData = {
+      recipient: user._id,
+      recipientInfo: {
+        name: user.name,
+        role: "Contractor",
+        phone: user.phone,
+        city: user.city,
+        address: user.address,
+        detail: `${user.profession} - ${user.experience}`,
+      },
+      senderName: formData.get("name") as string,
+      senderEmail: formData.get("email") as string,
+      senderWhatsapp: formData.get("whatsapp") as string,
+      requirements: formData.get("requirements") as string,
+    };
+    dispatch(createInquiry(inquiryData)).then((result) => {
+      if (createInquiry.fulfilled.match(result)) {
+        toast.success(`Your inquiry has been sent to ${user.name}!`);
+        dispatch(resetActionStatus());
+        onClose();
+      } else {
+        toast.error(String(result.payload) || "An error occurred.");
+        dispatch(resetActionStatus());
+      }
+    });
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/60"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 z-10"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Contact {user.name}
+                </h2>
+                <p className="text-gray-500">
+                  Share your project details to get a quote.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-2 text-gray-500 hover:text-gray-800"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="name">Your Name</Label>
+                <Input id="name" name="name" placeholder="John Doe" required />
+              </div>
+              <div>
+                <Label htmlFor="email">Your Email</Label>
+                <Input
+                  type="email"
+                  id="email"
+                  name="email"
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="whatsapp">WhatsApp Number</Label>
+                <Input
+                  type="tel"
+                  id="whatsapp"
+                  name="whatsapp"
+                  placeholder="+91..."
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="requirements">Project Details</Label>
+                <Textarea
+                  id="requirements"
+                  name="requirements"
+                  placeholder="e.g., I need a contractor for a 2-story building..."
+                  rows={4}
+                  required
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full btn-primary py-3"
+                disabled={actionStatus === "loading"}
+              >
+                {actionStatus === "loading" ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4 mr-2" />
+                )}
+                {actionStatus === "loading" ? "Sending..." : "Send Inquiry"}
+              </Button>
+            </form>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
 };
 
-// --- ContactModal Component (No changes needed here) ---
-const ContactModal: FC<ContactModalProps> = ({ isOpen, onClose, user }) => {
-  // ... This component remains the same
-};
-
-// --- Main Section Component ---
 const ConstructionPartnersSection: FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const { contractors, contractorListStatus } = useSelector(
@@ -76,7 +194,6 @@ const ConstructionPartnersSection: FC = () => {
   const [selectedContractor, setSelectedContractor] =
     useState<ContractorType | null>(null);
   const [cityFilter, setCityFilter] = useState("");
-  // --- NEW STATE for profession filter ---
   const [professionFilter, setProfessionFilter] = useState("All");
 
   useEffect(() => {
@@ -85,18 +202,25 @@ const ConstructionPartnersSection: FC = () => {
 
   const approvedContractors = useMemo(() => {
     if (!Array.isArray(contractors)) return [];
+    // <<< DATA BADLAV: Filter logic ko update kiya gaya >>>
     return contractors.filter((c: ContractorType) => {
       const isApproved = c.status === "Approved";
+      const isPremium = c.contractorType === "Premium"; // Sirf Premium check karega
       const matchesCity =
         !cityFilter || c.city?.toLowerCase().includes(cityFilter.toLowerCase());
-      // --- NEW LOGIC for profession filter ---
+
+      const lowerCaseProfession = c.profession?.toLowerCase() || "";
       const matchesProfession =
         professionFilter === "All" ||
-        c.profession?.toLowerCase().includes(professionFilter.toLowerCase());
+        (professionFilter === "Building" &&
+          (lowerCaseProfession.includes("civil") ||
+            lowerCaseProfession.includes("general"))) ||
+        (professionFilter === "Interior" &&
+          lowerCaseProfession.includes("interior"));
 
-      return isApproved && matchesCity && matchesProfession;
+      return isApproved && isPremium && matchesCity && matchesProfession;
     });
-  }, [contractors, cityFilter, professionFilter]); // <-- Added professionFilter to dependency array
+  }, [contractors, cityFilter, professionFilter]);
 
   const handleContactClick = (contractor: ContractorType) => {
     setSelectedContractor(contractor);
@@ -119,7 +243,7 @@ const ConstructionPartnersSection: FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-extrabold text-gray-800 tracking-tight">
-              Our City Partners(Contractor)
+              Our City Partners (Contractors)
             </h2>
             <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
               Connect with our network of trusted and approved contractors for
@@ -127,9 +251,7 @@ const ConstructionPartnersSection: FC = () => {
             </p>
           </div>
 
-          {/* --- FILTER SECTION --- */}
           <div className="max-w-2xl mx-auto mb-10 bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md space-y-4">
-            {/* City Filter */}
             <div>
               <Label
                 htmlFor="city-filter"
@@ -149,7 +271,6 @@ const ConstructionPartnersSection: FC = () => {
               </div>
             </div>
 
-            {/* --- NEW PROFESSION FILTER UI --- */}
             <div>
               <Label className="font-semibold text-gray-700">
                 Filter by Profession
@@ -215,7 +336,7 @@ const ConstructionPartnersSection: FC = () => {
               <div
                 ref={scrollContainerRef}
                 className="flex overflow-x-auto scroll-smooth py-4 -mx-4 px-4 snap-x snap-mandatory"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                style={{ scrollbarWidth: "none" }}
               >
                 <div className="flex gap-8">
                   {approvedContractors.length > 0 ? (
@@ -224,50 +345,62 @@ const ConstructionPartnersSection: FC = () => {
                         key={contractor._id}
                         className="bg-white rounded-xl p-4 flex flex-col group transition-all duration-300 border-2 border-transparent hover:border-primary hover:shadow-xl hover:-translate-y-2 w-72 flex-shrink-0 snap-start"
                       >
-                        <Avatar className="w-20 h-20 mx-auto mb-3 border-4 border-white shadow-md">
-                          <AvatarImage
-                            src={contractor.shopImageUrl}
-                            alt={contractor.name}
+                        <div className="h-40 bg-gray-100 rounded-lg overflow-hidden">
+                          <img
+                            src={
+                              contractor.shopImageUrl ||
+                              "https://via.placeholder.com/300x200?text=No+Shop+Image"
+                            }
+                            alt={contractor.companyName}
+                            className="w-full h-full object-cover"
                           />
-                          <AvatarFallback className="text-xl font-bold bg-gray-200 text-gray-600">
-                            {contractor.name?.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="text-center flex-grow">
-                          <h3 className="font-bold text-lg text-gray-800">
-                            {contractor.name}
-                          </h3>
-                          <div className="flex items-center justify-center gap-1.5 text-gray-500 text-sm mt-1">
-                            <Building className="w-4 h-4 text-primary" />
-                            <span className="font-medium">
-                              {contractor.companyName}
-                            </span>
-                          </div>
-                          <div className="mt-2 space-y-1.5 text-sm text-left text-gray-500">
-                            <div className="flex items-center gap-2">
-                              <Briefcase className="w-4 h-4 shrink-0 text-primary" />
-                              <span>{contractor.profession}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Star className="w-4 h-4 shrink-0 text-primary" />
-                              <span>{contractor.experience} Experience</span>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
-                              <span>
-                                {contractor.address}, {contractor.city}
+                        </div>
+                        <div className="relative flex-grow flex flex-col -mt-10">
+                          <Avatar className="w-20 h-20 mx-auto mb-3 border-4 border-white shadow-lg">
+                            <AvatarImage
+                              src={contractor.photoUrl}
+                              alt={contractor.name}
+                            />
+                            <AvatarFallback className="text-xl font-bold bg-gray-200 text-gray-600">
+                              {contractor.name?.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="text-center flex-grow">
+                            <h3 className="font-bold text-lg text-gray-800">
+                              {contractor.name}
+                            </h3>
+                            <div className="flex items-center justify-center gap-1.5 text-gray-500 text-sm mt-1">
+                              <Building className="w-4 h-4 text-primary" />
+                              <span className="font-medium">
+                                {contractor.companyName}
                               </span>
                             </div>
+                            <div className="mt-2 space-y-1.5 text-sm text-left text-gray-500">
+                              <div className="flex items-center gap-2">
+                                <Briefcase className="w-4 h-4 shrink-0 text-primary" />
+                                <span>{contractor.profession}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Star className="w-4 h-4 shrink-0 text-primary" />
+                                <span>{contractor.experience} Experience</span>
+                              </div>
+                              <div className="flex items-start gap-2">
+                                <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+                                <span>
+                                  {contractor.address}, {contractor.city}
+                                </span>
+                              </div>
+                            </div>
                           </div>
+                          <Button
+                            onClick={() => handleContactClick(contractor)}
+                            className="mt-4 w-full btn-primary h-10"
+                            type="button"
+                          >
+                            <Phone className="w-4 h-4 mr-2" />
+                            Contact Now
+                          </Button>
                         </div>
-                        <Button
-                          onClick={() => handleContactClick(contractor)}
-                          className="mt-4 w-full btn-primary h-10"
-                          type="button"
-                        >
-                          <Phone className="w-4 h-4 mr-2" />
-                          Contact Now
-                        </Button>
                       </div>
                     ))
                   ) : (

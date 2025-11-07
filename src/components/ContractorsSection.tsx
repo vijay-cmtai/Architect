@@ -1,4 +1,4 @@
-"use client"; // Este componente es interactivo
+"use client";
 
 import React, {
   useState,
@@ -43,7 +43,7 @@ import {
   Briefcase,
 } from "lucide-react";
 
-// --- Definiciones de Tipos ---
+// <<< DATA BADLAV: Type mein naya field add kiya gaya >>>
 type ContractorType = {
   _id: string;
   name: string;
@@ -52,10 +52,11 @@ type ContractorType = {
   address?: string;
   experience?: string;
   photoUrl?: string;
-  shopImageUrl?: string; // Se incluye la imagen de la tienda
+  shopImageUrl?: string;
   phone?: string;
   profession?: string;
   status?: string;
+  contractorType?: "Normal" | "Premium";
 };
 
 const contractorSubCategories = [
@@ -66,7 +67,19 @@ const contractorSubCategories = [
   "Plumbing Contractor",
 ];
 
-// --- Componente ContactModal (Restaurado y Funcional) ---
+const BACKEND_URL =
+  import.meta.env.VITE_BACKEND_URL || "https://architect-backend.vercel.app";
+
+const getImageUrl = (path?: string) => {
+  if (!path) {
+    return "https://via.placeholder.com/300x200?text=No+Image";
+  }
+  if (path.startsWith("http")) {
+    return path;
+  }
+  return `${BACKEND_URL}/${path.replace(/^\//, "")}`;
+};
+
 const ContactModal: FC<{
   isOpen: boolean;
   onClose: () => void;
@@ -196,7 +209,6 @@ const ContactModal: FC<{
   );
 };
 
-// --- Componente Principal de la Sección ---
 const ContractorsSection: FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const { contractors, contractorListStatus } = useSelector(
@@ -216,13 +228,15 @@ const ContractorsSection: FC = () => {
 
   const filteredContractors = useMemo(() => {
     if (!Array.isArray(contractors)) return [];
+    // <<< DATA BADLAV: Filter logic ko update kiya gaya >>>
     return contractors.filter((c: ContractorType) => {
       const isApproved = c.status === "Approved";
+      const isNormal = c.contractorType === "Normal" || !c.contractorType; // Normal ya undefined
       const matchesCity =
         !cityFilter || c.city?.toLowerCase().includes(cityFilter.toLowerCase());
       const matchesSubCategory =
         subCategoryFilter === "all" || c.profession === subCategoryFilter;
-      return isApproved && matchesCity && matchesSubCategory;
+      return isApproved && isNormal && matchesCity && matchesSubCategory;
     });
   }, [cityFilter, subCategoryFilter, contractors]);
 
@@ -312,7 +326,24 @@ const ContractorsSection: FC = () => {
           {contractorListStatus === "succeeded" && (
             <div className="relative">
               {filteredContractors.length > 3 && (
-                <>{/* Botones de desplazamiento */}</>
+                <>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 rounded-full h-12 w-12 bg-white/80"
+                    onClick={() => scroll("left")}
+                  >
+                    <ChevronLeft />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 rounded-full h-12 w-12 bg-white/80"
+                    onClick={() => scroll("right")}
+                  >
+                    <ChevronRight />
+                  </Button>
+                </>
               )}
               <div
                 ref={scrollContainerRef}
@@ -324,14 +355,11 @@ const ContractorsSection: FC = () => {
                     filteredContractors.map((contractor) => (
                       <div
                         key={contractor._id}
-                        className="bg-white rounded-xl p-4 flex flex-col group transition-all duration-300 border-2 border-transparent hover:border-primary hover:shadow-xl hover:-translate-y-2 w-72 flex-shrink-0 snap-start"
+                        className="bg-white rounded-xl flex flex-col group transition-all duration-300 border-2 border-transparent hover:border-primary hover:shadow-xl hover:-translate-y-2 w-72 flex-shrink-0 snap-start overflow-hidden"
                       >
                         <div className="h-40 bg-gray-200 relative">
                           <img
-                            src={
-                              contractor.shopImageUrl ||
-                              "https://via.placeholder.com/300x200?text=No+Shop+Image"
-                            }
+                            src={getImageUrl(contractor.shopImageUrl)}
                             alt={`${contractor.companyName || contractor.name}'s shop`}
                             className="w-full h-full object-cover"
                           />
@@ -340,7 +368,7 @@ const ContractorsSection: FC = () => {
                           <div className="absolute -top-10 left-1/2 -translate-x-1/2">
                             <Avatar className="w-20 h-20 border-4 border-white shadow-md">
                               <AvatarImage
-                                src={contractor.photoUrl}
+                                src={getImageUrl(contractor.photoUrl)}
                                 alt={contractor.name}
                               />
                               <AvatarFallback className="text-xl font-bold bg-gray-200 text-gray-600">

@@ -34,6 +34,7 @@ import house1 from "@/assets/house-1.jpg";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import DisplayPrice from "@/components/DisplayPrice";
 
+// --- Icon Components (No Changes) ---
 const FacebookIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -164,34 +165,24 @@ const slugify = (text: any) => {
 
 const DetailPage = () => {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
   const location = useLocation();
   const dispatch: AppDispatch = useDispatch();
-  const { toast } = useToast();
-  const { symbol, rate } = useCurrency();
+
   const isProfessionalPlan = location.pathname.includes("/professional-plan/");
+  const productIdFromSlug = slug?.split("-").pop();
+
   const {
     product: singleProduct,
     listStatus: adminListStatus,
-    actionStatus: adminActionStatus,
     products: adminProducts,
   } = useSelector((state: RootState) => state.products);
   const {
     plan: singlePlan,
     listStatus: profListStatus,
-    actionStatus: profActionStatus,
     plans: professionalPlans,
   } = useSelector((state: RootState) => state.professionalPlans);
-  const { userInfo } = useSelector((state: RootState) => state.user);
-  const { addItem } = useCart();
-  const [quantity, setQuantity] = useState(1);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
-  const [isZooming, setIsZooming] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const productIdFromSlug = slug?.split("-").pop();
+
+  const listStatus = isProfessionalPlan ? profListStatus : adminListStatus;
 
   useEffect(() => {
     if (slug) {
@@ -205,11 +196,11 @@ const DetailPage = () => {
 
   const displayData: any = useMemo(() => {
     if (isProfessionalPlan) {
-      return singlePlan && singlePlan._id === productIdFromSlug
+      return singlePlan?._id === productIdFromSlug
         ? singlePlan
         : professionalPlans.find((p) => p._id === productIdFromSlug);
     }
-    return singleProduct && singleProduct._id === productIdFromSlug
+    return singleProduct?._id === productIdFromSlug
       ? singleProduct
       : adminProducts.find((p) => p._id === productIdFromSlug);
   }, [
@@ -221,55 +212,163 @@ const DetailPage = () => {
     productIdFromSlug,
   ]);
 
+  if (listStatus === "loading" || listStatus === "idle") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!displayData || listStatus === "failed") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="text-center py-20">
+          <ServerCrash className="mx-auto h-16 w-16 text-destructive" />
+          <h2 className="mt-4 text-2xl font-bold">Item Not Found</h2>
+          <p className="mt-2 text-muted-foreground">
+            The item you are looking for does not exist.
+          </p>
+          <Button asChild className="mt-6">
+            <Link to="/products">Back to Products</Link>
+          </Button>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  return <ProductDetailContent product={displayData} />;
+};
+
+const ProductDetailContent = ({ product }: { product: any }) => {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch: AppDispatch = useDispatch();
+  const { toast } = useToast();
+  const { symbol, rate } = useCurrency();
+  const { addItem } = useCart();
+
+  const [quantity, setQuantity] = useState(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [isZooming, setIsZooming] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const isProfessionalPlan = location.pathname.includes("/professional-plan/");
+  const productIdFromSlug = slug?.split("-").pop();
+
+  const { userInfo } = useSelector((state: RootState) => state.user);
+  const { actionStatus: adminActionStatus, products: adminProducts } =
+    useSelector((state: RootState) => state.products);
+  const { actionStatus: profActionStatus, plans: professionalPlans } =
+    useSelector((state: RootState) => state.professionalPlans);
+
+  const displayData = product;
+
+  // ===================================================================
+  // FINAL CACHE BUSTING LOGIC
+  // ===================================================================
+
+  const backendApiUrl =
+    import.meta.env.VITE_BACKEND_URL || "https://architect-backend.vercel.app";
+
+  // Create a unique timestamp to bypass social media caches
+  const cacheBuster = `?v=${new Date().getTime()}`;
+
+  // This is the URL that will be shared, with the cache buster appended
+  const shareUrl = `${backendApiUrl}/share/${isProfessionalPlan ? "professional-plan" : "product"}/${slug}${cacheBuster}`;
+
+  // This is the frontend URL for canonical tags and internal use
+  const canonicalUrl = `${window.location.origin}${location.pathname}`;
+
+  // ===================================================================
+
+  const allProductsAndPlans = useMemo(() => {
+    const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
+    const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
+    return [
+      ...adminArray.map((p) => ({ ...p, source: "product" })),
+      ...profArray.map((p) => ({ ...p, source: "professional-plan" })),
+    ];
+  }, [adminProducts, professionalPlans]);
+
+  const relatedProducts = useMemo(() => {
+    if (!displayData || !allProductsAndPlans.length) return [];
+    const currentCategory =
+      (Array.isArray(displayData.category)
+        ? displayData.category[0]
+        : displayData.category) || displayData.Categories?.split(",")[0].trim();
+    if (!currentCategory) return [];
+    return allProductsAndPlans
+      .filter((p: any) => {
+        const pCategory =
+          (Array.isArray(p.category) ? p.category[0] : p.category) ||
+          p.Categories?.split(",")[0].trim();
+        return pCategory === currentCategory && p._id !== productIdFromSlug;
+      })
+      .slice(0, 8)
+      .map((p: any) => {
+        const regPrice = (p.price > 0 ? p.price : p["Regular price"]) ?? 0;
+        const sPrice =
+          (p.salePrice > 0 ? p.salePrice : p["Sale price"]) ?? null;
+        const isPricedSale =
+          sPrice != null &&
+          parseFloat(String(sPrice)) < parseFloat(String(regPrice));
+        return { ...p, displayPrice: isPricedSale ? sPrice : regPrice };
+      });
+  }, [allProductsAndPlans, displayData, productIdFromSlug]);
+
   const productName =
-    displayData?.name ||
-    displayData?.planName ||
-    displayData?.Name ||
+    displayData.name ||
+    displayData.planName ||
+    displayData.Name ||
     "Untitled Plan";
   const productDescription =
-    displayData?.description ||
-    displayData?.Description ||
+    displayData.description ||
+    displayData.Description ||
     "No description available.";
   const regularPrice =
-    (displayData?.price > 0
+    (displayData.price > 0
       ? displayData.price
       : displayData?.["Regular price"]) ?? 0;
   const salePrice =
-    (displayData?.salePrice > 0
+    (displayData.salePrice > 0
       ? displayData.salePrice
       : displayData?.["Sale price"]) ?? null;
-  const taxRate = displayData?.taxRate || 0;
-
-  const isSale = useMemo(() => {
-    if (!displayData) return false;
-    if (
-      salePrice !== null &&
+  const isSale =
+    (salePrice !== null &&
       parseFloat(String(salePrice)) > 0 &&
-      parseFloat(String(salePrice)) < parseFloat(String(regularPrice))
-    ) {
-      return true;
-    }
-    return displayData.isSale || false;
-  }, [displayData, regularPrice, salePrice]);
-
+      parseFloat(String(salePrice)) < parseFloat(String(regularPrice))) ||
+    displayData.isSale ||
+    false;
   const currentPrice = isSale ? salePrice : regularPrice;
+  const taxRate = displayData.taxRate || 0;
   const plotSize =
-    displayData?.plotSize || displayData?.["Attribute 1 value(s)"] || "N/A";
+    displayData.plotSize || displayData["Attribute 1 value(s)"] || "N/A";
   const plotArea =
-    displayData?.plotArea ||
-    (displayData?.["Attribute 2 value(s)"]
+    displayData.plotArea ||
+    (displayData["Attribute 2 value(s)"]
       ? parseInt(String(displayData["Attribute 2 value(s)"]).replace(/\D/g, ""))
       : "N/A");
   const rooms =
-    displayData?.rooms || displayData?.["Attribute 3 value(s)"] || "N/A";
+    displayData.rooms || displayData["Attribute 3 value(s)"] || "N/A";
   const direction =
-    displayData?.direction || displayData?.["Attribute 4 value(s)"] || "N/A";
-  const bathrooms = displayData?.bathrooms || "N/A";
+    displayData.direction || displayData["Attribute 4 value(s)"] || "N/A";
+  const bathrooms = displayData.bathrooms || "N/A";
   const kitchen =
-    displayData?.kitchen ||
-    (displayData?.["Attribute 5 name"] === "Kitchen"
+    displayData.kitchen ||
+    (displayData["Attribute 5 name"] === "Kitchen"
       ? displayData["Attribute 5 value(s)"]
       : "N/A");
+  const actionStatus = isProfessionalPlan
+    ? profActionStatus
+    : adminActionStatus;
 
   const productImages = useMemo(() => {
     if (!displayData) return [house1];
@@ -287,68 +386,7 @@ const DetailPage = () => {
     return uniqueImages.length > 0 ? uniqueImages : [house1];
   }, [displayData]);
 
-  const [currentUrl, setCurrentUrl] = useState("");
-  useEffect(() => {
-    setCurrentUrl(window.location.href);
-  }, []);
-
-  const encodedUrl = encodeURIComponent(currentUrl);
-  const encodedTitle = encodeURIComponent(productName);
-  const encodedImage = encodeURIComponent(productImages[selectedImageIndex]);
-  const phoneNumber = "+918815939484";
-  const socialPlatforms = [
-    {
-      name: "Facebook",
-      icon: <FacebookIcon />,
-      color: "bg-blue-800",
-      href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-    },
-    {
-      name: "WhatsApp",
-      icon: <WhatsAppIcon />,
-      color: "bg-green-500",
-      href: `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`,
-    },
-    {
-      name: "Twitter",
-      icon: <TwitterIcon />,
-      color: "bg-black",
-      href: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
-    },
-    {
-      name: "LinkedIn",
-      icon: <LinkedinIcon />,
-      color: "bg-sky-700",
-      href: `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`,
-    },
-    {
-      name: "Pinterest",
-      icon: <PinterestIcon />,
-      color: "bg-red-600",
-      href: `https://pinterest.com/pin/create/button/?url=${encodedUrl}&media=${encodedImage}&description=${encodedTitle}`,
-    },
-    {
-      name: "Telegram",
-      icon: <TelegramIcon />,
-      color: "bg-sky-500",
-      href: `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`,
-    },
-    {
-      name: "Threads",
-      icon: <ThreadsIcon />,
-      color: "bg-black",
-      href: `https://www.threads.net/share?url=${encodedUrl}&text=${encodedTitle}`,
-    },
-    {
-      name: "Call Us",
-      icon: <PhoneIcon />,
-      color: "bg-gray-700",
-      href: `tel:${phoneNumber}`,
-    },
-  ];
-
   const handleAddToCart = () => {
-    if (!displayData) return;
     addItem({
       productId: displayData._id,
       name: productName,
@@ -363,9 +401,7 @@ const DetailPage = () => {
       description: `${quantity} x ${productName} has been added.`,
     });
   };
-
   const handleBuyNow = () => {
-    if (!displayData) return;
     addItem({
       productId: displayData._id,
       name: productName,
@@ -377,11 +413,24 @@ const DetailPage = () => {
     });
     navigate("/checkout");
   };
-
-  const whatsappMessage = `Hello, I'm interested in modifying this plan: *${productName}*. \nProduct Link: ${currentUrl}`;
-  const encodedWhatsappMessage = encodeURIComponent(whatsappMessage);
-  const whatsappLink = `https://wa.me/${phoneNumber.replace("+", "")}?text=${encodedWhatsappMessage}`;
-
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const xPercent = (x / rect.width) * 100;
+    const yPercent = (y / rect.height) * 100;
+    setPosition({ x: xPercent, y: yPercent });
+  };
+  const handleScroll = (direction: "left" | "right") => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = scrollContainerRef.current.clientWidth * 0.8;
+      if (direction === "left") {
+        scrollContainerRef.current.scrollLeft -= scrollAmount;
+      } else {
+        scrollContainerRef.current.scrollLeft += scrollAmount;
+      }
+    }
+  };
   const handleReviewSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!rating || !comment) {
@@ -424,98 +473,70 @@ const DetailPage = () => {
       });
   };
 
-  const allProductsAndPlans = useMemo(() => {
-    const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
-    const profArray = Array.isArray(professionalPlans) ? professionalPlans : [];
-    return [
-      ...adminArray.map((p) => ({ ...p, source: "product" })),
-      ...profArray.map((p) => ({ ...p, source: "professional-plan" })),
-    ];
-  }, [adminProducts, professionalPlans]);
+  const encodedTitle = encodeURIComponent(productName);
 
-  const relatedProducts = useMemo(() => {
-    if (!displayData || !allProductsAndPlans.length) return [];
-    const currentCategory =
-      (Array.isArray(displayData.category)
-        ? displayData.category[0]
-        : displayData.category) || displayData.Categories?.split(",")[0].trim();
-    if (!currentCategory) return [];
-    return allProductsAndPlans
-      .filter((p: any) => {
-        const pCategory =
-          (Array.isArray(p.category) ? p.category[0] : p.category) ||
-          p.Categories?.split(",")[0].trim();
-        return pCategory === currentCategory && p._id !== productIdFromSlug;
-      })
-      .slice(0, 8)
-      .map((p: any) => {
-        const regPrice = (p.price > 0 ? p.price : p["Regular price"]) ?? 0;
-        const sPrice =
-          (p.salePrice > 0 ? p.salePrice : p["Sale price"]) ?? null;
-        const isPricedSale =
-          sPrice != null &&
-          parseFloat(String(sPrice)) < parseFloat(String(regPrice));
-        return { ...p, displayPrice: isPricedSale ? sPrice : regPrice };
-      });
-  }, [allProductsAndPlans, displayData, productIdFromSlug]);
+  const absoluteMainImageUrl = productImages[selectedImageIndex].startsWith(
+    "http"
+  )
+    ? productImages[selectedImageIndex]
+    : `${backendApiUrl}${productImages[selectedImageIndex]}`;
+  const encodedImage = encodeURIComponent(absoluteMainImageUrl);
 
-  const actionStatus = isProfessionalPlan
-    ? profActionStatus
-    : adminActionStatus;
-  const canonicalUrl = `${window.location.origin}${location.pathname}`;
-  const isLoading =
-    (adminListStatus === "loading" && !displayData && !isProfessionalPlan) ||
-    (profListStatus === "loading" && !displayData && isProfessionalPlan);
+  const phoneNumber = "+918815939484";
+  const whatsappMessage = `Hello, I'm interested in modifying this plan: *${productName}*. \nProduct Link: ${canonicalUrl}`;
+  const encodedWhatsappMessage = encodeURIComponent(whatsappMessage);
+  const whatsappLink = `https://wa.me/${phoneNumber.replace("+", "")}?text=${encodedWhatsappMessage}`;
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const xPercent = (x / rect.width) * 100;
-    const yPercent = (y / rect.height) * 100;
-    setPosition({ x: xPercent, y: yPercent });
-  };
-
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  const handleScroll = (direction: "left" | "right") => {
-    if (scrollContainerRef.current) {
-      const scrollAmount = scrollContainerRef.current.clientWidth * 0.8;
-      if (direction === "left") {
-        scrollContainerRef.current.scrollLeft -= scrollAmount;
-      } else {
-        scrollContainerRef.current.scrollLeft += scrollAmount;
-      }
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        {" "}
-        <Loader2 className="w-12 h-12 animate-spin text-primary" />{" "}
-      </div>
-    );
-  }
-
-  if (!displayData) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="text-center py-20">
-          <ServerCrash className="mx-auto h-16 w-16 text-destructive" />
-          <h2 className="mt-4 text-2xl font-bold">Item Not Found</h2>
-          <p className="mt-2 text-muted-foreground">
-            The item you are looking for does not exist.
-          </p>
-          <Button asChild className="mt-6">
-            <Link to="/products">Back to Products</Link>
-          </Button>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+  const socialPlatforms = [
+    {
+      name: "Facebook",
+      icon: <FacebookIcon />,
+      color: "bg-blue-800",
+      href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+    },
+    {
+      name: "WhatsApp",
+      icon: <WhatsAppIcon />,
+      color: "bg-green-500",
+      href: `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodeURIComponent(shareUrl)}`,
+    },
+    {
+      name: "Twitter",
+      icon: <TwitterIcon />,
+      color: "bg-black",
+      href: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodedTitle}`,
+    },
+    {
+      name: "LinkedIn",
+      icon: <LinkedinIcon />,
+      color: "bg-sky-700",
+      href: `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(shareUrl)}&title=${encodedTitle}`,
+    },
+    {
+      name: "Pinterest",
+      icon: <PinterestIcon />,
+      color: "bg-red-600",
+      href: `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(shareUrl)}&media=${encodedImage}&description=${encodedTitle}`,
+    },
+    {
+      name: "Telegram",
+      icon: <TelegramIcon />,
+      color: "bg-sky-500",
+      href: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodedTitle}`,
+    },
+    {
+      name: "Threads",
+      icon: <ThreadsIcon />,
+      color: "bg-black",
+      href: `https://www.threads.net/share?url=${encodeURIComponent(shareUrl)}&text=${encodedTitle}`,
+    },
+    {
+      name: "Call Us",
+      icon: <PhoneIcon />,
+      color: "bg-gray-700",
+      href: `tel:${phoneNumber}`,
+    },
+  ];
 
   return (
     <div
@@ -531,7 +552,14 @@ const DetailPage = () => {
           }
         />
         {displayData.seo?.keywords && (
-          <meta name="keywords" content={displayData.seo.keywords} />
+          <meta
+            name="keywords"
+            content={
+              Array.isArray(displayData.seo.keywords)
+                ? displayData.seo.keywords.join(", ")
+                : displayData.seo.keywords
+            }
+          />
         )}
         <link rel="canonical" href={canonicalUrl} />
         <meta
@@ -565,12 +593,14 @@ const DetailPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-8">
           <Link to="/" className="hover:text-primary">
-            Home
-          </Link>
+            {" "}
+            Home{" "}
+          </Link>{" "}
           <span>/</span>
           <Link to="/products" className="hover:text-primary">
-            Products
-          </Link>
+            {" "}
+            Products{" "}
+          </Link>{" "}
           <span>/</span>
           <span className="text-gray-800 font-medium">{productName}</span>
         </nav>
@@ -643,7 +673,8 @@ const DetailPage = () => {
             <div className="lg:col-span-2 space-y-6">
               <div>
                 <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-2">
-                  {productName}
+                  {" "}
+                  {productName}{" "}
                 </h1>
                 <div className="flex items-center gap-4 mb-4">
                   <StarRating
@@ -654,19 +685,24 @@ const DetailPage = () => {
                 <div className="flex items-baseline gap-4 mb-6 flex-wrap">
                   {isSale && parseFloat(String(regularPrice)) > 0 && (
                     <span className="text-xl text-gray-500 line-through">
+                      {" "}
                       <DisplayPrice
                         inrPrice={parseFloat(String(regularPrice))}
-                      />
+                      />{" "}
                     </span>
                   )}
                   <span className="text-4xl font-bold text-primary">
-                    <DisplayPrice inrPrice={parseFloat(String(currentPrice))} />
+                    {" "}
+                    <DisplayPrice
+                      inrPrice={parseFloat(String(currentPrice))}
+                    />{" "}
                   </span>
                   {isSale &&
                     parseFloat(String(regularPrice)) > 0 &&
                     parseFloat(String(currentPrice)) > 0 && (
                       <span className="text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full font-semibold">
-                        SAVE {symbol}
+                        {" "}
+                        SAVE {symbol}{" "}
                         {(
                           (parseFloat(String(regularPrice)) -
                             parseFloat(String(currentPrice))) *
@@ -674,59 +710,69 @@ const DetailPage = () => {
                         ).toLocaleString("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
-                        })}
+                        })}{" "}
                       </span>
                     )}
                 </div>
-
-                {/* --- **START: MOVED SPECIFICATIONS BLOCK** --- */}
                 <div className="mt-6 border-t pt-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <ClipboardList className="w-5 h-5" />
-                    Specifications
+                    {" "}
+                    <ClipboardList className="w-5 h-5" /> Specifications{" "}
                   </h3>
                   <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
                     <div className="flex justify-between border-b pb-2">
+                      {" "}
                       <span className="font-semibold text-gray-700">
-                        Plot Size:
-                      </span>
-                      <span className="text-gray-600">{plotSize}</span>
+                        {" "}
+                        Plot Size:{" "}
+                      </span>{" "}
+                      <span className="text-gray-600">{plotSize}</span>{" "}
                     </div>
                     <div className="flex justify-between border-b pb-2">
+                      {" "}
                       <span className="font-semibold text-gray-700">
-                        Plot Area:
-                      </span>
-                      <span className="text-gray-600">{plotArea} sqft</span>
+                        {" "}
+                        Plot Area:{" "}
+                      </span>{" "}
+                      <span className="text-gray-600">
+                        {plotArea} sqft
+                      </span>{" "}
                     </div>
                     <div className="flex justify-between border-b pb-2">
+                      {" "}
                       <span className="font-semibold text-gray-700">
-                        Rooms:
-                      </span>
-                      <span className="text-gray-600">{rooms}</span>
+                        {" "}
+                        Rooms:{" "}
+                      </span>{" "}
+                      <span className="text-gray-600">{rooms}</span>{" "}
                     </div>
                     <div className="flex justify-between border-b pb-2">
+                      {" "}
                       <span className="font-semibold text-gray-700">
-                        Bathrooms:
-                      </span>
-                      <span className="text-gray-600">{bathrooms}</span>
+                        {" "}
+                        Bathrooms:{" "}
+                      </span>{" "}
+                      <span className="text-gray-600">{bathrooms}</span>{" "}
                     </div>
                     <div className="flex justify-between border-b pb-2">
+                      {" "}
                       <span className="font-semibold text-gray-700">
-                        Kitchen:
-                      </span>
-                      <span className="text-gray-600">{kitchen}</span>
+                        {" "}
+                        Kitchen:{" "}
+                      </span>{" "}
+                      <span className="text-gray-600">{kitchen}</span>{" "}
                     </div>
                     <div className="flex justify-between border-b pb-2">
+                      {" "}
                       <span className="font-semibold text-gray-700">
-                        Direction:
-                      </span>
-                      <span className="text-gray-600">{direction}</span>
+                        {" "}
+                        Direction:{" "}
+                      </span>{" "}
+                      <span className="text-gray-600">{direction}</span>{" "}
                     </div>
                   </div>
                 </div>
-                {/* --- **END: MOVED SPECIFICATIONS BLOCK** --- */}
               </div>
-
               <div className="space-y-4 pt-4 border-t">
                 <div className="flex items-center space-x-4">
                   <span className="font-bold text-gray-800">Quantity:</span>
@@ -737,17 +783,20 @@ const DetailPage = () => {
                       className="p-3 disabled:opacity-50"
                       disabled={quantity <= 1}
                     >
-                      <Minus className="w-4 h-4" />
+                      {" "}
+                      <Minus className="w-4 h-4" />{" "}
                     </button>
                     <span className="px-6 py-2 font-bold text-lg">
-                      {quantity}
+                      {" "}
+                      {quantity}{" "}
                     </span>
                     <button
                       type="button"
                       onClick={() => setQuantity(quantity + 1)}
                       className="p-3"
                     >
-                      <Plus className="w-4 h-4" />
+                      {" "}
+                      <Plus className="w-4 h-4" />{" "}
                     </button>
                   </div>
                 </div>
@@ -757,7 +806,8 @@ const DetailPage = () => {
                     variant="outline"
                     className="w-full py-6 text-lg font-bold"
                   >
-                    Add to Cart
+                    {" "}
+                    Add to Cart{" "}
                   </Button>
                   <a
                     href={whatsappLink}
@@ -769,14 +819,16 @@ const DetailPage = () => {
                       variant="secondary"
                       className="bg-green-500 hover:bg-green-600 text-white w-full py-6 text-lg font-bold flex items-center justify-center gap-2"
                     >
-                      <WhatsAppIcon /> Modify Plan
+                      {" "}
+                      <WhatsAppIcon /> Modify Plan{" "}
                     </Button>
                   </a>
                 </div>
               </div>
               <div className="pt-4">
                 <h3 className="font-bold text-gray-700 mb-2">
-                  Share this plan
+                  {" "}
+                  Share this plan{" "}
                 </h3>
                 <div className="flex items-center gap-2 flex-wrap">
                   {socialPlatforms.map((p) => (
@@ -788,18 +840,18 @@ const DetailPage = () => {
                       title={p.name}
                       className={`w-9 h-9 flex items-center justify-center rounded-md text-white ${p.color} transition-opacity hover:opacity-80`}
                     >
-                      {p.icon}
+                      {" "}
+                      {p.icon}{" "}
                     </a>
                   ))}
                 </div>
               </div>
             </div>
           </div>
-
           <div className="mt-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-              <FileText className="w-6 h-6" />
-              Description
+              {" "}
+              <FileText className="w-6 h-6" /> Description{" "}
             </h2>
             <div
               className="text-gray-600 text-base leading-relaxed prose max-w-none"
@@ -807,10 +859,10 @@ const DetailPage = () => {
             />
           </div>
         </div>
-
         <div className="mt-16">
           <h2 className="text-3xl font-extrabold text-gray-800 mb-8 text-center">
-            Customer Feedback
+            {" "}
+            Customer Feedback{" "}
           </h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div>
@@ -824,26 +876,30 @@ const DetailPage = () => {
                     >
                       <div className="flex items-center justify-between">
                         <h4 className="font-bold text-gray-900">
-                          {review.name}
-                        </h4>
+                          {" "}
+                          {review.name}{" "}
+                        </h4>{" "}
                         <StarRating rating={review.rating} />
                       </div>
                       <p className="text-gray-600 mt-2">{review.comment}</p>
                       <p className="text-xs text-gray-400 mt-2">
-                        {new Date(review.createdAt).toLocaleDateString()}
+                        {" "}
+                        {new Date(review.createdAt).toLocaleDateString()}{" "}
                       </p>
                     </div>
                   ))}
                 </div>
               ) : (
                 <p className="text-gray-500 bg-white p-6 rounded-lg text-center">
-                  No reviews yet. Be the first to review!
+                  {" "}
+                  No reviews yet. Be the first to review!{" "}
                 </p>
               )}
             </div>
             <div>
               <h3 className="text-2xl font-bold text-gray-800 mb-6">
-                Write a Review
+                {" "}
+                Write a Review{" "}
               </h3>
               {userInfo ? (
                 <form
@@ -852,7 +908,8 @@ const DetailPage = () => {
                 >
                   <div>
                     <label className="font-bold text-gray-700">
-                      Your Rating
+                      {" "}
+                      Your Rating{" "}
                     </label>
                     <div className="flex mt-2">
                       {[1, 2, 3, 4, 5].map((star) => (
@@ -869,7 +926,8 @@ const DetailPage = () => {
                       htmlFor="comment"
                       className="font-bold text-gray-700"
                     >
-                      Your Comment
+                      {" "}
+                      Your Comment{" "}
                     </label>
                     <Textarea
                       id="comment"
@@ -894,24 +952,26 @@ const DetailPage = () => {
                 </form>
               ) : (
                 <p className="text-gray-600 bg-white p-6 rounded-lg text-center">
+                  {" "}
                   Please{" "}
                   <Link
                     to="/login"
                     className="text-primary underline font-bold"
                   >
-                    log in
+                    {" "}
+                    log in{" "}
                   </Link>{" "}
-                  to write a review.
+                  to write a review.{" "}
                 </p>
               )}
             </div>
           </div>
         </div>
-
-        {relatedProducts.length > 0 && (
+        {relatedProducts && relatedProducts.length > 0 && (
           <div className="border-t pt-16 mt-16">
             <h2 className="text-3xl font-extrabold text-gray-800 mb-8 text-center">
-              Related Products
+              {" "}
+              Related Products{" "}
             </h2>
             <div className="relative">
               <Button
@@ -920,7 +980,8 @@ const DetailPage = () => {
                 className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full shadow-md hover:bg-white"
                 onClick={() => handleScroll("left")}
               >
-                <ChevronLeft className="h-6 w-6" />
+                {" "}
+                <ChevronLeft className="h-6 w-6" />{" "}
               </Button>
               <div
                 ref={scrollContainerRef}
@@ -934,7 +995,7 @@ const DetailPage = () => {
                   const relatedLink = `/${relatedProd.source}/${slugify(relatedProductName)}-${relatedProd._id}`;
                   return (
                     <Link
-                      key={relatedProd.id}
+                      key={relatedProd._id}
                       to={relatedLink}
                       className="group block bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden w-72 flex-shrink-0"
                     >
@@ -949,18 +1010,21 @@ const DetailPage = () => {
                       />
                       <div className="p-4">
                         <h3 className="text-lg font-bold text-gray-900 mb-1 truncate">
-                          {relatedProductName}
+                          {" "}
+                          {relatedProductName}{" "}
                         </h3>
                         <p className="text-sm text-gray-600 mb-2">
+                          {" "}
                           {relatedProd.plotSize ||
-                            relatedProd["Attribute 1 value(s)"]}
+                            relatedProd["Attribute 1 value(s)"]}{" "}
                         </p>
                         <div className="text-xl font-bold text-primary">
+                          {" "}
                           <DisplayPrice
                             inrPrice={parseFloat(
                               String(relatedProd.displayPrice)
                             )}
-                          />
+                          />{" "}
                         </div>
                       </div>
                     </Link>
@@ -973,7 +1037,8 @@ const DetailPage = () => {
                 className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full shadow-md hover:bg-white"
                 onClick={() => handleScroll("right")}
               >
-                <ChevronRight className="h-6 w-6" />
+                {" "}
+                <ChevronRight className="h-6 w-6" />{" "}
               </Button>
             </div>
           </div>

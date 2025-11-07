@@ -1,5 +1,3 @@
-// File: lib/features/users/userSlice.js
-
 import axios from "axios";
 import {
   createSlice,
@@ -31,6 +29,7 @@ interface UserInfo {
   experience?: string;
   isApproved?: boolean;
   status?: string;
+  contractorType?: "Normal" | "Premium";
   [key: string]: any;
 }
 
@@ -64,7 +63,6 @@ const initialState: UserState = {
 
 const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/users`;
 
-// --- Public Thunks for Sellers and Contractors ---
 export const fetchSellers = createAsyncThunk(
   "user/fetchSellers",
   async (_, { rejectWithValue }) => {
@@ -93,7 +91,6 @@ export const fetchContractors = createAsyncThunk(
   }
 );
 
-// --- Authentication Thunks ---
 export const registerUser = createAsyncThunk<UserInfo, FormData>(
   "user/register",
   async (userData, { rejectWithValue }) => {
@@ -154,7 +151,6 @@ export const updateProfile = createAsyncThunk<
   }
 });
 
-// --- Admin Thunks for User Management ---
 export const fetchUsers = createAsyncThunk<
   { users: UserInfo[]; pagination: any },
   Record<string, any>,
@@ -293,7 +289,6 @@ const userSlice = createSlice({
       state.error = action.payload;
     };
 
-    // Auth & Profile
     builder
       .addCase(registerUser.pending, actionPending)
       .addCase(registerUser.fulfilled, (state, action) => {
@@ -302,21 +297,16 @@ const userSlice = createSlice({
         localStorage.setItem("userInfo", JSON.stringify(action.payload));
       })
       .addCase(registerUser.rejected, actionRejected)
-
       .addCase(loginUser.pending, actionPending)
-      // --- YAHAN BADLAAV KIYA GAYA HAI ---
       .addCase(
         loginUser.fulfilled,
         (state, action: PayloadAction<UserInfo>) => {
-          // Ab yeh sabhi roles ke liye kaam karega.
-          // Backend ab pending users ko handle kar raha hai.
           state.actionStatus = "succeeded";
           state.userInfo = action.payload;
           localStorage.setItem("userInfo", JSON.stringify(action.payload));
         }
       )
       .addCase(loginUser.rejected, actionRejected)
-
       .addCase(updateProfile.pending, actionPending)
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.actionStatus = "succeeded";
@@ -325,7 +315,6 @@ const userSlice = createSlice({
       })
       .addCase(updateProfile.rejected, actionRejected);
 
-    // Admin List
     builder
       .addCase(fetchUsers.pending, (state) => {
         state.listStatus = "loading";
@@ -340,7 +329,6 @@ const userSlice = createSlice({
         state.error = action.payload;
       });
 
-    // Admin Actions
     builder
       .addCase(createUserByAdmin.pending, actionPending)
       .addCase(createUserByAdmin.fulfilled, (state, action) => {
@@ -375,7 +363,6 @@ const userSlice = createSlice({
         state.error = action.payload;
       });
 
-    // Public Sellers List
     builder
       .addCase(fetchSellers.pending, (state) => {
         state.sellerListStatus = "loading";
@@ -392,7 +379,6 @@ const userSlice = createSlice({
         state.error = action.payload;
       });
 
-    // Public Contractors List
     builder
       .addCase(fetchContractors.pending, (state) => {
         state.contractorListStatus = "loading";

@@ -260,7 +260,6 @@ export const createReview = createAsyncThunk<
   }
 );
 
-// === NEW FUNCTION ADDED HERE ===
 export const removeCsvImage = createAsyncThunk<
   Product,
   { productId: string; imageUrl: string },
@@ -310,6 +309,14 @@ const productSlice = createSlice({
       .addCase(fetchMyProducts.fulfilled, (state, action) => {
         state.myProducts = action.payload;
       })
+      // <<< YEH HISSA ADD KARNA BAHUT ZAROORI HAI >>>
+      .addCase(fetchProductBySlug.fulfilled, (state, action) => {
+        state.product = action.payload;
+      })
+      .addCase(fetchProductById.fulfilled, (state, action) => {
+        state.product = action.payload;
+      })
+      // <<< CHANGE YAHAN KHATAM HUA >>>
       .addCase(createProduct.fulfilled, (state, action) => {
         state.myProducts.unshift(action.payload);
       })
@@ -328,7 +335,6 @@ const productSlice = createSlice({
           (p) => p._id !== action.payload
         );
       })
-      // === NEW HANDLER ADDED HERE ===
       .addCase(removeCsvImage.fulfilled, (state, action) => {
         const updatedProduct = action.payload;
         state.product = updatedProduct;
