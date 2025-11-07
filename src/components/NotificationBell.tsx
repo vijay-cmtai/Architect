@@ -21,7 +21,6 @@ interface NotificationType {
   link: string;
   createdAt: string;
 }
-
 const NotificationBell: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
@@ -110,5 +109,4 @@ const NotificationBell: React.FC = () => {
     </Popover>
   );
 };
-
 export default NotificationBell;
