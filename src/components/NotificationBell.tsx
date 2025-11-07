@@ -50,7 +50,6 @@ const NotificationBell: React.FC = () => {
       dispatch(fetchNotifications());
     }
   }, [isOpen, dispatch, userInfo]);
-
   const handleNotificationClick = (notification: NotificationType) => {
     if (!userInfo) {
       return;
