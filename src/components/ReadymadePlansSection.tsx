@@ -34,10 +34,10 @@ const planTypes = [
     iconColor: "text-teal-500",
   },
   {
-    name: "Home Design Product",
+    name: "Download",
     icon: HardHat,
     image: "/r4.avif",
-    href: "/house-designs-products",
+    href: "/download",
     bgColor: "bg-yellow-100",
     iconColor: "text-yellow-500",
   },
