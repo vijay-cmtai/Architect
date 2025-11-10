@@ -42,11 +42,9 @@ const Navbar = () => {
 
   const { userInfo } = useSelector((state: RootState) => state.user);
 
-  // <<< BADLAAV 1: 'seller' ko allowed roles ki list mein add karein >>>
   const isUserAllowed =
     userInfo &&
     ["user", "admin", "professional", "seller"].includes(userInfo.role);
-  // <<< BADLAAV KHATAM >>>
 
   const showCartAndWishlist = !userInfo || userInfo?.role === "user";
 
@@ -65,19 +63,16 @@ const Navbar = () => {
         return "/dashboard";
     }
   };
-
   const handleLogout = () => {
     dispatch(logout());
     setIsMenuOpen(false);
     navigate("/login");
   };
-
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location.pathname]);
@@ -89,17 +84,15 @@ const Navbar = () => {
       document.body.style.overflow = "auto";
     };
   }, [isMenuOpen, isWishlistOpen]);
-
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Ready Made House Plan", path: "/products" },
     { name: "Services", path: "/services" },
     { name: "Career", path: "/careers" },
-    { name: "Download", path: "/download" },
+    { name: "Package", path: "/house-designs-products" },
     { name: "Gallery", path: "/gallery" },
     { name: "Contact", path: "/contact" },
   ];
-
   const isActive = (path: string) => location.pathname === path;
 
   // <<< BADLAAV 3: Seller ka naam (businessName) handle karne ke liye >>>
