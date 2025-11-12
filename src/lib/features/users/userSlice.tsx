@@ -258,6 +258,44 @@ export const getUserStats = createAsyncThunk<any, void, { state: RootState }>(
   }
 );
 
+export const forgotPassword = createAsyncThunk<
+  { message: string },
+  { email: string }
+>("user/forgotPassword", async ({ email }, { rejectWithValue }) => {
+  try {
+    const config = { headers: { "Content-Type": "application/json" } };
+    const { data } = await axios.post(
+      `${API_URL}/forgot-password`,
+      { email },
+      config
+    );
+    return data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message || "Failed to send reset link"
+    );
+  }
+});
+
+export const resetPassword = createAsyncThunk<
+  { message: string },
+  { token: string; password: string }
+>("user/resetPassword", async ({ token, password }, { rejectWithValue }) => {
+  try {
+    const config = { headers: { "Content-Type": "application/json" } };
+    const { data } = await axios.put(
+      `${API_URL}/reset-password/${token}`,
+      { password },
+      config
+    );
+    return data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message || "Failed to reset password"
+    );
+  }
+});
+
 const userSlice = createSlice({
   name: "user",
   initialState,
@@ -313,7 +351,17 @@ const userSlice = createSlice({
         state.userInfo = action.payload;
         localStorage.setItem("userInfo", JSON.stringify(action.payload));
       })
-      .addCase(updateProfile.rejected, actionRejected);
+      .addCase(updateProfile.rejected, actionRejected)
+      .addCase(forgotPassword.pending, actionPending)
+      .addCase(forgotPassword.fulfilled, (state) => {
+        state.actionStatus = "succeeded";
+      })
+      .addCase(forgotPassword.rejected, actionRejected)
+      .addCase(resetPassword.pending, actionPending)
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.actionStatus = "succeeded";
+      })
+      .addCase(resetPassword.rejected, actionRejected);
 
     builder
       .addCase(fetchUsers.pending, (state) => {
