@@ -95,6 +95,8 @@ import SellerInquiryPage from "./pages/seller/SellerInquiriesPage";
 import MediaPage from "./pages/admin/MediaPage";
 import SellerProductPage from "./pages/admin/SellerProductPage";
 import AdminManagePlansPage from "./pages/admin/AdminManagePlansPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 const queryClient = new QueryClient();
 
@@ -136,6 +138,13 @@ const App = () => (
                       <Route path="/contact" element={<ContactUs />} />
                       <Route path="/register" element={<Register />} />
                       <Route path="/login" element={<Login />} />
+                       <Route
+                        path="/forgot-password"
+                        element={<ForgotPasswordPage />}
+                      />
+                      <Route
+                        path="/reset-password/:token"
+                        element={<ResetPasswordPage />}
                       <Route path="/apply" element={<ApplicationPage />} />
                       <Route path="/terms" element={<TermsAndConditions />} />
                       <Route
