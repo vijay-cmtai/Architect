@@ -138,13 +138,14 @@ const App = () => (
                       <Route path="/contact" element={<ContactUs />} />
                       <Route path="/register" element={<Register />} />
                       <Route path="/login" element={<Login />} />
-                       <Route
+                      <Route
                         path="/forgot-password"
                         element={<ForgotPasswordPage />}
                       />
                       <Route
                         path="/reset-password/:token"
                         element={<ResetPasswordPage />}
+                      />
                       <Route path="/apply" element={<ApplicationPage />} />
                       <Route path="/terms" element={<TermsAndConditions />} />
                       <Route
