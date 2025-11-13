@@ -97,6 +97,7 @@ import SellerProductPage from "./pages/admin/SellerProductPage";
 import AdminManagePlansPage from "./pages/admin/AdminManagePlansPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import PackagesPage from "./pages/PackagesPage";
 
 const queryClient = new QueryClient();
 
@@ -146,6 +147,7 @@ const App = () => (
                         path="/reset-password/:token"
                         element={<ResetPasswordPage />}
                       />
+                      <Route path="/packages" element={<PackagesPage />} />
                       <Route path="/apply" element={<ApplicationPage />} />
                       <Route path="/terms" element={<TermsAndConditions />} />
                       <Route
