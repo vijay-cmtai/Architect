@@ -102,7 +102,6 @@ const InquiryModal = ({ product, onClose }) => {
                 <span className="font-semibold">{product.name}</span>
               </p>
               <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                {/* Form fields... */}
                 <div>
                   <Label htmlFor="name">Full Name</Label>
                   <Input
@@ -230,7 +229,7 @@ const SellersSection: FC = () => {
 
   useEffect(() => {
     if (!products || products.length === 0) {
-      dispatch(fetchPublicSellerProducts({ page: 1, limit: 12 }));हैं
+      dispatch(fetchPublicSellerProducts({ page: 1, limit: 12 }));
     }
   }, [dispatch, products]);
 
