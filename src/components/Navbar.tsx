@@ -89,17 +89,14 @@ const Navbar = () => {
     { name: "Ready Made House Plan", path: "/products" },
     { name: "Services", path: "/services" },
     { name: "Career", path: "/careers" },
-    { name: "Package", path: "/house-designs-products" },
+    { name: "Package", path: "/packages" },
     { name: "Gallery", path: "/gallery" },
     { name: "Contact", path: "/contact" },
   ];
   const isActive = (path: string) => location.pathname === path;
 
-  // <<< BADLAAV 3: Seller ka naam (businessName) handle karne ke liye >>>
   const displayName = userInfo?.name || userInfo?.businessName || "User";
   const avatarFallback = displayName.charAt(0).toUpperCase();
-  // <<< BADLAAV KHATAM >>>
-
   return (
     <>
       <header
