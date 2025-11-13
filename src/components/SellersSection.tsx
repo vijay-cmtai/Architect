@@ -1,13 +1,6 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useRef,
-  FC,
-  FormEvent,
-} from "react";
+import React, { useState, useEffect, useMemo, useRef, FC } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 import {
   Loader2,
@@ -22,9 +15,7 @@ import {
 } from "lucide-react";
 
 import { RootState, AppDispatch } from "@/lib/store";
-// 1. बदला हुआ इम्पोर्ट: अब हम प्रोडक्ट्स को फेच करेंगे
 import { fetchPublicSellerProducts } from "@/lib/features/seller/sellerProductSlice";
-// 2. बदला हुआ इम्पोर्ट: अब हम प्रोडक्ट की इंक्वायरी बनाएंगे
 import {
   createInquiry,
   resetActionStatus,
@@ -42,14 +33,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// --- Inquiry Modal for Products ---
+// --- Inquiry Modal (No changes) ---
 const InquiryModal = ({ product, onClose }) => {
   const dispatch: AppDispatch = useDispatch();
   const { actionStatus, error } = useSelector(
     (state: RootState) => state.sellerInquiries
   );
   const { userInfo } = useSelector((state: RootState) => state.user);
-
   const [formData, setFormData] = useState({
     name: userInfo?.name || "",
     email: userInfo?.email || "",
@@ -73,98 +63,92 @@ const InquiryModal = ({ product, onClose }) => {
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.id]: e.target.value });
-
   const handleSubmit = (e) => {
     e.preventDefault();
     dispatch(createInquiry({ ...formData, productId: product._id }));
   };
 
   return (
-    <AnimatePresence>
-      {product && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-white rounded-lg shadow-xl w-full max-w-md relative"
-          >
-            <button
-              onClick={onClose}
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-700"
-            >
-              <X size={24} />
-            </button>
-            <div className="p-8">
-              <h2 className="text-2xl font-bold text-gray-800">Send Inquiry</h2>
-              <p className="text-gray-500 mt-1">
-                For product:{" "}
-                <span className="font-semibold">{product.name}</span>
-              </p>
-              <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                <div>
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="message">Message</Label>
-                  <Textarea
-                    id="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    required
-                    rows={4}
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={actionStatus === "loading"}
-                  className="w-full bg-orange-600 hover:bg-orange-700 h-12 text-base"
-                >
-                  {actionStatus === "loading" ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    <>
-                      <Send className="mr-2" />
-                      Send Inquiry
-                    </>
-                  )}
-                </Button>
-              </form>
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="bg-white rounded-lg shadow-xl w-full max-w-md relative"
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-400 hover:text-gray-700"
+        >
+          <X size={24} />
+        </button>
+        <div className="p-8">
+          <h2 className="text-2xl font-bold text-gray-800">Send Inquiry</h2>
+          <p className="text-gray-500 mt-1">
+            For product: <span className="font-semibold">{product.name}</span>
+          </p>
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <div>
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
             </div>
-          </motion.div>
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="message">Message</Label>
+              <Textarea
+                id="message"
+                value={formData.message}
+                onChange={handleChange}
+                required
+                rows={4}
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={actionStatus === "loading"}
+              className="w-full bg-orange-600 hover:bg-orange-700 h-12 text-base"
+            >
+              {actionStatus === "loading" ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <>
+                  <Send className="mr-2" />
+                  Send Inquiry
+                </>
+              )}
+            </Button>
+          </form>
         </div>
-      )}
-    </AnimatePresence>
+      </motion.div>
+    </div>
   );
 };
 
-// --- Product Card Component ---
+// --- Product Card for Carousel (No changes) ---
 const ProductCard = ({ product, onInquiryClick }) => (
   <div className="bg-white rounded-xl p-4 flex flex-col group transition-all duration-300 border hover:border-orange-500 hover:shadow-xl hover:-translate-y-2 w-80 flex-shrink-0 snap-start">
     <div className="relative">
@@ -214,7 +198,7 @@ const ProductCard = ({ product, onInquiryClick }) => (
   </div>
 );
 
-// --- Main Homepage Section Component ---
+// --- Main Carousel Section with Banner ---
 const SellersSection: FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const { products, status, error } = useSelector(
@@ -224,18 +208,27 @@ const SellersSection: FC = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCity, setSelectedCity] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
-    if (!products || products.length === 0) {
-      dispatch(fetchPublicSellerProducts({ page: 1, limit: 12 }));
-    }
-  }, [dispatch, products]);
+    dispatch(
+      fetchPublicSellerProducts({
+        limit: 15, // Fetch enough items for a carousel
+        city: selectedCity || undefined,
+      })
+    );
+  }, [dispatch, selectedCity]);
 
   const uniqueCategories = useMemo(() => {
     const categories = products.map((p) => p.category).filter(Boolean);
     return ["All", ...Array.from(new Set(categories)).sort()];
+  }, [products]);
+
+  const uniqueCities = useMemo(() => {
+    const cities = products.map((p) => p.city).filter(Boolean);
+    return ["All Cities", ...Array.from(new Set(cities)).sort()];
   }, [products]);
 
   const filteredProducts = useMemo(() => {
@@ -262,7 +255,7 @@ const SellersSection: FC = () => {
 
   const scroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
-      const scrollAmount = 344; // Card width + gap
+      const scrollAmount = 344; // Card width (320px) + gap (24px)
       scrollContainerRef.current.scrollBy({
         left: direction === "left" ? -scrollAmount : scrollAmount,
         behavior: "smooth",
@@ -274,16 +267,26 @@ const SellersSection: FC = () => {
     <>
       <section className="py-16 md:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800 tracking-tight">
-              MarketPlace
-            </h2>
-            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-              Discover amazing materials and designs for your dream home.
-            </p>
+          {/* --- BANNER ADDED HERE --- */}
+          <div
+            className="relative h-64 md:h-80 rounded-2xl overflow-hidden mb-12 bg-cover bg-center"
+            style={{ backgroundImage: "url(/marketplace.jpg)" }} // Make sure this image is in your /public folder
+          >
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20" />
+            <div className="relative z-10 h-full flex flex-col items-center justify-center text-center text-white p-4">
+              <h2
+                className="text-4xl md:text-5xl font-extrabold tracking-tight"
+                style={{ textShadow: "2px 2px 8px rgba(0,0,0,0.7)" }}
+              >
+                Our Marketplace
+              </h2>
+              <p className="mt-4 max-w-2xl mx-auto text-lg text-gray-200">
+                Discover amazing materials and designs for your dream home.
+              </p>
+            </div>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md mb-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end max-w-4xl mx-auto border">
+          <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md mb-10 grid grid-cols-1 md:grid-cols-3 gap-4 items-end max-w-4xl mx-auto border">
             <div className="md:col-span-1">
               <Label htmlFor="search-filter">Search Product or Seller</Label>
               <div className="relative mt-1">
@@ -315,17 +318,29 @@ const SellersSection: FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedCategory("All");
-              }}
-              className="w-full lg:w-auto"
-              type="button"
-            >
-              <X className="w-4 h-4 mr-2" /> Clear Filters
-            </Button>
+            <div>
+              <Label htmlFor="city-filter">City</Label>
+              <Select
+                value={selectedCity}
+                onValueChange={(value) =>
+                  setSelectedCity(value === "all-cities" ? "" : value)
+                }
+              >
+                <SelectTrigger id="city-filter">
+                  <SelectValue placeholder="All Cities" />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueCities.map((city) => (
+                    <SelectItem
+                      key={city}
+                      value={city === "All Cities" ? "all-cities" : city}
+                    >
+                      {city}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {status === "loading" && (
@@ -333,6 +348,7 @@ const SellersSection: FC = () => {
               <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
             </div>
           )}
+
           {status === "failed" && (
             <div className="text-center py-12">
               <ServerCrash className="mx-auto h-12 w-12 text-red-500 mb-4" />
@@ -340,14 +356,6 @@ const SellersSection: FC = () => {
                 Failed to Load Products
               </h3>
               <p className="text-gray-600">{String(error)}</p>
-              <Button
-                onClick={() =>
-                  dispatch(fetchPublicSellerProducts({ page: 1, limit: 12 }))
-                }
-                className="mt-4"
-              >
-                Try Again
-              </Button>
             </div>
           )}
 
@@ -366,7 +374,7 @@ const SellersSection: FC = () => {
                 className="flex overflow-x-auto scroll-smooth py-4 -mx-4 px-4 snap-x snap-mandatory"
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
               >
-                <div className="flex gap-8">
+                <div className="flex gap-6">
                   {filteredProducts.length > 0 ? (
                     filteredProducts.map((product) => (
                       <ProductCard
@@ -376,8 +384,16 @@ const SellersSection: FC = () => {
                       />
                     ))
                   ) : (
-                    <div className="w-full text-center py-12 text-gray-500 bg-white/50 rounded-xl">
-                      <p>No products found matching your criteria.</p>
+                    <div
+                      className="w-full flex items-center justify-center text-center py-12 text-gray-500 bg-white/50 rounded-xl"
+                      style={{ minWidth: "80vw" }}
+                    >
+                      <div>
+                        <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                        <p className="font-semibold">
+                          No products found matching your criteria.
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
