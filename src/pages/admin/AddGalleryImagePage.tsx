@@ -40,13 +40,20 @@ const AddGalleryImagePage: React.FC = () => {
   const [previews, setPreviews] = useState<string[]>([]);
   const [productLink, setProductLink] = useState("");
 
+  // <<< YAHAN BADLAV KIYA GAYA HAI >>>
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const files = Array.from(e.target.files);
-      setImages(files);
-      previews.forEach((url) => URL.revokeObjectURL(url));
-      const newPreviews = files.map((file) => URL.createObjectURL(file));
-      setPreviews(newPreviews);
+      // Step 1: Nayi select ki hui files ko array mein lein
+      const newFiles = Array.from(e.target.files);
+
+      // Step 2: Nayi files ko purane 'images' array mein jod dein
+      setImages((prevImages) => [...prevImages, ...newFiles]);
+
+      // Step 3: Sirf nayi files ke liye previews banayein
+      const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
+
+      // Step 4: Naye previews ko purane 'previews' array mein jod dein
+      setPreviews((prevPreviews) => [...prevPreviews, ...newPreviews]);
     }
   };
 
