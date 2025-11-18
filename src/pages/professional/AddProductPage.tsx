@@ -1,8 +1,6 @@
 // File: src/pages/professional/AddProductPage.tsx
 
-// <<< YAHAN BADLAAV KIYA GAYA HAI >>>
-import React, { useState, useEffect } from "react"; // useState aur useEffect ko import kiya gaya
-
+import React, { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
@@ -47,16 +45,18 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuSeparator, // Yeh import add kiya gaya
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MultiSelect as MultiSelectForProducts } from "@/components/ui/MultiSelectDropdown";
+
 // Interface for form data
 interface IProductFormData {
   name: string;
   description: string;
   productNo: string;
   price: number;
-  category: string;
+  // 'category' yahan se hata diya gaya, ab state se manage hoga
   youtubeLink?: string;
   city?: string;
   plotSize?: string;
@@ -75,6 +75,17 @@ interface IProductFormData {
   salePrice?: number;
   taxRate?: number;
 }
+
+// MultiSelect ke liye Props Interface
+interface MultiSelectProps {
+  selected: string[];
+  setSelected: React.Dispatch<React.SetStateAction<string[]>>;
+  options: any[];
+  placeholder: string;
+  isObject?: boolean;
+  canSelectAll?: boolean;
+}
+
 // Static Data
 const countries = [
   { value: "India", label: "India" },
@@ -82,11 +93,81 @@ const countries = [
   { value: "Sri Lanka", label: "Sri Lanka" },
   { value: "Bangladesh", label: "Bangladesh" },
   { value: "Nepal", label: "Nepal" },
+  { value: "Myanmar", label: "Myanmar" },
+  { value: "Afghanistan", label: "Afghanistan" },
+  { value: "Iran", label: "Iran" },
+  { value: "Oman", label: "Oman" },
+  { value: "Tajikistan", label: "Tajikistan" },
+  { value: "Turkmenistan", label: "Turkmenistan" },
+  { value: "Kuwait", label: "Kuwait" },
+  { value: "Bahrain", label: "Bahrain" },
+  { value: "Qatar", label: "Qatar" },
+  { value: "UAE", label: "UAE" },
+  { value: "Yemen", label: "Yemen" },
+  { value: "Saudi Arabia", label: "Saudi Arabia" },
+  { value: "Austria", label: "Austria" },
+  { value: "Hungary", label: "Hungary" },
+  { value: "Romania", label: "Romania" },
+  { value: "France", label: "France" },
+  { value: "Germany", label: "Germany" },
+  { value: "Netherlands", label: "Netherlands" },
+  { value: "United Kingdom", label: "United Kingdom" },
+  { value: "Ireland", label: "Ireland" },
+  { value: "Norway", label: "Norway" },
+  { value: "Sweden", label: "Sweden" },
+  { value: "Finland", label: "Finland" },
+  { value: "Spain", label: "Spain" },
+  { value: "Italy", label: "Italy" },
+  { value: "Greece", label: "Greece" },
+  { value: "Turkey", label: "Turkey" },
+  { value: "Portugal", label: "Portugal" },
+  { value: "Algeria", label: "Algeria" },
+  { value: "Libya", label: "Libya" },
+  { value: "Niger", label: "Niger" },
+  { value: "Mali", label: "Mali" },
+  { value: "Chad", label: "Chad" },
+  { value: "Sudan", label: "Sudan" },
+  { value: "Ethiopia", label: "Ethiopia" },
+  { value: "Somalia", label: "Somalia" },
+  { value: "Kenya", label: "Kenya" },
+  { value: "Tanzania", label: "Tanzania" },
+  { value: "Zambia", label: "Zambia" },
+  { value: "Zimbabwe", label: "Zimbabwe" },
+  { value: "Botswana", label: "Botswana" },
+  { value: "South Africa", label: "South Africa" },
+  { value: "Namibia", label: "Namibia" },
+  { value: "Angola", label: "Angola" },
+  { value: "Nigeria", label: "Nigeria" },
+  { value: "Egypt", label: "Egypt" },
+  { value: "DRC", label: "DRC" },
+  { value: "Mexico", label: "Mexico" },
+  { value: "Brazil", label: "Brazil" },
+  { value: "Chile", label: "Chile" },
+  { value: "Argentina", label: "Argentina" },
+  { value: "Peru", label: "Peru" },
+  { value: "Colombia", label: "Colombia" },
+  { value: "Ecuador", label: "Ecuador" },
+  { value: "Venezuela", label: "Venezuela" },
   { value: "United States", label: "United States" },
   { value: "Canada", label: "Canada" },
-  { value: "United Kingdom", label: "United Kingdom" },
+  { value: "Iceland", label: "Iceland" },
+  { value: "Kazakhstan", label: "Kazakhstan" },
+  { value: "China", label: "China" },
+  { value: "Japan", label: "Japan" },
+  { value: "Mongolia", label: "Mongolia" },
+  { value: "Russia", label: "Russia" },
+  { value: "Thailand", label: "Thailand" },
+  { value: "Vietnam", label: "Vietnam" },
+  { value: "Indonesia", label: "Indonesia" },
+  { value: "Malaysia", label: "Malaysia" },
+  { value: "Philippines", label: "Philippines" },
+  { value: "Papua New Guinea", label: "Papua New Guinea" },
   { value: "Australia", label: "Australia" },
+  { value: "New Zealand", label: "New Zealand" },
+  { value: "Israel", label: "Israel" },
+  { value: "Mauritius", label: "Mauritius" },
 ].sort((a, b) => a.label.localeCompare(b.label));
+
 const categories = [
   "Residential House",
   "Commercial House Plan",
@@ -111,47 +192,75 @@ const categories = [
   "Schools and Colleges Plans",
   "Temple & Mosque",
 ];
-// Helper component for multi-select country dropdown
-const MultiSelectCountry = ({
+
+// Reusable MultiSelectDropdown component
+const MultiSelectDropdown: React.FC<MultiSelectProps> = ({
   selected,
   setSelected,
   options,
   placeholder,
-}: {
-  selected: string[];
-  setSelected: React.Dispatch<React.SetStateAction<string[]>>;
-  options: { value: string; label: string }[];
-  placeholder: string;
-}) => (
-  <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <Button variant="outline" className="w-full justify-between font-normal">
-        {selected.length > 0
-          ? `${selected.length} countries selected`
-          : placeholder}
-        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-      </Button>
-    </DropdownMenuTrigger>
-    <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-60 overflow-y-auto">
-      {options.map((option) => (
-        <DropdownMenuCheckboxItem
-          key={option.value}
-          checked={selected.includes(option.value)}
-          onCheckedChange={() => {
-            setSelected((prev) =>
-              prev.includes(option.value)
-                ? prev.filter((v) => v !== option.value)
-                : [...prev, option.value]
-            );
-          }}
-          onSelect={(e) => e.preventDefault()}
+  isObject = false,
+  canSelectAll = false,
+}) => {
+  const allValues = options.map((option) => (isObject ? option.value : option));
+  const areAllSelected =
+    allValues.length > 0 && selected.length === allValues.length;
+
+  const handleSelectAll = () => {
+    if (areAllSelected) setSelected([]);
+    else setSelected(allValues);
+  };
+
+  const handleSelect = (value: string) => {
+    setSelected((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+  };
+  const displayText =
+    selected.length > 0 ? `${selected.length} selected` : placeholder;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          className="w-full justify-between font-normal"
         >
-          {option.label}
-        </DropdownMenuCheckboxItem>
-      ))}
-    </DropdownMenuContent>
-  </DropdownMenu>
-);
+          {displayText}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-60 overflow-y-auto">
+        {canSelectAll && (
+          <>
+            <DropdownMenuCheckboxItem
+              checked={areAllSelected}
+              onCheckedChange={handleSelectAll}
+              onSelect={(e) => e.preventDefault()}
+            >
+              {areAllSelected ? "Deselect All" : "Select All"}
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
+        {options.map((option) => {
+          const value = isObject ? option.value : option;
+          const label = isObject ? option.label : option;
+          return (
+            <DropdownMenuCheckboxItem
+              key={value}
+              checked={selected.includes(value)}
+              onCheckedChange={() => handleSelect(value)}
+              onSelect={(e) => e.preventDefault()}
+            >
+              {label}
+            </DropdownMenuCheckboxItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
 const quillModules = {
   toolbar: [
@@ -189,6 +298,7 @@ const AddProductPage = () => {
   const [direction, setDirection] = useState<string>("");
   const [planType, setPlanType] = useState<string>("");
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // Naya state
   const [isSale, setIsSale] = useState<boolean>(false);
   const [crossSell, setCrossSell] = useState<string[]>([]);
   const [upSell, setUpSell] = useState<string[]>([]);
@@ -225,8 +335,15 @@ const AddProductPage = () => {
   };
 
   const onSubmit = (data: IProductFormData) => {
-    if (selectedCountries.length === 0 || !propertyType || !planType) {
-      toast.error("Country, Property Type, and Plan Type are required.");
+    if (
+      selectedCountries.length === 0 ||
+      selectedCategories.length === 0 || // Category check add kiya
+      !propertyType ||
+      !planType
+    ) {
+      toast.error(
+        "Country, Category, Property Type, and Plan Type are required."
+      );
       return;
     }
     if (!mainImage || planFiles.length === 0) {
@@ -241,6 +358,11 @@ const AddProductPage = () => {
         formData.append(key, String(value));
       }
     });
+
+    // Selected categories ko formData mein add kiya
+    if (selectedCategories.length > 0) {
+      formData.append("category", selectedCategories.join(","));
+    }
 
     formData.append("country", selectedCountries.join(","));
     formData.append("propertyType", propertyType);
@@ -483,11 +605,13 @@ const AddProductPage = () => {
                 </div>
                 <div className="md:col-span-3">
                   <Label>Country*</Label>
-                  <MultiSelectCountry
+                  <MultiSelectDropdown
                     selected={selectedCountries}
                     setSelected={setSelectedCountries}
                     options={countries}
                     placeholder="Select countries..."
+                    isObject={true}
+                    canSelectAll={true}
                   />
                 </div>
               </CardContent>
@@ -710,33 +834,14 @@ const AddProductPage = () => {
                 </div>
                 <div>
                   <Label>Category*</Label>
-                  <Controller
-                    name="category"
-                    control={control}
-                    rules={{ required: "Category is required" }}
-                    render={({ field }) => (
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-60 overflow-y-auto">
-                          {categories.map((cat) => (
-                            <SelectItem key={cat} value={cat}>
-                              {cat}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
+                  {/* === YAHAN BADLAV KIYA GAYA HAI === */}
+                  <MultiSelectDropdown
+                    selected={selectedCategories}
+                    setSelected={setSelectedCategories}
+                    options={categories}
+                    placeholder="Select categories..."
+                    canSelectAll={true}
                   />
-                  {errors.category && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {String(errors.category.message)}
-                    </p>
-                  )}
                 </div>
                 <div>
                   <Label>Property Type*</Label>
@@ -758,4 +863,5 @@ const AddProductPage = () => {
     </div>
   );
 };
+
 export default AddProductPage;
