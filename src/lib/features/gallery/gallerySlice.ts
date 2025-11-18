@@ -7,10 +7,10 @@ const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/gallery`;
 export interface GalleryItem {
   _id: string;
   title: string;
-  altText?: string; 
+  altText?: string;
   category: string;
   imageUrl: string;
-  productLink?: string; 
+  productLink?: string;
   createdAt?: string;
 }
 
@@ -28,7 +28,6 @@ const initialState: GalleryState = {
   error: null,
 };
 
-
 export const fetchGalleryItems = createAsyncThunk(
   "gallery/fetchItems",
   async (_, { rejectWithValue }) => {
@@ -43,7 +42,7 @@ export const fetchGalleryItems = createAsyncThunk(
   }
 );
 
-export const createGalleryItem = createAsyncThunk<GalleryItem, FormData>(
+export const createGalleryItem = createAsyncThunk<GalleryItem[], FormData>(
   "gallery/createItem",
   async (formData, { getState, rejectWithValue }) => {
     try {
@@ -95,7 +94,6 @@ const gallerySlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch
       .addCase(fetchGalleryItems.pending, (state) => {
         state.status = "loading";
       })
@@ -110,22 +108,20 @@ const gallerySlice = createSlice({
         state.status = "failed";
         state.error = action.payload as string;
       })
-      // Create
       .addCase(createGalleryItem.pending, (state) => {
         state.actionStatus = "loading";
       })
       .addCase(
         createGalleryItem.fulfilled,
-        (state, action: PayloadAction<GalleryItem>) => {
+        (state, action: PayloadAction<GalleryItem[]>) => {
           state.actionStatus = "succeeded";
-          state.items.unshift(action.payload);
+          state.items.unshift(...action.payload);
         }
       )
       .addCase(createGalleryItem.rejected, (state, action) => {
         state.actionStatus = "failed";
         state.error = action.payload as string;
       })
-      // Delete
       .addCase(deleteGalleryItem.pending, (state) => {
         state.actionStatus = "loading";
       })
