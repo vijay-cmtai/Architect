@@ -17,7 +17,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, UploadCloud, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -36,58 +36,67 @@ const AddGalleryImagePage: React.FC = () => {
   const [title, setTitle] = useState("");
   const [altText, setAltText] = useState("");
   const [category, setCategory] = useState("General");
-  const [image, setImage] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  // --- ✨ नया स्टेट यहाँ जोड़ा गया है ---
+  const [images, setImages] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
   const [productLink, setProductLink] = useState("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImage(file);
-      setPreview(URL.createObjectURL(file));
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setImages(files);
+      previews.forEach((url) => URL.revokeObjectURL(url));
+      const newPreviews = files.map((file) => URL.createObjectURL(file));
+      setPreviews(newPreviews);
     }
+  };
+
+  const removePreview = (indexToRemove: number) => {
+    setImages((prev) => prev.filter((_, index) => index !== indexToRemove));
+    setPreviews((prev) => {
+      const newPreviews = prev.filter((_, index) => index !== indexToRemove);
+      URL.revokeObjectURL(prev[indexToRemove]);
+      return newPreviews;
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !image) {
-      toast.error("Title and image are required.");
+    if (!title || images.length === 0) {
+      toast.error("Title and at least one image are required.");
       return;
     }
 
     const formData = new FormData();
     formData.append("title", title);
-    formData.append("altText", altText);
+    formData.append("altText", altText || title);
     formData.append("category", category);
-    formData.append("image", image);
-    // --- ✨ productLink को FormData में जोड़ा गया है ---
     if (productLink) {
       formData.append("productLink", productLink);
     }
+    images.forEach((file) => {
+      formData.append("images", file);
+    });
 
     dispatch(createGalleryItem(formData));
   };
 
   useEffect(() => {
     if (actionStatus === "succeeded") {
-      toast.success("Image uploaded to the gallery successfully!");
+      toast.success("Images uploaded to the gallery successfully!");
       dispatch(resetActionStatus());
       navigate("/admin/gallery");
     }
     if (actionStatus === "failed") {
-      toast.error(String(error) || "Failed to upload image.");
+      toast.error(String(error) || "Failed to upload images.");
       dispatch(resetActionStatus());
     }
   }, [actionStatus, error, dispatch, navigate]);
 
   useEffect(() => {
     return () => {
-      if (preview) {
-        URL.revokeObjectURL(preview);
-      }
+      previews.forEach((url) => URL.revokeObjectURL(url));
     };
-  }, [preview]);
+  }, [previews]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -105,25 +114,26 @@ const AddGalleryImagePage: React.FC = () => {
             {actionStatus === "loading" && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}
-            Upload Image
+            Upload Images
           </Button>
         </div>
         <Card>
           <CardHeader>
             <CardTitle>Image Details</CardTitle>
             <CardDescription>
-              Complete the information and select the image to upload.
+              Provide details and upload one or more images for the same
+              project.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="title">Image Title *</Label>
+                <Label htmlFor="title">Project Title *</Label>
                 <Input
                   id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="E.g., Modern house facade"
+                  placeholder="E.g., 30x50 Modern Home Design"
                   required
                 />
               </div>
@@ -133,56 +143,86 @@ const AddGalleryImagePage: React.FC = () => {
                   id="altText"
                   value={altText}
                   onChange={(e) => setAltText(e.target.value)}
-                  placeholder="Describe the image for SEO"
+                  placeholder="Describe the main image for SEO"
                 />
               </div>
             </div>
 
-            {/* --- ✨ Product Link फ़ील्ड यहाँ जोड़ी गई है ✨ --- */}
-            <div className="space-y-2">
-              <Label htmlFor="productLink">Product Link (Optional)</Label>
-              <Input
-                id="productLink"
-                value={productLink}
-                onChange={(e) => setProductLink(e.target.value)}
-                placeholder="E.g., /product/60d5ecb4d40015e9b3a0"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="productLink">Product Link (Optional)</Label>
+                <Input
+                  id="productLink"
+                  value={productLink}
+                  onChange={(e) => setProductLink(e.target.value)}
+                  placeholder="E.g., /product/modern-home-123"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="General">General</SelectItem>
+                    <SelectItem value="Exteriors">Exteriors</SelectItem>
+                    <SelectItem value="Interiors">Interiors</SelectItem>
+                    <SelectItem value="Projects">Projects</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="General">General</SelectItem>
-                  <SelectItem value="Exteriors">Exteriors</SelectItem>
-                  <SelectItem value="Interiors">Interiors</SelectItem>
-                  <SelectItem value="Projects">Projects</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="image">Image File *</Label>
-              <Input
-                id="image"
-                type="file"
-                onChange={handleFileChange}
-                required
-                accept="image/*"
-              />
-            </div>
-            {preview && (
-              <div>
-                <Label>Preview</Label>
-                <div className="mt-2 border rounded-md p-2 w-fit">
-                  <img
-                    src={preview}
-                    alt="Preview"
-                    className="h-40 w-auto object-contain rounded"
+              <Label htmlFor="images">Image Files *</Label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-orange-500 transition-colors">
+                <Label htmlFor="images" className="cursor-pointer">
+                  <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
+                  <p className="mt-2 text-sm text-gray-600">
+                    <span className="font-semibold text-orange-600">
+                      Click to upload
+                    </span>{" "}
+                    or drag and drop
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    PNG, JPG, GIF up to 10MB
+                  </p>
+                  <Input
+                    id="images"
+                    type="file"
+                    className="hidden"
+                    onChange={handleFileChange}
+                    required={images.length === 0}
+                    accept="image/*"
+                    multiple
                   />
+                </Label>
+              </div>
+            </div>
+
+            {previews.length > 0 && (
+              <div>
+                <Label>Previews ({previews.length} selected)</Label>
+                <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                  {previews.map((previewUrl, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={previewUrl}
+                        alt={`Preview ${index + 1}`}
+                        className="h-24 w-full object-cover rounded-md border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => removePreview(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -192,5 +232,4 @@ const AddGalleryImagePage: React.FC = () => {
     </div>
   );
 };
-
 export default AddGalleryImagePage;
