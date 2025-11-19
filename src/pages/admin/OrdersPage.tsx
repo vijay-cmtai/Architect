@@ -1,4 +1,3 @@
-// src/pages/admin/AdminOrdersPage.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
@@ -51,6 +50,10 @@ import {
   ChevronRight,
   Eye,
   Download,
+  MapPin,
+  Phone,
+  Mail,
+  User,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -65,11 +68,20 @@ type OrderItem = {
   planFile?: string[];
 };
 
+// Updated Type Definition to include everything
 type Order = {
   _id: string;
-  user: {
+  user?: {
     name: string;
     email: string;
+  };
+  shippingAddress?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    location?: string; // Checkout page sends 'location'
+    address?: string; // Fallback
+    city?: string; // Fallback
   };
   orderItems?: OrderItem[];
   createdAt: string;
@@ -78,6 +90,7 @@ type Order = {
   paymentMethod: string;
   paidAt?: string;
 };
+
 const AdminOrdersPage: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const { orders, status, actionStatus, error } = useSelector(
@@ -88,12 +101,15 @@ const AdminOrdersPage: React.FC = () => {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const ORDERS_PER_PAGE = 15;
+
   useEffect(() => {
     dispatch(fetchAllOrders());
   }, [dispatch]);
+
   useEffect(() => {
     if (actionStatus === "succeeded") {
       toast.success("Action completed successfully!");
@@ -106,6 +122,7 @@ const AdminOrdersPage: React.FC = () => {
       dispatch(resetActionStatus());
     }
   }, [actionStatus, error, dispatch]);
+
   // Pagination Logic
   const totalPages = Math.ceil(orders.length / ORDERS_PER_PAGE);
   const paginatedOrders = useMemo(() => {
@@ -117,19 +134,23 @@ const AdminOrdersPage: React.FC = () => {
     setSelectedOrderId(orderId);
     setIsAlertOpen(true);
   };
+
   const confirmDelete = () => {
     if (selectedOrderId) {
       dispatch(deleteOrderAdmin(selectedOrderId));
     }
   };
+
   const handleMarkAsPaid = (orderId: string) => {
     setSelectedOrderId(orderId);
     dispatch(markOrderAsPaidAdmin(orderId));
   };
+
   const handleViewDetails = (order: Order) => {
     setSelectedOrder(order);
     setIsDetailDialogOpen(true);
   };
+
   const handleDownloadFile = (fileUrl: string, fileName: string) => {
     try {
       const link = document.createElement("a");
@@ -145,6 +166,20 @@ const AdminOrdersPage: React.FC = () => {
     }
   };
 
+  // --- MAIN LOGIC HELPER ---
+  // This extracts info from shippingAddress first (User Input), then falls back to User Profile
+  const getCustomerDetails = (order: Order) => {
+    const shipping = order.shippingAddress || {};
+    const userProfile = order.user || {};
+
+    return {
+      name: shipping.name || userProfile.name || "Guest",
+      email: shipping.email || userProfile.email || "N/A",
+      phone: shipping.phone || "N/A",
+      location: shipping.location || shipping.city || "N/A",
+    };
+  };
+
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center h-64">
@@ -152,6 +187,7 @@ const AdminOrdersPage: React.FC = () => {
       </div>
     );
   }
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-800">Manage Orders</h1>
@@ -161,7 +197,7 @@ const AdminOrdersPage: React.FC = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Customer</TableHead>
+              <TableHead className="w-[300px]">Customer Details</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Total</TableHead>
               <TableHead>Paid</TableHead>
@@ -171,73 +207,95 @@ const AdminOrdersPage: React.FC = () => {
           </TableHeader>
           <TableBody>
             {paginatedOrders.length > 0 ? (
-              paginatedOrders.map((order: Order) => (
-                <TableRow key={order._id} className="hover:bg-gray-50">
-                  <TableCell>
-                    <div className="font-medium">
-                      {order.user?.name || "Guest"}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {order.user?.email || "N/A"}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(order.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>₹{order.totalPrice.toLocaleString()}</TableCell>
-                  <TableCell>
-                    {order.isPaid ? (
-                      <Badge className="bg-green-100 text-green-800">
-                        Paid
-                      </Badge>
-                    ) : (
-                      <Badge className="bg-red-100 text-red-800">
-                        Not Paid
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>{order.paymentMethod}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          {actionStatus === "loading" &&
-                          selectedOrderId === order._id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <MoreHorizontal className="h-4 w-4" />
+              paginatedOrders.map((order: Order) => {
+                const customer = getCustomerDetails(order);
+                return (
+                  <TableRow key={order._id} className="hover:bg-gray-50">
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        {/* Name */}
+                        <div className="font-bold text-gray-900 flex items-center gap-2">
+                          {customer.name}
+                        </div>
+                        {/* Email */}
+                        <div className="text-sm text-gray-500 flex items-center gap-1">
+                          <Mail className="w-3 h-3" /> {customer.email}
+                        </div>
+                        {/* Phone & Location */}
+                        <div className="text-xs text-gray-400 flex flex-wrap gap-x-3 gap-y-1 mt-1">
+                          <span className="flex items-center gap-1">
+                            <Phone className="w-3 h-3" /> {customer.phone}
+                          </span>
+                          {customer.location !== "N/A" && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" /> {customer.location}
+                            </span>
                           )}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onSelect={() => handleViewDetails(order)}
-                        >
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        {!order.isPaid && (
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="align-top pt-4">
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="align-top pt-4">
+                      ₹{order.totalPrice.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="align-top pt-4">
+                      {order.isPaid ? (
+                        <Badge className="bg-green-100 text-green-800">
+                          Paid
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-red-100 text-red-800">
+                          Not Paid
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="align-top pt-4">
+                      {order.paymentMethod}
+                    </TableCell>
+                    <TableCell className="text-right align-top pt-4">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            {actionStatus === "loading" &&
+                            selectedOrderId === order._id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <MoreHorizontal className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onSelect={() => handleMarkAsPaid(order._id)}
-                            className="text-green-600 focus:text-green-600"
+                            onSelect={() => handleViewDetails(order)}
                           >
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Mark as Paid
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
                           </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                          onSelect={() => handleDeleteClick(order._id)}
-                          className="text-red-600 focus:text-red-600"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete Order
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
+                          <DropdownMenuSeparator />
+                          {!order.isPaid && (
+                            <DropdownMenuItem
+                              onSelect={() => handleMarkAsPaid(order._id)}
+                              className="text-green-600 focus:text-green-600"
+                            >
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Mark as Paid
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem
+                            onSelect={() => handleDeleteClick(order._id)}
+                            className="text-red-600 focus:text-red-600"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete Order
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
@@ -248,6 +306,8 @@ const AdminOrdersPage: React.FC = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="mt-6 flex justify-center items-center gap-4">
           <Button
@@ -271,6 +331,7 @@ const AdminOrdersPage: React.FC = () => {
           </Button>
         </div>
       )}
+
       {/* Order Details Dialog */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
@@ -284,28 +345,59 @@ const AdminOrdersPage: React.FC = () => {
           </DialogHeader>
           {selectedOrder && (
             <div className="space-y-6 mt-4">
-              {/* Customer Info */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-lg mb-3 text-gray-800">
-                  Customer Information
+              {/* Customer Info (Expanded) */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <h3 className="font-semibold text-lg mb-3 text-gray-800 flex items-center gap-2">
+                  <User className="w-5 h-5" /> Customer Information
                 </h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Name:</span>
-                    <span className="font-medium">
-                      {selectedOrder.user?.name || "Guest"}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  {/* Name */}
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 text-xs uppercase tracking-wider">
+                      Name
+                    </span>
+                    <span className="font-medium text-base text-gray-900">
+                      {getCustomerDetails(selectedOrder).name}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Email:</span>
-                    <span className="font-medium">
-                      {selectedOrder.user?.email || "N/A"}
+
+                  {/* Email */}
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 text-xs uppercase tracking-wider">
+                      Email
+                    </span>
+                    <span className="font-medium text-base text-gray-900 flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-gray-400" />
+                      {getCustomerDetails(selectedOrder).email}
+                    </span>
+                  </div>
+
+                  {/* Phone */}
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 text-xs uppercase tracking-wider">
+                      Phone
+                    </span>
+                    <span className="font-medium text-base text-gray-900 flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-gray-400" />
+                      {getCustomerDetails(selectedOrder).phone}
+                    </span>
+                  </div>
+
+                  {/* Location */}
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 text-xs uppercase tracking-wider">
+                      Location
+                    </span>
+                    <span className="font-medium text-base text-gray-900 flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-gray-400" />
+                      {getCustomerDetails(selectedOrder).location}
                     </span>
                   </div>
                 </div>
               </div>
+
               {/* Order Items */}
-              <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
                 <h3 className="font-semibold text-lg mb-4 text-gray-800">
                   Order Items
                 </h3>
@@ -316,34 +408,30 @@ const AdminOrdersPage: React.FC = () => {
                       const itemQty = item.qty || item.quantity || 1;
                       const itemPrice = item.price || 0;
                       const itemTotal = itemQty * itemPrice;
-                      let planFiles = [];
+                      let planFiles: string[] = [];
+
+                      // Logic to extract files
                       if (
                         item.planFile &&
                         Array.isArray(item.planFile) &&
                         item.planFile.length > 0
                       ) {
                         planFiles = item.planFile;
-                      }
-                      else if (
+                      } else if (
                         item.productId?.planFile &&
-                        Array.isArray(item.productId.planFile) &&
-                        item.productId.planFile.length > 0
+                        Array.isArray(item.productId.planFile)
                       ) {
                         planFiles = item.productId.planFile;
                       }
+
                       if (planFiles.length === 0 && item.image) {
                         planFiles = [item.image];
                       }
-                      console.log(
-                        "Order Item:",
-                        item.name,
-                        "Files to Download:",
-                        planFiles
-                      );
+
                       return (
                         <div
                           key={index}
-                          className="bg-white p-4 rounded-lg border border-gray-200"
+                          className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm"
                         >
                           <div className="flex items-start gap-4">
                             {item.image && (
@@ -354,48 +442,42 @@ const AdminOrdersPage: React.FC = () => {
                               />
                             )}
                             <div className="flex-1">
-                              <h4 className="font-semibold text-gray-900">
+                              <h4 className="font-semibold text-gray-900 text-lg">
                                 {item.name}
                               </h4>
-                              <div className="mt-2 space-y-1 text-sm text-gray-600">
+                              <div className="mt-2 grid grid-cols-3 gap-4 text-sm text-gray-600">
                                 <p>
-                                  Quantity:{" "}
-                                  <span className="font-medium">{itemQty}</span>
+                                  Qty:{" "}
+                                  <span className="font-bold text-gray-900">
+                                    {itemQty}
+                                  </span>
                                 </p>
                                 <p>
                                   Price:{" "}
-                                  <span className="font-medium">
+                                  <span className="font-bold text-gray-900">
                                     ₹{itemPrice.toLocaleString()}
                                   </span>
                                 </p>
-                                <p className="text-base font-semibold text-gray-900">
+                                <p className="text-teal-700 font-bold">
                                   Total: ₹{itemTotal.toLocaleString()}
                                 </p>
                               </div>
 
-                              {/* Download Buttons for Plan Files or Image */}
+                              {/* Download Buttons */}
                               {planFiles.length > 0 ? (
-                                <div className="mt-3 space-y-2">
-                                  <p className="text-xs font-semibold text-teal-700 uppercase tracking-wide">
-                                    📥 Available Downloads:
+                                <div className="mt-4 space-y-2 border-t pt-3 border-dashed">
+                                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                    Available Files:
                                   </p>
                                   <div className="flex flex-wrap gap-2">
                                     {planFiles.map((fileUrl, fileIndex) => {
                                       if (!fileUrl) return null;
-
                                       const fileName =
                                         fileUrl
                                           .split("/")
                                           .pop()
                                           ?.split("?")[0] ||
                                         `File-${fileIndex + 1}`;
-                                      const fileExt =
-                                        fileName
-                                          .split(".")
-                                          .pop()
-                                          ?.toUpperCase() || "FILE";
-
-                                      // Check if this is image fallback (no plan file)
                                       const isImageFallback =
                                         fileUrl === item.image;
 
@@ -404,11 +486,11 @@ const AdminOrdersPage: React.FC = () => {
                                           key={fileIndex}
                                           size="sm"
                                           variant="outline"
-                                          className={`text-xs h-9 px-3 ${
+                                          className={`text-xs h-8 ${
                                             isImageFallback
-                                              ? "bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-300 text-blue-700"
-                                              : "bg-gradient-to-r from-teal-50 to-cyan-50 hover:from-teal-100 hover:to-cyan-100 border-teal-300 text-teal-700"
-                                          } font-semibold shadow-sm transition-all`}
+                                              ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                                              : "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100"
+                                          }`}
                                           onClick={() =>
                                             handleDownloadFile(
                                               fileUrl,
@@ -416,29 +498,19 @@ const AdminOrdersPage: React.FC = () => {
                                             )
                                           }
                                         >
-                                          <Download className="w-4 h-4 mr-1.5" />
+                                          <Download className="w-3 h-3 mr-1.5" />
                                           {isImageFallback
-                                            ? `Download Image (${fileExt})`
-                                            : `Download ${fileExt}`}
+                                            ? "Image"
+                                            : "Download File"}
                                         </Button>
                                       );
                                     })}
                                   </div>
-                                  {planFiles[0] === item.image && (
-                                    <p className="text-xs text-blue-600 italic flex items-center">
-                                      ℹ️ Plan file not available, showing
-                                      product image for download
-                                    </p>
-                                  )}
                                 </div>
                               ) : (
-                                <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded">
-                                  <p className="text-xs text-amber-800 flex items-center">
-                                    <span className="mr-2">⚠️</span>
-                                    No downloadable files or images available
-                                    for this item
-                                  </p>
-                                </div>
+                                <p className="text-xs text-amber-600 mt-2">
+                                  No files available.
+                                </p>
                               )}
                             </div>
                           </div>
@@ -452,45 +524,32 @@ const AdminOrdersPage: React.FC = () => {
                   )}
                 </div>
               </div>
+
               {/* Payment Summary */}
-              <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
                 <h3 className="font-semibold text-lg mb-3 text-gray-800">
-                  Payment Information
+                  Payment Summary
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-3 text-sm">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Payment Method:</span>
-                    <span className="font-semibold text-gray-900">
+                    <span className="text-gray-600">Method:</span>
+                    <span className="font-semibold text-gray-900 capitalize">
                       {selectedOrder.paymentMethod}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Payment Status:</span>
+                    <span className="text-gray-600">Status:</span>
                     {selectedOrder.isPaid ? (
-                      <Badge className="bg-green-100 text-green-800 px-3 py-1">
+                      <Badge className="bg-green-100 text-green-800">
                         Paid
                       </Badge>
                     ) : (
-                      <Badge className="bg-red-100 text-red-800 px-3 py-1">
+                      <Badge className="bg-red-100 text-red-800">
                         Not Paid
                       </Badge>
                     )}
                   </div>
-                  {selectedOrder.paidAt && (
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">Paid At:</span>
-                      <span className="font-medium">
-                        {new Date(selectedOrder.paidAt).toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">Order Date:</span>
-                    <span className="font-medium">
-                      {new Date(selectedOrder.createdAt).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center pt-3 border-t border-gray-300">
+                  <div className="flex justify-between items-center pt-3 border-t border-gray-200 mt-2">
                     <span className="text-lg font-bold text-gray-900">
                       Total Amount:
                     </span>
@@ -534,7 +593,7 @@ const AdminOrdersPage: React.FC = () => {
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the
-              order from the database.
+              order.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -560,4 +619,5 @@ const AdminOrdersPage: React.FC = () => {
     </div>
   );
 };
+
 export default AdminOrdersPage;
