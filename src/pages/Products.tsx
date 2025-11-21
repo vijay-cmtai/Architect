@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
@@ -20,7 +20,6 @@ import {
   Lock,
 } from "lucide-react";
 import { fetchProducts } from "@/lib/features/products/productSlice";
-import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice";
 import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -912,28 +911,45 @@ const Products = () => {
     filters.sortBy,
   ]);
 
+  // Fix: Store previous filters state to avoid resetting page on refresh
+  const prevFiltersRef = useRef({
+    ...filters,
+    searchTerm: debouncedSearchTerm,
+    country: countryQuery,
+  });
+
   useEffect(() => {
-    if (currentPage !== 1) {
+    const currentFiltersState = {
+      ...filters,
+      searchTerm: debouncedSearchTerm,
+      country: countryQuery,
+    };
+
+    // Only reset page if filters ACTUALLY changed from what we tracked last
+    if (
+      JSON.stringify(currentFiltersState) !==
+      JSON.stringify(prevFiltersRef.current)
+    ) {
       setCurrentPage(1);
+      setSearchParams((prev) => {
+        prev.set("page", "1");
+        return prev;
+      });
+      // Update ref to current state
+      prevFiltersRef.current = currentFiltersState;
     }
-  }, [
-    debouncedSearchTerm,
-    filters.category,
-    filters.plotSize,
-    filters.plotArea,
-    filters.direction,
-    filters.floors,
-    filters.propertyType,
-    filters.budget,
-    filters.sortBy,
-    countryQuery,
-  ]);
+  }, [debouncedSearchTerm, filters, countryQuery, setSearchParams]);
 
   const totalPages = pages > 0 ? pages : 1;
 
   const handlePageChange = (newPage: number) => {
     if (newPage > 0 && newPage <= totalPages) {
       setCurrentPage(newPage);
+      // Update URL when page changes
+      setSearchParams((prev) => {
+        prev.set("page", String(newPage));
+        return prev;
+      });
       window.scrollTo(0, 0);
     }
   };
