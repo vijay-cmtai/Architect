@@ -245,7 +245,7 @@ const Navbar = () => {
             >
               <div className="flex justify-between items-center mb-8 flex-shrink-0">
                 <Link to="/" className="text-2xl font-bold text-gray-800">
-                  ArchHome
+                  HousePlansFile
                 </Link>
                 <button onClick={() => setIsMenuOpen(false)}>
                   <X className="w-7 h-7 text-gray-600" />
