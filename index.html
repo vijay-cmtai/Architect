@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- <title>housePlanfiles</title> -->
+    
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
 
-    <!-- Google Taager -->
+    <!-- Google Tag Manager -->
     <script>
       (function (w, d, s, l, i) {
         w[l] = w[l] || [];
@@ -21,13 +21,20 @@
     </script>
     <!-- End Google Tag Manager -->
 
-    <!-- <meta
-      name="description"
-      content="Find and purchase architectural house plans for your dream home at houseplanfiles."
-    /> -->
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-54KSTVRE8S"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-54KSTVRE8S');
+    </script>
+    <!-- End GA4 -->
+
   </head>
 
   <body>
+    <!-- Google Tag Manager (noscript) -->
     <noscript>
       <iframe
         src="https://www.googletagmanager.com/ns.html?id=GTM-KCFWJDQK"
@@ -36,9 +43,12 @@
         style="display: none; visibility: hidden"
       ></iframe>
     </noscript>
+    <!-- End GTM (noscript) -->
 
     <div id="root"></div>
+    
     <script type="module" src="/src/main.tsx"></script>
+
     <script
       type="text/javascript"
       src="https://d3mkw6s8thqya7.cloudfront.net/integration-plugin.js"
