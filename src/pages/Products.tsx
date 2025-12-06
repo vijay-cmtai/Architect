@@ -509,7 +509,7 @@ const ProductCard = ({ product, userOrders, onPlayVideo }: any) => {
             Purchased
           </div>
         )}
-        <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-4 right-4 flex flex-col space-y-2 transition-opacity">
           <button
             onClick={handleWishlistToggle}
             className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-gray-600 hover:text-red-500 hover:scale-110"}`}
@@ -520,6 +520,7 @@ const ProductCard = ({ product, userOrders, onPlayVideo }: any) => {
               fill={isWishlisted ? "currentColor" : "none"}
             />
           </button>
+
           {product.youtubeLink && (
             <button
               onClick={(e) => {
@@ -1179,5 +1180,4 @@ const Products = () => {
     </div>
   );
 };
-
 export default Products;
