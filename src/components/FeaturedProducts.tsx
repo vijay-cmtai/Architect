@@ -256,7 +256,7 @@ const FeaturedProducts = () => {
   const hasProducts = processedFeaturedProducts.length > 0;
 
   return (
-    <section className="py-20 bg-background">
+    <section className="py-15 bg-background">
       <VideoModal
         videoId={playingVideoId}
         onClose={() => setPlayingVideoId(null)}
@@ -480,7 +480,7 @@ const FeaturedProducts = () => {
 
         <div className="text-center mt-16">
           <Link to="/products">
-            <Button size="lg" className="px-10 py-6 text-base btn-primary">
+            <Button size="lg" className="px-10 py-1 text-base btn-primary">
               View All Products
             </Button>
           </Link>
