@@ -38,6 +38,10 @@ import {
   UserX,
   ChevronLeft,
   ChevronRight,
+  Download,
+  Search,
+  FileSpreadsheet,
+  Filter,
 } from "lucide-react";
 
 const professionalSubRoles = [
@@ -89,11 +93,18 @@ const AllUsersPage = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // --- States for Filters ---
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+
+  // --- States for Modal Form ---
   const [role, setRole] = useState("");
   const [status, setStatus] = useState("");
   const [profession, setProfession] = useState("");
-  // <<< BADLAAV 1: NAYA STATE ADD KAREIN >>>
   const [contractorType, setContractorType] = useState("Normal");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const USERS_PER_PAGE = 10;
 
@@ -104,13 +115,28 @@ const AllUsersPage = () => {
     formState: { errors },
   } = useForm();
 
+  // --- 1. Fetch Users with Filters ---
   const handleFetchUsers = (page = 1) => {
-    dispatch(fetchUsers({ page, limit: USERS_PER_PAGE }));
+    // Note: Ensure your fetchUsers action and backend accepts these query params
+    dispatch(
+      fetchUsers({
+        page,
+        limit: USERS_PER_PAGE,
+        search: searchTerm,
+        role: filterRole === "all" ? "" : filterRole,
+        status: filterStatus === "all" ? "" : filterStatus,
+      })
+    );
   };
 
+  // Re-fetch when page or filters change
   useEffect(() => {
-    handleFetchUsers(currentPage);
-  }, [currentPage]);
+    const delayDebounceFn = setTimeout(() => {
+      handleFetchUsers(currentPage);
+    }, 500); // Debounce search to avoid too many API calls
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [currentPage, searchTerm, filterRole, filterStatus]);
 
   useEffect(() => {
     if (actionStatus === "succeeded" && error) {
@@ -131,7 +157,6 @@ const AllUsersPage = () => {
       });
       setRole(selectedUser.role || "");
       setStatus(selectedUser.status || "");
-      // <<< BADLAAV 2: useEffect MEIN NAYE STATE KO SET KAREIN >>>
       setContractorType(selectedUser.contractorType || "Normal");
       if (selectedUser.role === "professional") {
         setProfession(selectedUser.profession || "");
@@ -140,6 +165,68 @@ const AllUsersPage = () => {
       }
     }
   }, [selectedUser, reset, isEditModalOpen]);
+
+  // --- 2. CSV Export Logic ---
+  const handleExportCSV = () => {
+    if (!users || users.length === 0) {
+      toast.error("No data available to export.");
+      return;
+    }
+
+    // Define CSV Headers based on data
+    const headers = [
+      "ID",
+      "Name",
+      "Email",
+      "Phone",
+      "Role",
+      "Profession",
+      "Contractor Type",
+      "Status",
+      "Registered Date",
+    ];
+
+    // Convert Data to CSV Rows
+    const csvRows = [
+      headers.join(","), // Header Row
+      ...users.map((user) => {
+        const name =
+          user.name || user.businessName || user.companyName || "N/A";
+        const professionVal =
+          user.role === "professional" ? user.profession : "N/A";
+        const contractorVal =
+          user.role === "Contractor" ? user.contractorType : "N/A";
+        const date = user.createdAt
+          ? format(new Date(user.createdAt), "yyyy-MM-dd")
+          : "";
+
+        // Escape commas in strings to avoid breaking CSV
+        const safeName = `"${name.replace(/"/g, '""')}"`;
+
+        return [
+          user._id,
+          safeName,
+          user.email,
+          user.phone || "",
+          user.role,
+          professionVal,
+          contractorVal,
+          user.status,
+          date,
+        ].join(",");
+      }),
+    ];
+
+    const csvString = csvRows.join("\n");
+    const blob = new Blob([csvString], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `users_export_${format(new Date(), "yyyyMMdd_HHmm")}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success("Data exported successfully!");
+  };
 
   const handleDelete = (userId: string) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
@@ -170,9 +257,7 @@ const AllUsersPage = () => {
 
   const onSubmit = async (data: any) => {
     if (!selectedUser) return;
-
     setIsSubmitting(true);
-
     const userData: any = { ...data, role, status };
 
     if (status === "Approved") {
@@ -185,7 +270,6 @@ const AllUsersPage = () => {
       userData.profession = profession;
     }
 
-    // <<< BADLAAV 3: onSubmit FUNCTION MEIN DATA ADD KAREIN >>>
     if (role === "Contractor") {
       userData.contractorType = contractorType;
     }
@@ -194,16 +278,13 @@ const AllUsersPage = () => {
       await dispatch(
         updateUserByAdmin({ userId: selectedUser._id, userData })
       ).unwrap();
-
       toast.success("User updated successfully!");
       setIsEditModalOpen(false);
-
       setTimeout(() => {
         setSelectedUser(null);
         reset();
         setIsSubmitting(false);
       }, 200);
-
       setTimeout(() => {
         handleFetchUsers(currentPage);
       }, 300);
@@ -222,16 +303,79 @@ const AllUsersPage = () => {
   return (
     <>
       <div className="space-y-6">
-        {/* Table and other UI elements... (No changes here) */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-800">All Users</h1>
-          <Link to="/admin/users/add">
-            <Button className="btn-primary flex items-center gap-2">
-              <PlusCircle size={18} /> Add New User
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h1 className="text-3xl font-bold text-gray-800">
+            All Users Management
+          </h1>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="border-green-600 text-green-700 hover:bg-green-50"
+              onClick={handleExportCSV}
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Export CSV
             </Button>
-          </Link>
+            <Link to="/admin/users/add">
+              <Button className="btn-primary flex items-center gap-2">
+                <PlusCircle size={18} /> Add User
+              </Button>
+            </Link>
+          </div>
         </div>
 
+        {/* --- 3. Filters Section --- */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          {/* Search */}
+          <div className="relative col-span-1 md:col-span-2">
+            <Label className="text-xs mb-1 block text-gray-500">Search</Label>
+            <Search className="absolute left-3 top-8 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search by Name or Email..."
+              className="pl-9"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          {/* Role Filter */}
+          <div className="col-span-1">
+            <Label className="text-xs mb-1 block text-gray-500">
+              Filter by Role
+            </Label>
+            <Select value={filterRole} onValueChange={setFilterRole}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Roles" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="user">User</SelectItem>
+                <SelectItem value="professional">Professional</SelectItem>
+                <SelectItem value="seller">Seller</SelectItem>
+                <SelectItem value="Contractor">Contractor</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Status Filter */}
+          <div className="col-span-1">
+            <Label className="text-xs mb-1 block text-gray-500">
+              Filter by Status
+            </Label>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="Approved">Approved</SelectItem>
+                <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="Rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Table Section */}
         <div className="bg-white rounded-xl shadow-md overflow-hidden border">
           {showLoading ? (
             <div className="p-12 text-center text-gray-500 flex items-center justify-center">
@@ -240,12 +384,17 @@ const AllUsersPage = () => {
           ) : !users || users.length === 0 ? (
             <div className="p-12 text-center text-gray-500">
               <UserX className="mx-auto h-12 w-12 text-gray-400" />
-              <p className="mt-2">No users found.</p>
-              <Link to="/admin/users/add">
-                <Button variant="link" className="mt-2">
-                  Create the first user
-                </Button>
-              </Link>
+              <p className="mt-2">No users found matching your criteria.</p>
+              <Button
+                variant="link"
+                onClick={() => {
+                  setSearchTerm("");
+                  setFilterRole("all");
+                  setFilterStatus("all");
+                }}
+              >
+                Clear Filters
+              </Button>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -263,6 +412,9 @@ const AllUsersPage = () => {
                     </th>
                     <th className="p-4 font-semibold text-sm text-gray-600">
                       Status
+                    </th>
+                    <th className="p-4 font-semibold text-sm text-gray-600">
+                      Details
                     </th>
                     <th className="p-4 font-semibold text-sm text-gray-600">
                       Registered
@@ -292,6 +444,12 @@ const AllUsersPage = () => {
                         >
                           {user.status}
                         </span>
+                      </td>
+                      <td className="p-4 text-xs text-gray-500">
+                        {user.role === "professional" && user.profession}
+                        {user.role === "Contractor" &&
+                          `(${user.contractorType || "Normal"})`}
+                        {user.role === "user" && "-"}
                       </td>
                       <td className="p-4 text-gray-600">
                         {user.createdAt &&
@@ -340,37 +498,33 @@ const AllUsersPage = () => {
                 onClick={() => setCurrentPage(currentPage - 1)}
                 disabled={!pagination.hasPrevPage}
               >
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                Previous
+                <ChevronLeft className="h-4 w-4 mr-2" /> Previous
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setCurrentPage(currentPage + 1)}
                 disabled={!pagination.hasNextPage}
               >
-                Next
-                <ChevronRight className="h-4 w-4 ml-2" />
+                Next <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Edit User Modal */}
+      {/* Edit User Modal (No changes to logic here, just re-rendering) */}
       {selectedUser && (
         <Dialog
           open={isEditModalOpen}
           onOpenChange={(open) => {
-            if (!open && !isSubmitting) {
-              handleCloseModal();
-            }
+            if (!open && !isSubmitting) handleCloseModal();
           }}
         >
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Edit User</DialogTitle>
               <DialogDescription>
-                Make changes to the user's profile. Click save when you're done.
+                Make changes to the user's profile.
               </DialogDescription>
             </DialogHeader>
             <form
@@ -384,9 +538,9 @@ const AllUsersPage = () => {
                   {...register("name", { required: "Name is required." })}
                   disabled={isSubmitting}
                 />
-                {errors.name && typeof errors.name.message === "string" && (
+                {errors.name && (
                   <p className="text-red-500 text-xs mt-1">
-                    {errors.name.message}
+                    {String(errors.name.message)}
                   </p>
                 )}
               </div>
@@ -398,11 +552,6 @@ const AllUsersPage = () => {
                   {...register("email", { required: "Email is required." })}
                   disabled={isSubmitting}
                 />
-                {errors.email && typeof errors.email.message === "string" && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.email.message}
-                  </p>
-                )}
               </div>
               <div>
                 <Label htmlFor="phone">Phone</Label>
@@ -453,7 +602,6 @@ const AllUsersPage = () => {
                 </div>
               )}
 
-              {/* <<< BADLAAV 4: YEH NAYA DROPDOWN ADD KAREIN >>> */}
               {role === "Contractor" && (
                 <div>
                   <Label>Contractor Type</Label>
