@@ -43,7 +43,6 @@ import {
   Briefcase,
 } from "lucide-react";
 
-// <<< DATA BADLAV: Type mein naya field add kiya gaya >>>
 type ContractorType = {
   _id: string;
   name: string;
@@ -228,10 +227,9 @@ const ContractorsSection: FC = () => {
 
   const filteredContractors = useMemo(() => {
     if (!Array.isArray(contractors)) return [];
-    // <<< DATA BADLAV: Filter logic ko update kiya gaya >>>
     return contractors.filter((c: ContractorType) => {
       const isApproved = c.status === "Approved";
-      const isNormal = c.contractorType === "Normal" || !c.contractorType; // Normal ya undefined
+      const isNormal = c.contractorType === "Normal" || !c.contractorType;
       const matchesCity =
         !cityFilter || c.city?.toLowerCase().includes(cityFilter.toLowerCase());
       const matchesSubCategory =
@@ -269,7 +267,8 @@ const ContractorsSection: FC = () => {
             </p>
           </div>
 
-          <div className="max-w-2xl mx-auto mb-10 bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Filters - Mobile Responsive */}
+          <div className="max-w-2xl mx-auto mb-10 bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md space-y-4">
             <div>
               <Label
                 htmlFor="city-filter"
@@ -330,7 +329,7 @@ const ContractorsSection: FC = () => {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 rounded-full h-12 w-12 bg-white/80"
+                    className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 rounded-full h-12 w-12 bg-white/80 hidden md:flex"
                     onClick={() => scroll("left")}
                   >
                     <ChevronLeft />
@@ -338,7 +337,7 @@ const ContractorsSection: FC = () => {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 rounded-full h-12 w-12 bg-white/80"
+                    className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 rounded-full h-12 w-12 bg-white/80 hidden md:flex"
                     onClick={() => scroll("right")}
                   >
                     <ChevronRight />
@@ -350,12 +349,13 @@ const ContractorsSection: FC = () => {
                 className="flex overflow-x-auto scroll-smooth py-4 -mx-4 px-4 snap-x snap-mandatory"
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
               >
-                <div className="flex gap-8">
+                <style>{`.overflow-x-auto::-webkit-scrollbar { display: none; } .overflow-x-auto { -ms-overflow-style: none; }`}</style>
+                <div className="flex gap-6 md:gap-8">
                   {filteredContractors.length > 0 ? (
                     filteredContractors.map((contractor) => (
                       <div
                         key={contractor._id}
-                        className="bg-white rounded-xl flex flex-col group transition-all duration-300 border-2 border-transparent hover:border-primary hover:shadow-xl hover:-translate-y-2 w-72 flex-shrink-0 snap-start overflow-hidden"
+                        className="bg-white rounded-xl flex flex-col group transition-all duration-300 border-2 border-transparent hover:border-primary hover:shadow-xl hover:-translate-y-2 w-[85vw] sm:w-[70vw] md:w-[280px] flex-shrink-0 snap-start overflow-hidden"
                       >
                         <div className="h-40 bg-gray-200 relative">
                           <img

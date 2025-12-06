@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { motion, AnimatePresence } from "framer-motion"; // AnimatePresence जोड़ा गया
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Filter,
   Heart,
@@ -20,7 +20,6 @@ import {
   Lock,
 } from "lucide-react";
 import { fetchProducts } from "@/lib/features/products/productSlice";
-import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice";
 import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -55,7 +54,6 @@ const slugify = (text: any) => {
     .replace(/\-\-+/g, "-");
 };
 
-// --- नया वीडियो मॉडल कंपोनेंट ---
 const VideoModal = ({
   videoUrl,
   onClose,
@@ -63,7 +61,6 @@ const VideoModal = ({
   videoUrl: string;
   onClose: () => void;
 }) => {
-  // YouTube URL को एम्बेड करने लायक URL में बदलने के लिए एक हेल्पर फंक्शन
   const getYouTubeEmbedUrl = (url: string) => {
     if (!url) return null;
     let videoId;
@@ -75,7 +72,6 @@ const VideoModal = ({
         videoId = urlObj.searchParams.get("v");
       }
     } catch (e) {
-      // रेगुलर एक्सप्रेशन का उपयोग करके fallback
       const regex =
         /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
       const match = url.match(regex);
@@ -91,7 +87,7 @@ const VideoModal = ({
   const embedUrl = getYouTubeEmbedUrl(videoUrl);
 
   if (!embedUrl) {
-    onClose(); // अगर URL गलत है तो मॉडल बंद कर दें
+    onClose();
     toast.error("Invalid YouTube URL provided.");
     return null;
   }
@@ -109,7 +105,7 @@ const VideoModal = ({
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.8, y: 50 }}
         className="relative w-full max-w-4xl bg-black rounded-lg overflow-hidden shadow-2xl"
-        onClick={(e) => e.stopPropagation()} // कंटेंट पर क्लिक करने पर मॉडल बंद न हो
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="aspect-video">
           <iframe
@@ -374,7 +370,6 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }: any) => (
 );
 
 const ProductCard = ({ product, userOrders, onPlayVideo }: any) => {
-  // onPlayVideo prop जोड़ा गया
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { userInfo } = useSelector((state: RootState) => state.user);
@@ -514,7 +509,7 @@ const ProductCard = ({ product, userOrders, onPlayVideo }: any) => {
             Purchased
           </div>
         )}
-        <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-4 right-4 flex flex-col space-y-2 transition-opacity">
           <button
             onClick={handleWishlistToggle}
             className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isWishlisted ? "text-red-500 scale-110" : "text-gray-600 hover:text-red-500 hover:scale-110"}`}
@@ -525,12 +520,12 @@ const ProductCard = ({ product, userOrders, onPlayVideo }: any) => {
               fill={isWishlisted ? "currentColor" : "none"}
             />
           </button>
+
           {product.youtubeLink && (
-            // --- YouTube बटन में बदलाव ---
             <button
               onClick={(e) => {
-                e.stopPropagation(); // कार्ड के लिंक पर जाने से रोकें
-                onPlayVideo(product.youtubeLink); // पेरेंट कंपोनेंट को URL भेजें
+                e.stopPropagation();
+                onPlayVideo(product.youtubeLink);
               }}
               className="w-9 h-9 bg-red-500/90 rounded-full flex items-center justify-center shadow-sm text-white hover:bg-red-600"
             >
@@ -872,7 +867,7 @@ const Products = () => {
   });
   const [currentPage, setCurrentPage] = useState(pageQuery);
   const [jumpToPage, setJumpToPage] = useState("");
-  const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null); // मॉडल के लिए स्टेट
+  const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null);
 
   const debouncedSearchTerm = useDebounce(filters.searchTerm, 500);
 
@@ -917,28 +912,45 @@ const Products = () => {
     filters.sortBy,
   ]);
 
+  // Fix: Store previous filters state to avoid resetting page on refresh
+  const prevFiltersRef = useRef({
+    ...filters,
+    searchTerm: debouncedSearchTerm,
+    country: countryQuery,
+  });
+
   useEffect(() => {
-    if (currentPage !== 1) {
+    const currentFiltersState = {
+      ...filters,
+      searchTerm: debouncedSearchTerm,
+      country: countryQuery,
+    };
+
+    // Only reset page if filters ACTUALLY changed from what we tracked last
+    if (
+      JSON.stringify(currentFiltersState) !==
+      JSON.stringify(prevFiltersRef.current)
+    ) {
       setCurrentPage(1);
+      setSearchParams((prev) => {
+        prev.set("page", "1");
+        return prev;
+      });
+      // Update ref to current state
+      prevFiltersRef.current = currentFiltersState;
     }
-  }, [
-    debouncedSearchTerm,
-    filters.category,
-    filters.plotSize,
-    filters.plotArea,
-    filters.direction,
-    filters.floors,
-    filters.propertyType,
-    filters.budget,
-    filters.sortBy,
-    countryQuery,
-  ]);
+  }, [debouncedSearchTerm, filters, countryQuery, setSearchParams]);
 
   const totalPages = pages > 0 ? pages : 1;
 
   const handlePageChange = (newPage: number) => {
     if (newPage > 0 && newPage <= totalPages) {
       setCurrentPage(newPage);
+      // Update URL when page changes
+      setSearchParams((prev) => {
+        prev.set("page", String(newPage));
+        return prev;
+      });
       window.scrollTo(0, 0);
     }
   };
@@ -954,7 +966,6 @@ const Products = () => {
     setJumpToPage("");
   };
 
-  // वीडियो मॉडल को खोलने और बंद करने के लिए हैंडlers
   const handlePlayVideo = (url: string) => {
     setPlayingVideoUrl(url);
   };
@@ -984,7 +995,6 @@ const Products = () => {
       </Helmet>
       <Navbar />
 
-      {/* वीडियो मॉडल का रेंडर */}
       <AnimatePresence>
         {playingVideoUrl && (
           <VideoModal videoUrl={playingVideoUrl} onClose={handleCloseModal} />
@@ -1119,7 +1129,7 @@ const Products = () => {
                     key={product._id}
                     product={product}
                     userOrders={userOrders}
-                    onPlayVideo={handlePlayVideo} // handler को prop के रूप में पास करें
+                    onPlayVideo={handlePlayVideo}
                   />
                 ))}
               </div>
@@ -1170,5 +1180,4 @@ const Products = () => {
     </div>
   );
 };
-
 export default Products;

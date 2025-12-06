@@ -38,7 +38,6 @@ import {
   HardHat,
 } from "lucide-react";
 
-// <<< DATA BADLAV: Type mein naya field add kiya gaya >>>
 type ContractorType = {
   _id: string;
   name: string;
@@ -202,10 +201,9 @@ const ConstructionPartnersSection: FC = () => {
 
   const approvedContractors = useMemo(() => {
     if (!Array.isArray(contractors)) return [];
-    // <<< DATA BADLAV: Filter logic ko update kiya gaya >>>
     return contractors.filter((c: ContractorType) => {
       const isApproved = c.status === "Approved";
-      const isPremium = c.contractorType === "Premium"; // Sirf Premium check karega
+      const isPremium = c.contractorType === "Premium";
       const matchesCity =
         !cityFilter || c.city?.toLowerCase().includes(cityFilter.toLowerCase());
 
@@ -251,6 +249,7 @@ const ConstructionPartnersSection: FC = () => {
             </p>
           </div>
 
+          {/* Filters - Mobile Responsive */}
           <div className="max-w-2xl mx-auto mb-10 bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md space-y-4">
             <div>
               <Label
@@ -279,6 +278,7 @@ const ConstructionPartnersSection: FC = () => {
                 <Button
                   variant={professionFilter === "All" ? "default" : "outline"}
                   onClick={() => setProfessionFilter("All")}
+                  className="h-10 text-sm"
                 >
                   All
                 </Button>
@@ -287,8 +287,9 @@ const ConstructionPartnersSection: FC = () => {
                     professionFilter === "Building" ? "default" : "outline"
                   }
                   onClick={() => setProfessionFilter("Building")}
+                  className="h-10 text-sm"
                 >
-                  <HardHat className="w-4 h-4 mr-2" />
+                  <HardHat className="w-4 h-4 mr-1" />
                   Building
                 </Button>
                 <Button
@@ -296,8 +297,9 @@ const ConstructionPartnersSection: FC = () => {
                     professionFilter === "Interior" ? "default" : "outline"
                   }
                   onClick={() => setProfessionFilter("Interior")}
+                  className="h-10 text-sm"
                 >
-                  <Paintbrush className="w-4 h-4 mr-2" />
+                  <Paintbrush className="w-4 h-4 mr-1" />
                   Interior
                 </Button>
               </div>
@@ -338,12 +340,13 @@ const ConstructionPartnersSection: FC = () => {
                 className="flex overflow-x-auto scroll-smooth py-4 -mx-4 px-4 snap-x snap-mandatory"
                 style={{ scrollbarWidth: "none" }}
               >
-                <div className="flex gap-8">
+                <style>{`.overflow-x-auto::-webkit-scrollbar { display: none; } .overflow-x-auto { -ms-overflow-style: none; }`}</style>
+                <div className="flex gap-6 md:gap-8">
                   {approvedContractors.length > 0 ? (
                     approvedContractors.map((contractor) => (
                       <div
                         key={contractor._id}
-                        className="bg-white rounded-xl p-4 flex flex-col group transition-all duration-300 border-2 border-transparent hover:border-primary hover:shadow-xl hover:-translate-y-2 w-72 flex-shrink-0 snap-start"
+                        className="bg-white rounded-xl p-4 flex flex-col group transition-all duration-300 border-2 border-transparent hover:border-primary hover:shadow-xl hover:-translate-y-2 w-[85vw] sm:w-[70vw] md:w-[280px] flex-shrink-0 snap-start"
                       >
                         <div className="h-40 bg-gray-100 rounded-lg overflow-hidden">
                           <img

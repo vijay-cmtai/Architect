@@ -34,10 +34,10 @@ const planTypes = [
     iconColor: "text-teal-500",
   },
   {
-    name: "Home Design Product",
+    name: "Download",
     icon: HardHat,
     image: "/r4.avif",
-    href: "/house-designs-products",
+    href: "/download",
     bgColor: "bg-yellow-100",
     iconColor: "text-yellow-500",
   },
@@ -60,14 +60,15 @@ const ReadymadePlansSection = () => {
           <div className="mt-4 h-1 w-24 bg-primary mx-auto rounded-full"></div>
         </motion.div>
 
-        <div className="flex overflow-x-auto sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 -mx-4 px-4 sm:mx-0 sm:px-0 pb-4 sm:pb-0">
+        {/* Mobile: Horizontal scroll, Desktop: Grid */}
+        <div className="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 -mx-4 px-4 md:mx-0 md:px-0 pb-4 md:pb-0 snap-x snap-mandatory">
           {/* Hide scrollbar */}
           <style>{`.overflow-x-auto::-webkit-scrollbar { display: none; } .overflow-x-auto { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
 
           {planTypes.map((plan, index) => (
             <motion.div
               key={plan.name}
-              className="flex-shrink-0 w-3/4 sm:w-auto"
+              className="flex-shrink-0 w-[85vw] sm:w-[70vw] md:w-auto snap-start"
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}

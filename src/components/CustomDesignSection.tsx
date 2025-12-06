@@ -62,15 +62,15 @@ const CustomDesignSection = () => {
           <div className="mt-4 h-1 w-24 bg-primary mx-auto rounded-full"></div>
         </motion.div>
 
-        {/* --- मुख्य बदलाव यहाँ है --- */}
-        <div className="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 -mx-4 px-4 md:mx-0 md:px-0 pb-4 md:pb-0 max-w-7xl mx-auto">
+        {/* Mobile: Horizontal scroll, Desktop: Grid */}
+        <div className="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 -mx-4 px-4 md:mx-0 md:px-0 pb-4 md:pb-0 max-w-7xl mx-auto snap-x snap-mandatory">
           {/* Hide scrollbar */}
           <style>{`.overflow-x-auto::-webkit-scrollbar { display: none; } .overflow-x-auto { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
 
           {customServices.map((service, index) => (
             <motion.div
               key={service.name}
-              className="flex-shrink-0 w-3/4 sm:w-2/5 md:w-auto" // मोबाइल के लिए कार्ड की चौड़ाई
+              className="flex-shrink-0 w-[85vw] sm:w-[70vw] md:w-auto snap-start"
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}

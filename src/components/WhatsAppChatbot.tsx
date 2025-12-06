@@ -1,9 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const WhatsAppChatbot = () => {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    // 10 minutes = 10 * 60 * 1000 = 600000 milliseconds
+    const timer = setTimeout(() => {
+      setOpen(true);
+    }, 600000); // 10 minutes
+
+    // Cleanup timer on component unmount
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <>
