@@ -18,6 +18,8 @@ import SellersSection from "@/components/SellersSection";
 import ContractorsSection from "@/components/ContractorsSection";
 import ConstructionPartnersSection from "@/components/ConstructionPartnersSection";
 import TopBar from "@/components/TopBar";
+import HomeFloorPlans from "@/components/HomeFloorPlans";
+import HomeElevations from "@/components/HomeElevations";
 
 // ✅ Import chatbot component
 import WhatsAppChatbot from "@/components/WhatsAppChatbot";
@@ -40,12 +42,15 @@ const Index = () => {
       <ReadymadePlansSection />
       <CustomDesignSection />
       <FeaturedProducts />
+      <HomeFloorPlans />
+      <HomeElevations />
+      {/* <CategoriesSection /> */}
       <ConstructionPartnersSection />
       <ContractorsSection />
       <SellersSection />
-      <StandardPackagesSection />
+      {/* <StandardPackagesSection />
       <PremiumPackagesSection />
-      <CorporatePackagesSection />
+      <CorporatePackagesSection /> */}
       <RegionalPlansSection />
       <BrandPartnersSection />
       <Testimonials />
