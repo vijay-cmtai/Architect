@@ -97,7 +97,6 @@ const FeaturedProducts = () => {
   const { userInfo } = useSelector((state: RootState) => state.user);
   const { orders } = useSelector((state: RootState) => state.orders);
 
-  // ✅ Debugging logs
   useEffect(() => {
     console.log("🔍 Featured Products Debug:", {
       productsCount: products?.length || 0,
@@ -107,13 +106,11 @@ const FeaturedProducts = () => {
     });
   }, [products, listStatus, error]);
 
-  // ✅ Component mount hote hi products fetch karo
   useEffect(() => {
     console.log("🚀 Fetching products...");
     dispatch(fetchProducts({}));
   }, [dispatch]);
 
-  // ✅ User logged in hai to orders fetch karo
   useEffect(() => {
     if (userInfo) {
       dispatch(fetchMyOrders());
@@ -253,7 +250,6 @@ const FeaturedProducts = () => {
     }
   };
 
-  // ✅ Render conditions
   const isLoading = listStatus === "loading";
   const hasFailed =
     listStatus === "failed" && processedFeaturedProducts.length === 0;
@@ -289,7 +285,7 @@ const FeaturedProducts = () => {
           </div>
         )}
 
-        {/* Error State - Only if no products */}
+        {/* Error State */}
         {hasFailed && (
           <div className="text-center py-12 text-destructive">
             <ServerCrash className="mx-auto h-12 w-12" />
@@ -317,7 +313,7 @@ const FeaturedProducts = () => {
             </Button>
             <div
               ref={scrollContainerRef}
-              className="flex overflow-x-auto scroll-smooth py-4 -mx-4 px-4"
+              className="flex overflow-x-auto scroll-smooth py-4 -mx-4 px-4 snap-x snap-mandatory"
               style={{
                 scrollSnapType: "x mandatory",
                 scrollbarWidth: "none",
@@ -325,12 +321,11 @@ const FeaturedProducts = () => {
               }}
             >
               <style>{`.flex.overflow-x-auto::-webkit-scrollbar { display: none; }`}</style>
-              <div className="flex gap-8">
+              <div className="flex gap-6 md:gap-8">
                 {processedFeaturedProducts.map((product, index) => (
                   <motion.div
                     key={product.id}
-                    className="bg-card rounded-2xl overflow-hidden group transition-all duration-300 border-2 border-transparent hover:border-primary hover:shadow-2xl hover:-translate-y-2 flex-shrink-0 w-[320px]"
-                    style={{ scrollSnapAlign: "start" }}
+                    className="bg-card rounded-2xl overflow-hidden group transition-all duration-300 border-2 border-transparent hover:border-primary hover:shadow-2xl hover:-translate-y-2 flex-shrink-0 w-[85vw] sm:w-[70vw] md:w-[320px] snap-start"
                     initial={{ opacity: 0, y: 50 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
