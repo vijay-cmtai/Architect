@@ -270,7 +270,7 @@ const SellersSection: FC = () => {
           {/* --- BANNER ADDED HERE --- */}
           <div
             className="relative h-64 md:h-80 rounded-2xl overflow-hidden mb-12 bg-cover bg-center"
-            style={{ backgroundImage: "url(/marketplace.jpg)" }} // Make sure this image is in your /public folder
+            style={{ backgroundImage: "url(/marketplace.png)" }} // Make sure this image is in your /public folder
           >
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20" />
             <div className="relative z-10 h-full flex flex-col items-center justify-center text-center text-white p-4">
