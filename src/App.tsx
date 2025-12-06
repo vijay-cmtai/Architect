@@ -95,6 +95,10 @@ import SellerInquiryPage from "./pages/seller/SellerInquiriesPage";
 import MediaPage from "./pages/admin/MediaPage";
 import SellerProductPage from "./pages/admin/SellerProductPage";
 import AdminManagePlansPage from "./pages/admin/AdminManagePlansPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import PackagesPage from "./pages/PackagesPage";
+import MarketPlace from "./pages/MarketPlace";
 
 const queryClient = new QueryClient();
 
@@ -134,8 +138,20 @@ const App = () => (
                       <Route path="/download" element={<DownloadsPage1 />} />
                       <Route path="/careers" element={<CareersPage />} />
                       <Route path="/contact" element={<ContactUs />} />
+                      <Route path="/marketplace" element={<MarketPlace />} />
+
                       <Route path="/register" element={<Register />} />
                       <Route path="/login" element={<Login />} />
+                      <Route
+                        path="/forgot-password"
+                        element={<ForgotPasswordPage />}
+                      />
+                      <Route
+                        path="/reset-password/:token"
+                        element={<ResetPasswordPage />}
+                      />
+                      <Route path="/packages" element={<PackagesPage />} />
+
                       <Route path="/apply" element={<ApplicationPage />} />
                       <Route path="/terms" element={<TermsAndConditions />} />
                       <Route
