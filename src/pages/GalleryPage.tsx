@@ -18,6 +18,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Loader2,
   ServerCrash,
@@ -25,37 +26,57 @@ import {
   ShoppingCart,
   ChevronLeft,
   ChevronRight,
+  X,
+  ZoomIn,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 
 // --- Naya Carousel Card Component ---
-const GalleryImageCard = ({ items }: { items: GalleryItem[] }) => {
+const GalleryImageCard = ({
+  items,
+  onCardClick,
+}: {
+  items: GalleryItem[];
+  onCardClick: () => void;
+}) => {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
   const firstItem = items[0];
-  const hasProductLink =
-    firstItem.productLink && firstItem.productLink.trim() !== "";
 
   const scrollPrev = useCallback(
-    () => emblaApi && emblaApi.scrollPrev(),
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      emblaApi && emblaApi.scrollPrev();
+    },
     [emblaApi]
   );
+
   const scrollNext = useCallback(
-    () => emblaApi && emblaApi.scrollNext(),
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      emblaApi && emblaApi.scrollNext();
+    },
     [emblaApi]
   );
 
   return (
-    <Card className="rounded-xl overflow-hidden group relative border-2 border-transparent hover:border-orange-500/50 transition-all duration-300 shadow-sm hover:shadow-xl">
+    <Card
+      className="rounded-xl overflow-hidden group relative border-2 border-transparent hover:border-orange-500/50 transition-all duration-300 shadow-sm hover:shadow-xl cursor-pointer"
+      onClick={onCardClick}
+    >
       <div className="overflow-hidden relative" ref={emblaRef}>
         <div className="flex">
           {items.map((item) => (
             <div className="flex-grow-0 flex-shrink-0 w-full" key={item._id}>
-              <div className="aspect-w-1 aspect-h-1 w-full bg-gray-100">
+              <div className="aspect-square w-full bg-gray-100 relative">
                 <img
                   src={item.imageUrl}
                   alt={item.altText || item.title}
                   className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
                 />
+                {/* Zoom Icon */}
+                <div className="absolute top-4 right-4 bg-black/60 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <ZoomIn className="h-5 w-5 text-white" />
+                </div>
               </div>
             </div>
           ))}
@@ -84,26 +105,18 @@ const GalleryImageCard = ({ items }: { items: GalleryItem[] }) => {
       </div>
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-4 pointer-events-none">
-        <div className="transition-transform duration-300 transform group-hover:-translate-y-12">
+        <div className="transition-transform duration-300 transform group-hover:-translate-y-2">
           <h3 className="text-white font-bold text-lg drop-shadow-md">
             {firstItem.title}
           </h3>
           <p className="text-orange-300 text-sm font-semibold">
             {firstItem.category}
           </p>
+          {items.length > 1 && (
+            <p className="text-white/80 text-xs mt-1">{items.length} images</p>
+          )}
         </div>
       </div>
-
-      {hasProductLink && (
-        <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
-          <Link to={firstItem.productLink} className="w-full">
-            <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold">
-              <ShoppingCart className="mr-2 h-4 w-4" />
-              Buy Now
-            </Button>
-          </Link>
-        </div>
-      )}
     </Card>
   );
 };
@@ -118,6 +131,11 @@ const GalleryPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [jumpToPage, setJumpToPage] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<GalleryItem[] | null>(
+    null
+  );
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const ITEMS_PER_PAGE = 12;
 
   useEffect(() => {
@@ -179,6 +197,30 @@ const GalleryPage: React.FC = () => {
     setJumpToPage("");
   };
 
+  const handleCardClick = (group: GalleryItem[]) => {
+    setSelectedGroup(group);
+    setCurrentImageIndex(0);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedGroup(null);
+    setCurrentImageIndex(0);
+  };
+
+  const handlePrevImage = () => {
+    if (selectedGroup && currentImageIndex > 0) {
+      setCurrentImageIndex(currentImageIndex - 1);
+    }
+  };
+
+  const handleNextImage = () => {
+    if (selectedGroup && currentImageIndex < selectedGroup.length - 1) {
+      setCurrentImageIndex(currentImageIndex + 1);
+    }
+  };
+
   const renderContent = () => {
     if (status === "loading") {
       return (
@@ -221,6 +263,7 @@ const GalleryPage: React.FC = () => {
             <GalleryImageCard
               key={`${group[0].title}-${index}`}
               items={group}
+              onCardClick={() => handleCardClick(group)}
             />
           ))}
         </div>
@@ -310,7 +353,126 @@ const GalleryPage: React.FC = () => {
         {renderContent()}
       </main>
       <Footer />
+
+      {/* Full Screen Image Modal - Fixed Version */}
+      <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
+        <DialogContent className="max-w-[95vw] md:max-w-6xl w-full max-h-[95vh] p-0 bg-black border-none overflow-hidden">
+          {selectedGroup && (
+            <>
+              {/* Header with Close Button */}
+              <div className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/90 via-black/60 to-transparent p-4 md:p-6">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1 pr-4">
+                    <h2 className="text-white text-xl md:text-3xl font-bold drop-shadow-lg">
+                      {selectedGroup[currentImageIndex].title}
+                    </h2>
+                    <p className="text-orange-400 text-sm md:text-base font-semibold mt-1">
+                      {selectedGroup[currentImageIndex].category}
+                    </p>
+                    {selectedGroup.length > 1 && (
+                      <p className="text-white/80 text-xs md:text-sm mt-1">
+                        Image {currentImageIndex + 1} of {selectedGroup.length}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleCloseModal}
+                    className="bg-white/10 hover:bg-white/20 text-white rounded-full h-10 w-10 md:h-12 md:w-12 backdrop-blur-sm shrink-0"
+                  >
+                    <X className="h-5 w-5 md:h-6 md:w-6" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Main Image Container */}
+              <div className="relative w-full h-full flex items-center justify-center px-4 md:px-16 py-20 md:py-24">
+                <img
+                  src={selectedGroup[currentImageIndex].imageUrl}
+                  alt={
+                    selectedGroup[currentImageIndex].altText ||
+                    selectedGroup[currentImageIndex].title
+                  }
+                  className="max-w-full max-h-full object-contain"
+                />
+
+                {/* Navigation Buttons */}
+                {selectedGroup.length > 1 && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full h-10 w-10 md:h-14 md:w-14 backdrop-blur-sm disabled:opacity-30 z-30"
+                      onClick={handlePrevImage}
+                      disabled={currentImageIndex === 0}
+                    >
+                      <ChevronLeft className="h-5 w-5 md:h-7 md:w-7" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full h-10 w-10 md:h-14 md:w-14 backdrop-blur-sm disabled:opacity-30 z-30"
+                      onClick={handleNextImage}
+                      disabled={currentImageIndex === selectedGroup.length - 1}
+                    >
+                      <ChevronRight className="h-5 w-5 md:h-7 md:w-7" />
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              {/* Bottom Section with Thumbnails and Button */}
+              <div className="absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/90 via-black/60 to-transparent pb-4 md:pb-6 pt-20">
+                {/* Thumbnail Strip */}
+                {selectedGroup.length > 1 && (
+                  <div className="flex justify-center mb-4 px-4">
+                    <div className="flex gap-2 bg-black/60 p-2 md:p-3 rounded-full backdrop-blur-sm overflow-x-auto max-w-full">
+                      {selectedGroup.map((item, index) => (
+                        <button
+                          key={item._id}
+                          onClick={() => setCurrentImageIndex(index)}
+                          className={`shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                            index === currentImageIndex
+                              ? "border-orange-500 scale-110"
+                              : "border-white/30 hover:border-white/60"
+                          }`}
+                        >
+                          <img
+                            src={item.imageUrl}
+                            alt={item.altText || item.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Buy Now Button */}
+                {selectedGroup[currentImageIndex].productLink &&
+                  selectedGroup[currentImageIndex].productLink.trim() !==
+                    "" && (
+                    <div className="flex justify-center px-4">
+                      <Link
+                        to={selectedGroup[currentImageIndex].productLink}
+                        onClick={handleCloseModal}
+                        className="w-full max-w-md"
+                      >
+                        <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 md:px-8 py-4 md:py-6 text-base md:text-lg shadow-2xl rounded-full">
+                          <ShoppingCart className="mr-2 h-5 w-5" />
+                          Buy Now
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
 export default GalleryPage;
