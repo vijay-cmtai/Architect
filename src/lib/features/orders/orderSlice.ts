@@ -21,7 +21,7 @@ interface OrderState {
   orders: Order[];
   currentOrder: Order | null;
   status: "idle" | "loading" | "succeeded" | "failed";
-  actionStatus: "idle" | "loading" | "succeeded" | "failed"; // For actions like delete, update
+  actionStatus: "idle" | "loading" | "succeeded" | "failed";
   error: any;
 }
 
@@ -40,7 +40,7 @@ export const createOrder = createAsyncThunk<Order, any, { state: RootState }>(
   async (orderData, { getState, rejectWithValue }) => {
     try {
       const state = getState();
-      const token = getToken(state); // Will be undefined for guests
+      const token = getToken(state);
 
       const config: { headers: { [key: string]: string } } = {
         headers: {
@@ -48,7 +48,6 @@ export const createOrder = createAsyncThunk<Order, any, { state: RootState }>(
         },
       };
 
-      // Only add Authorization header if a token exists
       if (token) {
         config.headers["Authorization"] = `Bearer ${token}`;
       }
@@ -63,7 +62,6 @@ export const createOrder = createAsyncThunk<Order, any, { state: RootState }>(
   }
 );
 
-// This thunk is only for LOGGED-IN users to see their order history
 export const fetchMyOrders = createAsyncThunk<
   Order[],
   void,
@@ -72,7 +70,6 @@ export const fetchMyOrders = createAsyncThunk<
   try {
     const state = getState();
     const token = getToken(state);
-    // This MUST have a token, so we throw an error if not found
     if (!token) {
       return rejectWithValue("Not authorized, no token");
     }
@@ -95,7 +92,7 @@ export const payOrderWithPaypal = createAsyncThunk<
   async ({ orderId, paymentResult }, { getState, rejectWithValue }) => {
     try {
       const state = getState();
-      const token = getToken(state); // Optional token
+      const token = getToken(state);
 
       const config: { headers: { [key: string]: string } } = {
         headers: {
@@ -121,7 +118,42 @@ export const payOrderWithPaypal = createAsyncThunk<
   }
 );
 
-// --- ADMIN-ONLY ASYNC THUNKS (These require a token) ---
+// ✅ NEW: Check PhonePe Payment Status
+export const checkPhonePeStatus = createAsyncThunk<
+  any,
+  string,
+  { state: RootState }
+>(
+  "orders/checkPhonePeStatus",
+  async (merchantTransactionId, { getState, rejectWithValue }) => {
+    try {
+      const state = getState();
+      const token = getToken(state);
+
+      const config: { headers: { [key: string]: string } } = {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
+
+      if (token) {
+        config.headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const { data } = await axios.get(
+        `${API_URL}/phonepe-status/${merchantTransactionId}`,
+        config
+      );
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to check payment status"
+      );
+    }
+  }
+);
+
+// --- ADMIN-ONLY ASYNC THUNKS ---
 
 export const fetchAllOrders = createAsyncThunk<
   Order[],
@@ -250,14 +282,22 @@ const orderSlice = createSlice({
         payOrderWithPaypal.fulfilled,
         (state, action: PayloadAction<Order>) => {
           state.actionStatus = "succeeded";
-          // We might not have the order in our `orders` list for a guest,
-          // so we just update the currentOrder if it matches.
           if (state.currentOrder?._id === action.payload._id) {
             state.currentOrder = action.payload;
           }
         }
       )
       .addCase(payOrderWithPaypal.rejected, actionRejected);
+
+    // ✅ NEW: Check PhonePe Status
+    builder
+      .addCase(checkPhonePeStatus.pending, actionPending)
+      .addCase(checkPhonePeStatus.fulfilled, (state, action) => {
+        state.actionStatus = "succeeded";
+        // You can update currentOrder or orders based on the status
+        console.log("PhonePe Status:", action.payload);
+      })
+      .addCase(checkPhonePeStatus.rejected, actionRejected);
 
     // --- ADMIN REDUCERS ---
 
