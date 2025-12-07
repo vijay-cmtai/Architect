@@ -7,7 +7,6 @@ import {
   Heart,
   Download,
   Loader2,
-  ServerCrash,
   ChevronLeft,
   ChevronRight,
   Youtube,
@@ -92,10 +91,14 @@ const HomeFloorPlans = () => {
   const { userInfo } = useSelector((state: RootState) => state.user);
   const { orders } = useSelector((state: RootState) => state.orders);
 
-  // Fetch only Floor Plans
+  // Fetch Floor Plans (Limit increased to 50)
   useEffect(() => {
     dispatch(
-      fetchProducts({ planCategory: "floor-plans", limit: 8, sortBy: "newest" })
+      fetchProducts({
+        planCategory: "floor-plans",
+        limit: 50,
+        sortBy: "newest",
+      })
     );
   }, [dispatch]);
 
@@ -116,13 +119,14 @@ const HomeFloorPlans = () => {
   const processedData = useMemo(() => {
     if (!Array.isArray(products) || products.length === 0) return [];
 
-    // Filter locally to be safe if API returns mixed
+    // Filter locally to ensure we only get floor plans
     const floorPlansOnly = products.filter((p) => {
       const cat = String(p.category || p.Categories).toLowerCase();
       return cat.includes("floor") || cat.includes("house plan");
     });
 
-    return floorPlansOnly.slice(0, 8).map((product) => {
+    // Map data to match FeaturedProducts structure
+    return floorPlansOnly.map((product) => {
       const productName = product.name || product.Name || "Untitled Plan";
       const regularPrice =
         Number(product.price) || Number(product["Regular price"]) || 0;
@@ -140,6 +144,8 @@ const HomeFloorPlans = () => {
           product.image ||
           product.Images?.split(",")[0]?.trim() ||
           house3,
+
+        // Featured Product Attribute Mapping
         plotAreaDisplay:
           product.plotArea || String(product["Attribute 2 value(s)"] || "N/A"),
         roomsDisplay:
@@ -148,6 +154,7 @@ const HomeFloorPlans = () => {
           product.plotSize || String(product["Attribute 1 value(s)"] || "N/A"),
         directionDisplay:
           product.direction || String(product["Attribute 4 value(s)"] || "N/A"),
+
         categoryDisplay:
           (Array.isArray(product.category) && product.category[0]) ||
           product.Categories?.split(",")[0] ||
@@ -182,9 +189,12 @@ const HomeFloorPlans = () => {
     if (!product.hasPurchased)
       return toast({ variant: "destructive", title: "Purchase Required" });
     const files = product.planFile || [];
-    if (files.length === 0)
+    const fileUrl = Array.isArray(files) ? files[0] : files;
+
+    if (!fileUrl)
       return toast({ variant: "destructive", title: "No Files Found" });
-    files.forEach((url: string) => window.open(url, "_blank"));
+
+    window.open(fileUrl, "_blank");
     toast({ title: "Download Started" });
   };
 
@@ -214,7 +224,7 @@ const HomeFloorPlans = () => {
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-center items-end mb-8">
-          <div>
+          <div className="text-center">
             <h2 className="text-3xl font-bold text-foreground">
               Latest Floor Plans
             </h2>
@@ -257,6 +267,7 @@ const HomeFloorPlans = () => {
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
+                  {/* --- TOP IMAGE SECTION --- */}
                   <div className="relative border-b bg-muted/20">
                     <Link to={`/product/${product.slug}`} className="block p-4">
                       <img
@@ -278,7 +289,11 @@ const HomeFloorPlans = () => {
                     <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleWishlistToggle(product)}
-                        className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${product.isWishlisted ? "text-red-500 scale-110" : "text-foreground hover:text-primary hover:scale-110"}`}
+                        className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${
+                          product.isWishlisted
+                            ? "text-red-500 scale-110"
+                            : "text-foreground hover:text-primary hover:scale-110"
+                        }`}
                       >
                         <Heart
                           className="w-5 h-5"
@@ -296,7 +311,7 @@ const HomeFloorPlans = () => {
                     </div>
                   </div>
 
-                  {/* SAME 4-GRID LAYOUT */}
+                  {/* --- 4-GRID ATTRIBUTE SECTION (Like Featured Products) --- */}
                   <div className="p-4 border-b">
                     <div className="grid grid-cols-4 gap-2 text-center">
                       <div className="bg-gray-50 rounded-md p-2">
@@ -326,6 +341,7 @@ const HomeFloorPlans = () => {
                     </div>
                   </div>
 
+                  {/* --- INFO & BUTTONS SECTION --- */}
                   <div className="p-4">
                     <div className="mb-4">
                       <p className="text-xs text-gray-500 uppercase font-medium">
