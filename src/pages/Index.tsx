@@ -43,7 +43,7 @@ const Index = () => {
       <CustomDesignSection />
       <FeaturedProducts />
       <HomeFloorPlans />
-      <FloorDElevations />
+      {/* <FloorDElevations /> */}
       {/* <CategoriesSection /> */}
       <ConstructionPartnersSection />
       <ContractorsSection />
