@@ -9,6 +9,9 @@ import {
   resetActionStatus,
 } from "@/lib/features/inquiries/inquirySlice";
 
+// ✅ Added useNavigate for routing
+import { useNavigate } from "react-router-dom";
+
 // Components
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -36,10 +39,10 @@ import {
   Search,
   CheckCircle2,
   Filter,
+  UserPlus, // ✅ Added Icon
 } from "lucide-react";
 
 // --- Types ---
-// ✅ Type Definition
 type ContractorType = {
   _id: string;
   name: string;
@@ -204,7 +207,8 @@ const ContactModal: FC<{
 // --- Main Page Component ---
 const PartnersPage: FC = () => {
   const dispatch: AppDispatch = useDispatch();
-  // Using explicit RootState selector
+  const navigate = useNavigate(); // ✅ Initialize Navigation hook
+
   const { contractors, contractorListStatus } = useSelector(
     (state: RootState) => state.user
   );
@@ -219,11 +223,9 @@ const PartnersPage: FC = () => {
     dispatch(fetchContractors());
   }, [dispatch]);
 
-  // ✅ ERROR FIX 1: Type casting contractors here
   const approvedContractors = useMemo(() => {
     if (!Array.isArray(contractors)) return [];
 
-    // Explicitly cast contractors to ContractorType[] to fix the first error
     const typedContractors = contractors as ContractorType[];
 
     return typedContractors.filter((c) => {
@@ -246,7 +248,6 @@ const PartnersPage: FC = () => {
     });
   }, [contractors, cityFilter, professionFilter]);
 
-  // ✅ ERROR FIX 2: Argument type is now matched because approvedContractors is typed correctly
   const handleContactClick = (contractor: ContractorType) => {
     setSelectedContractor(contractor);
     setIsModalOpen(true);
@@ -273,10 +274,21 @@ const PartnersPage: FC = () => {
           <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight mb-6">
             City Partners & Contractors
           </h1>
-          <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto mb-8">
             Find verified professionals for your dream project. From civil work
             to interior design, we have the best partners.
           </p>
+
+          {/* ✅ REGISTER BUTTON ADDED HERE */}
+          <div className="flex justify-center">
+            <Button
+              onClick={() => navigate("/register")}
+              className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-6 px-8 rounded-full shadow-lg hover:shadow-orange-500/20 transition-all transform hover:-translate-y-1 text-lg"
+            >
+              <UserPlus className="w-5 h-5 mr-2" />
+              Register With Us
+            </Button>
+          </div>
         </div>
       </div>
 
