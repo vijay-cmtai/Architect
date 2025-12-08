@@ -36,7 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// --- 1. FULL SCREEN IMAGE VIEWER (Fixed Close Button) ---
+// --- 1. FULL SCREEN IMAGE VIEWER ---
 const ImageViewModal = ({ imageUrl, onClose }) => {
   if (!imageUrl) return null;
 
@@ -48,10 +48,6 @@ const ImageViewModal = ({ imageUrl, onClose }) => {
       className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
       onClick={onClose}
     >
-      {/* 
-         FIX: Added z-50 to ensure button is ABOVE the image container layer.
-         Moved button purely absolute relative to viewport.
-      */}
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -62,18 +58,17 @@ const ImageViewModal = ({ imageUrl, onClose }) => {
         <X size={32} />
       </button>
 
-      {/* Image Container */}
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.8, opacity: 0 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="relative max-w-7xl w-full h-full flex items-center justify-center pointer-events-none" // pointer-events-none lets clicks pass through empty space
+        className="relative max-w-7xl w-full h-full flex items-center justify-center pointer-events-none"
       >
         <img
           src={imageUrl}
           alt="Full View"
-          className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl border border-white/10 pointer-events-auto" // Re-enable clicks on image only
+          className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl border border-white/10 pointer-events-auto"
           onClick={(e) => e.stopPropagation()}
         />
       </motion.div>
@@ -81,7 +76,7 @@ const ImageViewModal = ({ imageUrl, onClose }) => {
   );
 };
 
-// --- 2. INQUIRY MODAL (Unchanged) ---
+// --- 2. INQUIRY MODAL ---
 const InquiryModal = ({ product, onClose }) => {
   const dispatch: AppDispatch = useDispatch();
   const { actionStatus, error } = useSelector(
@@ -201,18 +196,18 @@ const InquiryModal = ({ product, onClose }) => {
   );
 };
 
-// --- 3. PRODUCT CARD (Grid Item) ---
+// --- 3. PRODUCT CARD (Optimized for Mobile 2-Cols) ---
 const ProductCard = ({ product, onInquiryClick, onImageClick }) => (
   <motion.div
     layout
     initial={{ opacity: 0, scale: 0.9 }}
     animate={{ opacity: 1, scale: 1 }}
     transition={{ duration: 0.3 }}
-    className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden h-full"
+    className="group bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden h-full"
   >
-    {/* Image Section - Click triggers Full View */}
+    {/* Image Section - Smaller height on mobile */}
     <div
-      className="relative h-64 overflow-hidden bg-gray-100 cursor-zoom-in"
+      className="relative h-36 sm:h-64 overflow-hidden bg-gray-100 cursor-zoom-in"
       onClick={() => onImageClick(product.image)}
     >
       <img
@@ -221,42 +216,38 @@ const ProductCard = ({ product, onInquiryClick, onImageClick }) => (
         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
       />
 
-      {/* City Badge */}
-      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full text-xs font-semibold text-gray-700 flex items-center gap-1 shadow-sm z-10">
-        <MapPin size={12} className="text-orange-500" /> {product.city}
+      {/* City Badge - Smaller font on mobile */}
+      <div className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-white/90 backdrop-blur-md px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold text-gray-700 flex items-center gap-1 shadow-sm z-10">
+        <MapPin size={10} className="sm:w-3 sm:h-3 text-orange-500" />{" "}
+        <span className="truncate max-w-[60px] sm:max-w-none">
+          {product.city}
+        </span>
       </div>
 
-      {/* Category Badge */}
-      <div className="absolute top-3 left-3 bg-orange-600 text-white px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm z-10">
+      {/* Category Badge - Smaller on mobile */}
+      <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-orange-600 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[8px] sm:text-[10px] font-bold uppercase tracking-wider shadow-sm z-10">
         {product.category}
-      </div>
-
-      {/* Hover Overlay */}
-      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20">
-        <div className="bg-white/90 text-gray-900 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-          <ZoomIn size={14} /> View Image
-        </div>
       </div>
     </div>
 
-    {/* Content Section */}
-    <div className="p-5 flex flex-col flex-grow">
+    {/* Content Section - Compact padding on mobile */}
+    <div className="p-3 sm:p-5 flex flex-col flex-grow">
       <div className="mb-2">
-        <h3 className="text-lg font-bold text-gray-900 leading-tight line-clamp-1 group-hover:text-orange-600 transition-colors">
+        <h3 className="text-sm sm:text-lg font-bold text-gray-900 leading-tight line-clamp-2 sm:line-clamp-1 group-hover:text-orange-600 transition-colors">
           {product.name}
         </h3>
-        <p className="text-xs text-gray-400 mt-1">
-          Sold by:{" "}
+        <p className="text-[10px] sm:text-xs text-gray-400 mt-1 truncate">
+          By:{" "}
           <span className="font-medium text-gray-600">
             {product.seller?.businessName || "Verified Seller"}
           </span>
         </p>
       </div>
 
-      <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+      <div className="mt-auto pt-2 sm:pt-4 border-t border-gray-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
         <div className="flex flex-col">
-          <span className="text-xs text-gray-400">Price</span>
-          <span className="text-xl font-extrabold text-gray-900">
+          <span className="hidden sm:block text-xs text-gray-400">Price</span>
+          <span className="text-sm sm:text-xl font-extrabold text-gray-900">
             ₹{product.price.toLocaleString()}
           </span>
         </div>
@@ -265,7 +256,7 @@ const ProductCard = ({ product, onInquiryClick, onImageClick }) => (
             e.stopPropagation();
             onInquiryClick(product);
           }}
-          className="bg-gray-900 hover:bg-orange-600 text-white rounded-lg px-5 transition-colors"
+          className="w-full sm:w-auto h-8 sm:h-10 text-xs sm:text-sm bg-gray-900 hover:bg-orange-600 text-white rounded-lg px-3 sm:px-5 transition-colors"
         >
           Inquiry
         </Button>
@@ -293,7 +284,7 @@ const MarketplacePage: FC = () => {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 12; // Config: 12 cards per page
+  const ITEMS_PER_PAGE = 12;
 
   useEffect(() => {
     dispatch(fetchPublicSellerProducts({ limit: 200 }));
@@ -348,7 +339,6 @@ const MarketplacePage: FC = () => {
     setCurrentPage(1);
   }, [searchTerm, selectedCategory, selectedCity]);
 
-  // Scroll to top on page change
   const handlePageChange = (page) => {
     setCurrentPage(page);
     window.scrollTo({ top: 350, behavior: "smooth" });
@@ -364,22 +354,22 @@ const MarketplacePage: FC = () => {
       <Navbar />
 
       {/* --- Banner --- */}
-      <div className="relative h-[300px] md:h-[400px] bg-gray-900 overflow-hidden">
+      <div className="relative h-[250px] md:h-[400px] bg-gray-900 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-gray-800" />
         <div className="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&q=80')] bg-cover bg-center" />
         <div className="relative z-10 h-full max-w-7xl mx-auto px-4 flex flex-col justify-center items-center text-center">
-          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight mb-4">
+          <h1 className="text-3xl md:text-6xl font-black text-white tracking-tight mb-4">
             Marketplace
           </h1>
-          <p className="text-gray-300 text-lg max-w-2xl">
+          <p className="text-gray-300 text-sm md:text-lg max-w-2xl">
             Find the best construction materials & sellers in one place.
           </p>
         </div>
       </div>
 
-      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-20 pb-20">
+      <main className="flex-grow max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 -mt-10 md:-mt-16 relative z-20 pb-20">
         {/* --- Filters Card --- */}
-        <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-6 mb-10">
+        <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-4 md:p-6 mb-6 md:mb-10">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div className="md:col-span-2">
               <Label className="text-xs font-bold text-gray-500 uppercase">
@@ -438,7 +428,7 @@ const MarketplacePage: FC = () => {
           </div>
         </div>
 
-        {/* --- Product Grid --- */}
+        {/* --- Product Grid (Updated for 2 Columns Mobile) --- */}
         {status === "loading" ? (
           <div className="py-20 flex justify-center">
             <Loader2 className="h-12 w-12 animate-spin text-orange-600" />
@@ -452,7 +442,8 @@ const MarketplacePage: FC = () => {
         ) : (
           <>
             {displayedProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              // ✅ FIX: grid-cols-2 for mobile
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                 <AnimatePresence mode="popLayout">
                   {displayedProducts.map((product) => (
                     <ProductCard
@@ -476,26 +467,26 @@ const MarketplacePage: FC = () => {
               </div>
             )}
 
-            {/* --- Pagination Controls (Only shows if multiple pages) --- */}
+            {/* --- Pagination Controls --- */}
             {totalPages > 1 && (
-              <div className="mt-16 flex items-center justify-center gap-2">
+              <div className="mt-10 md:mt-16 flex items-center justify-center gap-2">
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className="rounded-full h-10 w-10 border-gray-300 hover:border-orange-500 hover:text-orange-600"
+                  className="rounded-full h-8 w-8 sm:h-10 sm:w-10 border-gray-300 hover:border-orange-500 hover:text-orange-600"
                 >
-                  <ChevronLeft size={18} />
+                  <ChevronLeft size={16} className="sm:w-[18px]" />
                 </Button>
 
-                <div className="flex gap-2 mx-2">
+                <div className="flex gap-1 sm:gap-2 mx-2">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                     (page) => (
                       <button
                         key={page}
                         onClick={() => handlePageChange(page)}
-                        className={`h-10 w-10 rounded-full text-sm font-bold transition-all ${
+                        className={`h-8 w-8 sm:h-10 sm:w-10 rounded-full text-xs sm:text-sm font-bold transition-all ${
                           currentPage === page
                             ? "bg-orange-600 text-white shadow-lg shadow-orange-600/30 transform scale-110"
                             : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-100 hover:border-orange-300"
@@ -514,9 +505,9 @@ const MarketplacePage: FC = () => {
                     handlePageChange(Math.min(totalPages, currentPage + 1))
                   }
                   disabled={currentPage === totalPages}
-                  className="rounded-full h-10 w-10 border-gray-300 hover:border-orange-500 hover:text-orange-600"
+                  className="rounded-full h-8 w-8 sm:h-10 sm:w-10 border-gray-300 hover:border-orange-500 hover:text-orange-600"
                 >
-                  <ChevronRight size={18} />
+                  <ChevronRight size={16} className="sm:w-[18px]" />
                 </Button>
               </div>
             )}
