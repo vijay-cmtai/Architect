@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Heart,
   Download,
@@ -18,8 +18,10 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import { useToast } from "@/components/ui/use-toast";
 import house3 from "@/assets/house-3.jpg";
 import DisplayPrice from "@/components/DisplayPrice";
+// ✅ Import Currency Context
+import { useCurrency } from "@/contexts/CurrencyContext";
 
-// ✅ Import Actions (Wahi same actions jo data la rahe the)
+// ✅ Import Actions
 import { fetchProducts } from "@/lib/features/products/productSlice";
 import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice";
 import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
@@ -76,26 +78,29 @@ const VideoModal = ({ videoId, onClose }) => {
 // --- MAIN COMPONENT ---
 const HomeElevations = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const scrollContainerRef = useRef(null);
   const [playingVideoId, setPlayingVideoId] = useState(null);
 
-  // ✅ Data Selectors (Logic same as before for 3D Plans)
+  // Currency Hook
+  const { symbol, rate } = useCurrency();
+
+  // Redux Selectors
   const { products: adminProducts, listStatus: adminStatus } = useSelector(
     (state) => state.products
   );
   const { plans: professionalPlans, listStatus: profStatus } = useSelector(
     (state) => state.professionalPlans
   );
-
   const { userInfo } = useSelector((state) => state.user);
   const { orders } = useSelector((state) => state.orders);
 
   // --- FETCH DATA (Logic for Elevations) ---
   useEffect(() => {
     const params = {
-      limit: 10,
+      limit: 12,
       sortBy: "newest",
       planCategory: "elevations", // ✅ Fetching 3D Elevations
     };
@@ -118,7 +123,7 @@ const HomeElevations = () => {
 
   // --- MERGE & PROCESS DATA ---
   const processedData = useMemo(() => {
-    // 1. Merge Lists (Admin + Professional)
+    // 1. Merge Lists
     const combinedList = [
       ...(Array.isArray(adminProducts) ? adminProducts : []),
       ...(Array.isArray(professionalPlans) ? professionalPlans : []),
@@ -126,55 +131,89 @@ const HomeElevations = () => {
 
     if (combinedList.length === 0) return [];
 
-    // 2. Map Data to Uniform Structure
+    // 2. Map Data
     return combinedList.slice(0, 10).map((product) => {
-      // Name handling
       const productName =
         product.name || product.planName || product.Name || "Untitled Plan";
 
-      // Price handling
+      // Price Logic
       const regularPrice =
-        Number(product.price > 0 ? product.price : product["Regular price"]) ||
-        0;
+        product.price && product.price > 0
+          ? product.price
+          : product["Regular price"] &&
+              parseFloat(String(product["Regular price"])) > 0
+            ? parseFloat(String(product["Regular price"]))
+            : 0;
+
       const salePrice =
-        Number(
-          product.salePrice > 0 ? product.salePrice : product["Sale price"]
-        ) || 0;
-      const isSale = salePrice > 0 && salePrice < regularPrice;
+        product.salePrice && product.salePrice > 0
+          ? product.salePrice
+          : product["Sale price"] &&
+              parseFloat(String(product["Sale price"])) > 0
+            ? parseFloat(String(product["Sale price"]))
+            : null;
+
+      const isSale =
+        salePrice !== null &&
+        salePrice > 0 &&
+        regularPrice > 0 &&
+        salePrice < regularPrice;
+
+      const displayPrice = isSale ? salePrice : regularPrice;
+
+      // Image Logic
+      const getImageSource = () => {
+        const primaryImage =
+          product.mainImage || product.image || product.Images;
+        if (primaryImage && typeof primaryImage === "string") {
+          return primaryImage.split(",")[0].trim();
+        }
+        return house3;
+      };
+
+      // City Logic
+      const city = product.city
+        ? Array.isArray(product.city)
+          ? product.city.join(", ")
+          : product.city
+        : null;
 
       return {
         ...product,
         id: product._id,
         displayName: productName,
         slug: `${slugify(productName)}-${product._id}`,
-        mainImage:
-          product.mainImage ||
-          product.image ||
-          product.Images?.split(",")[0]?.trim() ||
-          house3,
+        mainImage: getImageSource(),
 
-        // Stats Display (Matching Theme Logic)
+        // --- ATTRIBUTES (Matching ThreeDPlansPage Grid) ---
+        // 1. Area
         plotAreaDisplay:
           product.plotArea ||
           (product["Attribute 2 value(s)"]
-            ? String(product["Attribute 2 value(s)"]).replace(/[^0-9]/g, "")
+            ? parseInt(
+                String(product["Attribute 2 value(s)"]).replace(/[^0-9]/g, "")
+              )
             : "N/A"),
 
-        roomsDisplay:
-          product.rooms ||
-          product.bhk ||
-          String(product["Attribute 3 value(s)"] || "N/A"),
+        // 2. Rooms
+        roomsDisplay: product.rooms || product["Attribute 3 value(s)"] || "N/A",
 
+        // 3. Bathrooms
+        bathrooms: product.bathrooms || "N/A",
+
+        // 4. Kitchen
+        kitchen: product.kitchen || "N/A",
+
+        // For Overlay
         plotSizeDisplay:
-          product.plotSize || String(product["Attribute 1 value(s)"] || "N/A"),
-
-        directionDisplay:
-          product.direction || String(product["Attribute 4 value(s)"] || "N/A"),
+          product.plotSize || product["Attribute 1 value(s)"] || "N/A",
 
         categoryDisplay: "Floor Plan + 3D",
+        productNo: product.productNo || null,
+        city: city,
 
         isSale,
-        displayPrice: isSale ? salePrice : regularPrice,
+        displayPrice,
         regularPrice,
         videoId: getYouTubeId(product.youtubeLink),
         isWishlisted: isInWishlist(product._id),
@@ -184,12 +223,15 @@ const HomeElevations = () => {
   }, [adminProducts, professionalPlans, purchasedProductIds, isInWishlist]);
 
   const handleWishlistToggle = (product) => {
-    if (!userInfo)
-      return toast({
+    if (!userInfo) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to add items to your wishlist.",
         variant: "destructive",
-        title: "Please Login",
-        description: "Login to manage wishlist.",
       });
+      navigate("/login");
+      return;
+    }
 
     const wishlistItem = {
       productId: product.id,
@@ -210,6 +252,16 @@ const HomeElevations = () => {
   };
 
   const handleDownload = (product) => {
+    if (!userInfo) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to download.",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+
     if (!product.hasPurchased)
       return toast({ variant: "destructive", title: "Purchase Required" });
 
@@ -245,7 +297,6 @@ const HomeElevations = () => {
   if (processedData.length === 0) return null;
 
   return (
-    // ✅ Main Background Theme (Matching HomeFloorPlans)
     <section className="py-12 bg-background border-b">
       <VideoModal
         videoId={playingVideoId}
@@ -256,24 +307,23 @@ const HomeElevations = () => {
         <div className="flex justify-center items-end mb-8 relative">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-foreground">
-              Latest Floor Plans + 3D Elevation 
+              Latest Floor Plans + 3D Elevation
             </h2>
             <p className="text-muted-foreground mt-2">
               Explore our newest residential layouts
             </p>
           </div>
           {/* Desktop View All Button */}
-          {/* <Link
+          <Link
             to="/3d-plans"
             className="hidden md:inline-flex absolute right-0 top-1/2 -translate-y-1/2"
           >
             <Button variant="outline">View All Designs</Button>
-          </Link> */}
+          </Link>
         </div>
 
         {/* Carousel Container */}
         <div className="relative group/carousel">
-          {/* Navigation Buttons */}
           <Button
             variant="outline"
             size="icon"
@@ -301,129 +351,161 @@ const HomeElevations = () => {
               {processedData.map((product, index) => (
                 <motion.div
                   key={product.id}
-                  // Mobile Friendly Card Width
-                  className="bg-card rounded-2xl overflow-hidden group transition-all duration-300 border-2 border-transparent hover:border-primary hover:shadow-2xl hover:-translate-y-2 flex-shrink-0 w-[85vw] sm:w-[70vw] md:w-[320px] snap-start"
+                  className="bg-card rounded-lg shadow-md overflow-hidden border border-gray-200 flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex-shrink-0 w-[85vw] sm:w-[70vw] md:w-[320px] snap-start"
                   initial={{ opacity: 0, y: 50 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  {/* Image Section */}
-                  <div className="relative border-b bg-muted/20">
-                    <Link to={`/product/${product.slug}`} className="block p-4">
+                  {/* --- CARD IMAGE SECTION (MATCHING ThreeDPlansPage) --- */}
+                  <div className="relative border-b p-3 sm:p-4">
+                    <Link to={`/product/${product.slug}`}>
                       <img
                         src={product.mainImage}
                         alt={product.displayName}
-                        className="w-full h-56 object-contain group-hover:scale-105 transition-transform"
+                        className="w-full h-48 sm:h-56 object-contain group-hover:scale-105 transition-transform duration-500"
                       />
                     </Link>
                     {product.isSale && (
-                      <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md z-10">
+                      <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 sm:px-3 py-1 rounded-md shadow-md z-10">
                         Sale!
                       </div>
                     )}
                     {product.hasPurchased && (
-                      <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md z-10">
+                      <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-semibold px-2 sm:px-3 py-1 rounded-full shadow-md z-10">
                         Purchased
                       </div>
                     )}
-                    <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-1.5 rounded-md shadow-lg z-10 text-center max-w-[90%]">
+                      <p className="truncate">{product.plotSizeDisplay}</p>
+                      <p className="text-[10px] sm:text-xs font-normal">
+                        {product.hasPurchased
+                          ? "Download pdf file"
+                          : "Purchase to download"}
+                      </p>
+                    </div>
+                    <div className="absolute top-3 right-3 flex space-x-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleWishlistToggle(product)}
-                        className={`w-9 h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${
-                          product.isWishlisted
-                            ? "text-red-500 scale-110"
-                            : "text-foreground hover:text-primary hover:scale-110"
-                        }`}
+                        className={`w-8 h-8 sm:w-9 sm:h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${product.isWishlisted ? "text-red-500 scale-110" : "text-foreground hover:text-primary hover:scale-110"}`}
                       >
                         <Heart
-                          className="w-5 h-5"
+                          className="w-4 h-4 sm:w-5 sm:h-5"
                           fill={product.isWishlisted ? "currentColor" : "none"}
                         />
                       </button>
                       {product.videoId && (
                         <button
                           onClick={() => setPlayingVideoId(product.videoId)}
-                          className="w-9 h-9 bg-red-500/90 rounded-full flex items-center justify-center shadow-sm text-white hover:bg-red-600"
+                          className="w-8 h-8 sm:w-9 sm:h-9 bg-red-500/90 rounded-full flex items-center justify-center shadow-sm text-white hover:bg-red-600"
                         >
-                          <Youtube className="w-5 h-5" />
+                          <Youtube className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
                       )}
                     </div>
                   </div>
 
-                  {/* ✅ THEME MATCHED STATS GRID (Colored Boxes) */}
-                  <div className="p-4 border-b">
-                    <div className="grid grid-cols-4 gap-2 text-center">
-                      <div className="bg-gray-50 rounded-md p-2">
-                        <p className="text-xs text-gray-500">Area</p>
-                        <p className="text-sm font-semibold text-gray-800">
-                          {product.plotAreaDisplay}
+                  {/* --- 2x2 GRID STATS (MATCHING ThreeDPlansPage EXACTLY) --- */}
+                  <div className="p-3 sm:p-4 border-b">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-4 text-center">
+                      <div className="p-2">
+                        <p className="text-xs sm:text-sm text-gray-500">
+                          Plot Area
+                        </p>
+                        <p className="font-semibold text-sm sm:text-base text-gray-800">
+                          {product.plotAreaDisplay} sqft
                         </p>
                       </div>
-                      <div className="bg-teal-50 rounded-md p-2">
-                        <p className="text-xs text-gray-500">BHK</p>
-                        <p className="text-sm font-semibold text-gray-800">
+                      <div className="bg-teal-50 p-2 rounded-md">
+                        <p className="text-xs sm:text-sm text-gray-500">
+                          Rooms
+                        </p>
+                        <p className="font-semibold text-sm sm:text-base text-gray-800">
                           {product.roomsDisplay}
                         </p>
                       </div>
-                      <div className="bg-blue-50 rounded-md p-2">
-                        <p className="text-xs text-gray-500">Size</p>
-                        <p className="text-sm font-semibold text-gray-800">
-                          {product.plotSizeDisplay}
+                      <div className="bg-teal-50 p-2 rounded-md">
+                        <p className="text-xs sm:text-sm text-gray-500">
+                          Bathrooms
+                        </p>
+                        <p className="font-semibold text-sm sm:text-base text-gray-800">
+                          {product.bathrooms}
                         </p>
                       </div>
-                      <div className="bg-orange-50 rounded-md p-2">
-                        <p className="text-xs text-gray-500">Facing</p>
-                        <p className="text-sm font-semibold text-gray-800">
-                          {product.directionDisplay || "Any"}
+                      <div className="p-2">
+                        <p className="text-xs sm:text-sm text-gray-500">
+                          Kitchen
+                        </p>
+                        <p className="font-semibold text-sm sm:text-base text-gray-800">
+                          {product.kitchen}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Info & Buttons */}
-                  <div className="p-4">
-                    <div className="mb-4">
-                      <p className="text-xs text-gray-500 uppercase font-medium">
-                        {product.categoryDisplay}
-                      </p>
-                      <h3 className="text-xl font-bold text-gray-800 mt-1 truncate">
-                        {product.displayName}
-                      </h3>
-                      <div className="flex items-baseline gap-2 mt-1 flex-wrap">
-                        {product.isSale && (
-                          <span className="text-sm text-gray-400 line-through">
-                            <DisplayPrice inrPrice={product.regularPrice} />
+                  {/* --- INFO & BUTTONS SECTION --- */}
+                  <div className="p-3 sm:p-4">
+                    <p className="text-xs sm:text-sm text-gray-500 uppercase">
+                      {product.categoryDisplay}
+                    </p>
+                    <h3 className="text-base sm:text-lg font-bold text-gray-800 mt-1 truncate">
+                      {product.displayName}
+                    </h3>
+
+                    {/* Price with Save Badge */}
+                    <div className="flex items-baseline gap-2 mt-2 flex-wrap">
+                      {product.isSale &&
+                        parseFloat(String(product.regularPrice)) > 0 && (
+                          <s className="text-sm sm:text-md text-gray-400">
+                            <DisplayPrice
+                              inrPrice={parseFloat(
+                                String(product.regularPrice)
+                              )}
+                            />
+                          </s>
+                        )}
+                      <span className="text-lg sm:text-xl font-bold text-gray-900">
+                        <DisplayPrice
+                          inrPrice={parseFloat(String(product.displayPrice))}
+                        />
+                      </span>
+                      {product.isSale &&
+                        parseFloat(String(product.regularPrice)) > 0 &&
+                        parseFloat(String(product.displayPrice)) > 0 && (
+                          <span className="text-[10px] sm:text-xs bg-green-100 text-green-800 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-semibold">
+                            SAVE {symbol}
+                            {(
+                              (parseFloat(String(product.regularPrice)) -
+                                parseFloat(String(product.displayPrice))) *
+                              rate
+                            ).toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
                           </span>
                         )}
-                        <span className="text-xl font-bold text-gray-900">
-                          <DisplayPrice inrPrice={product.displayPrice} />
-                        </span>
-                      </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
+
+                    <div className="mt-3 sm:mt-4 grid grid-cols-1 gap-2">
                       <Link to={`/product/${product.slug}`}>
-                        <Button
-                          size="sm"
-                          className="w-full bg-slate-800 text-white hover:bg-slate-700 text-sm h-10"
-                        >
+                        <Button className="w-full text-sm sm:text-base bg-slate-800 text-white hover:bg-slate-700 hover:text-white rounded-md py-2 h-auto">
                           Read more
                         </Button>
                       </Link>
                       <Button
-                        size="sm"
-                        className={`w-full text-white text-sm h-10`}
+                        className={`w-full text-sm sm:text-base text-white rounded-md py-2 h-auto ${product.hasPurchased ? "bg-teal-500 hover:bg-teal-600" : "bg-gray-400 cursor-not-allowed"}`}
                         onClick={() => handleDownload(product)}
                         disabled={!product.hasPurchased}
                       >
                         {product.hasPurchased ? (
                           <>
-                            <Download className="mr-2 h-4 w-4" /> PDF
+                            <Download className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                            Download PDF
                           </>
                         ) : (
                           <>
-                            <Lock className="mr-2 h-4 w-4" /> Download
+                            <Lock className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                            Purchase to Download
                           </>
                         )}
                       </Button>
@@ -436,13 +518,13 @@ const HomeElevations = () => {
         </div>
 
         {/* Mobile View All Button */}
-        {/* <div className="mt-8 text-center md:hidden">
+        <div className="mt-8 text-center md:hidden">
           <Link to="/3d-plans">
             <Button variant="outline" className="w-full">
               View All Designs
             </Button>
           </Link>
-        </div> */}
+        </div>
       </div>
     </section>
   );
