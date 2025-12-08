@@ -43,7 +43,10 @@ const Index = () => {
       <CustomDesignSection />
       <FeaturedProducts />
       <HomeFloorPlans />
-      {/* <FloorDElevations /> */}
+
+      {/* ✅ FIX 1: Uncommented FloorDElevations */}
+      <FloorDElevations />
+
       {/* <CategoriesSection /> */}
       <ConstructionPartnersSection />
       <ContractorsSection />
@@ -56,6 +59,9 @@ const Index = () => {
       <Testimonials />
       <CTA />
       <Footer />
+
+      {/* ✅ FIX 2: Added Chatbot Component Here */}
+      <WhatsAppChatbot />
     </div>
   );
 };
