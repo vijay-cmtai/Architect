@@ -9,7 +9,7 @@ const WhatsAppChatbot = () => {
     // 10 minutes = 10 * 60 * 1000 = 600000 milliseconds
     const timer = setTimeout(() => {
       setOpen(true);
-    }, 600000); // 10 minutes
+    }, 600000); // ✅ Ye sahi hai, 10 minute wait karega
 
     // Cleanup timer on component unmount
     return () => clearTimeout(timer);
