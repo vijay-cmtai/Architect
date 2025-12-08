@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useMemo, FC } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,7 +15,11 @@ import {
   ZoomIn,
   ChevronLeft,
   ChevronRight,
+  Store, // ✅ Added Store Icon
 } from "lucide-react";
+
+// ✅ Added useNavigate
+import { useNavigate } from "react-router-dom";
 
 import { RootState, AppDispatch } from "@/lib/store";
 import { fetchPublicSellerProducts } from "@/lib/features/seller/sellerProductSlice";
@@ -268,6 +274,8 @@ const ProductCard = ({ product, onInquiryClick, onImageClick }) => (
 // --- 4. MAIN PAGE ---
 const MarketplacePage: FC = () => {
   const dispatch: AppDispatch = useDispatch();
+  const navigate = useNavigate(); // ✅ Initialize Navigation
+
   const { products, status, error } = useSelector(
     (state: RootState) => state.sellerProducts
   );
@@ -354,16 +362,25 @@ const MarketplacePage: FC = () => {
       <Navbar />
 
       {/* --- Banner --- */}
-      <div className="relative h-[250px] md:h-[400px] bg-gray-900 overflow-hidden">
+      <div className="relative h-[300px] md:h-[450px] bg-gray-900 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-gray-800" />
         <div className="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&q=80')] bg-cover bg-center" />
         <div className="relative z-10 h-full max-w-7xl mx-auto px-4 flex flex-col justify-center items-center text-center">
           <h1 className="text-3xl md:text-6xl font-black text-white tracking-tight mb-4">
             Marketplace
           </h1>
-          <p className="text-gray-300 text-sm md:text-lg max-w-2xl">
+          <p className="text-gray-300 text-sm md:text-lg max-w-2xl mb-8">
             Find the best construction materials & sellers in one place.
           </p>
+
+          {/* ✅ REGISTER SHOP BUTTON ADDED HERE */}
+          <Button
+            onClick={() => navigate("/register")}
+            className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-6 px-8 rounded-full shadow-lg hover:shadow-orange-500/20 transition-all transform hover:-translate-y-1 text-lg"
+          >
+            <Store className="w-5 h-5 mr-2" />
+            Register Your Shop
+          </Button>
         </div>
       </div>
 
