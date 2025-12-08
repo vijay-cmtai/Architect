@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState, AppDispatch } from "@/lib/store";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -16,14 +15,17 @@ import {
 import YouTube from "react-youtube";
 import { Button } from "@/components/ui/button";
 import { useWishlist } from "@/contexts/WishlistContext";
-import { fetchProducts } from "@/lib/features/products/productSlice";
-import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
 import { useToast } from "@/components/ui/use-toast";
 import house3 from "@/assets/house-3.jpg";
 import DisplayPrice from "@/components/DisplayPrice";
 
+// ✅ Import Actions (Wahi same actions jo data la rahe the)
+import { fetchProducts } from "@/lib/features/products/productSlice";
+import { fetchAllApprovedPlans } from "@/lib/features/professional/professionalPlanSlice";
+import { fetchMyOrders } from "@/lib/features/orders/orderSlice";
+
 // --- HELPER FUNCTIONS ---
-const slugify = (text: any) => {
+const slugify = (text) => {
   if (!text) return "";
   return text
     .toString()
@@ -34,7 +36,7 @@ const slugify = (text: any) => {
     .replace(/\-\-+/g, "-");
 };
 
-const getYouTubeId = (url: string): string | null => {
+const getYouTubeId = (url) => {
   if (!url) return null;
   const regExp =
     /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -43,13 +45,7 @@ const getYouTubeId = (url: string): string | null => {
 };
 
 // --- VIDEO MODAL ---
-const VideoModal = ({
-  videoId,
-  onClose,
-}: {
-  videoId: string | null;
-  onClose: () => void;
-}) => {
+const VideoModal = ({ videoId, onClose }) => {
   if (!videoId) return null;
   const opts = {
     height: "100%",
@@ -78,31 +74,35 @@ const VideoModal = ({
 };
 
 // --- MAIN COMPONENT ---
-const HomeFloorPlans = () => {
-  const dispatch = useDispatch<AppDispatch>();
+const HomeElevations = () => {
+  const dispatch = useDispatch();
   const { toast } = useToast();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+  const scrollContainerRef = useRef(null);
+  const [playingVideoId, setPlayingVideoId] = useState(null);
 
-  const { products, listStatus } = useSelector(
-    (state: RootState) => state.products
+  // ✅ Data Selectors (Logic same as before for 3D Plans)
+  const { products: adminProducts, listStatus: adminStatus } = useSelector(
+    (state) => state.products
   );
-  const { userInfo } = useSelector((state: RootState) => state.user);
-  const { orders } = useSelector((state: RootState) => state.orders);
+  const { plans: professionalPlans, listStatus: profStatus } = useSelector(
+    (state) => state.professionalPlans
+  );
 
-  // Fetch Floor Plans (Limit increased to 50)
-  useEffect(() => {
-    dispatch(
-      fetchProducts({
-        planCategory: "floor-plans",
-        limit: 50,
-        sortBy: "newest",
-      })
-    );
-  }, [dispatch]);
+  const { userInfo } = useSelector((state) => state.user);
+  const { orders } = useSelector((state) => state.orders);
 
+  // --- FETCH DATA (Logic for Elevations) ---
   useEffect(() => {
+    const params = {
+      limit: 10,
+      sortBy: "newest",
+      planCategory: "elevations", // ✅ Fetching 3D Elevations
+    };
+
+    dispatch(fetchProducts(params));
+    dispatch(fetchAllApprovedPlans(params));
+
     if (userInfo) dispatch(fetchMyOrders());
   }, [dispatch, userInfo]);
 
@@ -116,22 +116,30 @@ const HomeFloorPlans = () => {
     );
   }, [orders, userInfo]);
 
+  // --- MERGE & PROCESS DATA ---
   const processedData = useMemo(() => {
-    if (!Array.isArray(products) || products.length === 0) return [];
+    // 1. Merge Lists (Admin + Professional)
+    const combinedList = [
+      ...(Array.isArray(adminProducts) ? adminProducts : []),
+      ...(Array.isArray(professionalPlans) ? professionalPlans : []),
+    ];
 
-    // Filter locally to ensure we only get floor plans
-    const floorPlansOnly = products.filter((p) => {
-      const cat = String(p.category || p.Categories).toLowerCase();
-      return cat.includes("floor") || cat.includes("house plan");
-    });
+    if (combinedList.length === 0) return [];
 
-    // Map data to match FeaturedProducts structure
-    return floorPlansOnly.map((product) => {
-      const productName = product.name || product.Name || "Untitled Plan";
+    // 2. Map Data to Uniform Structure
+    return combinedList.slice(0, 10).map((product) => {
+      // Name handling
+      const productName =
+        product.name || product.planName || product.Name || "Untitled Plan";
+
+      // Price handling
       const regularPrice =
-        Number(product.price) || Number(product["Regular price"]) || 0;
+        Number(product.price > 0 ? product.price : product["Regular price"]) ||
+        0;
       const salePrice =
-        Number(product.salePrice) || Number(product["Sale price"]) || 0;
+        Number(
+          product.salePrice > 0 ? product.salePrice : product["Sale price"]
+        ) || 0;
       const isSale = salePrice > 0 && salePrice < regularPrice;
 
       return {
@@ -145,20 +153,26 @@ const HomeFloorPlans = () => {
           product.Images?.split(",")[0]?.trim() ||
           house3,
 
-        // Featured Product Attribute Mapping
+        // Stats Display (Matching Theme Logic)
         plotAreaDisplay:
-          product.plotArea || String(product["Attribute 2 value(s)"] || "N/A"),
+          product.plotArea ||
+          (product["Attribute 2 value(s)"]
+            ? String(product["Attribute 2 value(s)"]).replace(/[^0-9]/g, "")
+            : "N/A"),
+
         roomsDisplay:
-          product.rooms || String(product["Attribute 3 value(s)"] || "N/A"),
+          product.rooms ||
+          product.bhk ||
+          String(product["Attribute 3 value(s)"] || "N/A"),
+
         plotSizeDisplay:
           product.plotSize || String(product["Attribute 1 value(s)"] || "N/A"),
+
         directionDisplay:
           product.direction || String(product["Attribute 4 value(s)"] || "N/A"),
 
-        categoryDisplay:
-          (Array.isArray(product.category) && product.category[0]) ||
-          product.Categories?.split(",")[0] ||
-          "Floor Plan",
+        categoryDisplay: "Floor Plan + 3D",
+
         isSale,
         displayPrice: isSale ? salePrice : regularPrice,
         regularPrice,
@@ -167,28 +181,39 @@ const HomeFloorPlans = () => {
         hasPurchased: purchasedProductIds.has(product._id),
       };
     });
-  }, [products, purchasedProductIds, isInWishlist]);
+  }, [adminProducts, professionalPlans, purchasedProductIds, isInWishlist]);
 
-  const handleWishlistToggle = (product: any) => {
+  const handleWishlistToggle = (product) => {
     if (!userInfo)
       return toast({
         variant: "destructive",
         title: "Please Login",
         description: "Login to manage wishlist.",
       });
+
+    const wishlistItem = {
+      productId: product.id,
+      name: product.displayName,
+      price: product.regularPrice,
+      salePrice: product.isSale ? product.displayPrice : null,
+      image: product.mainImage,
+      size: product.plotSizeDisplay,
+    };
+
     if (isInWishlist(product.id)) {
       removeFromWishlist(product.id);
       toast({ title: "Removed from Wishlist" });
     } else {
-      addToWishlist(product);
+      addToWishlist(wishlistItem);
       toast({ title: "Added to Wishlist!" });
     }
   };
 
-  const handleDownload = (product: any) => {
+  const handleDownload = (product) => {
     if (!product.hasPurchased)
       return toast({ variant: "destructive", title: "Purchase Required" });
-    const files = product.planFile || [];
+
+    const files = product.planFile || product["Download 1 URL"] || [];
     const fileUrl = Array.isArray(files) ? files[0] : files;
 
     if (!fileUrl)
@@ -198,7 +223,7 @@ const HomeFloorPlans = () => {
     toast({ title: "Download Started" });
   };
 
-  const scroll = (direction: "left" | "right") => {
+  const scroll = (direction) => {
     if (scrollContainerRef.current) {
       const scrollAmount = scrollContainerRef.current.offsetWidth * 0.8;
       scrollContainerRef.current.scrollBy({
@@ -208,33 +233,47 @@ const HomeFloorPlans = () => {
     }
   };
 
-  if (listStatus === "loading")
+  const isLoading = adminStatus === "loading" || profStatus === "loading";
+
+  if (isLoading)
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
+
   if (processedData.length === 0) return null;
 
   return (
+    // ✅ Main Background Theme (Matching HomeFloorPlans)
     <section className="py-12 bg-background border-b">
       <VideoModal
         videoId={playingVideoId}
         onClose={() => setPlayingVideoId(null)}
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-center items-end mb-8">
+        {/* Header Section */}
+        <div className="flex justify-center items-end mb-8 relative">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-foreground">
-              Latest Floor Plans
+              Latest Floor Plans + 3D Elevation 
             </h2>
             <p className="text-muted-foreground mt-2">
               Explore our newest residential layouts
             </p>
           </div>
+          {/* Desktop View All Button */}
+          {/* <Link
+            to="/3d-plans"
+            className="hidden md:inline-flex absolute right-0 top-1/2 -translate-y-1/2"
+          >
+            <Button variant="outline">View All Designs</Button>
+          </Link> */}
         </div>
 
-        <div className="relative">
+        {/* Carousel Container */}
+        <div className="relative group/carousel">
+          {/* Navigation Buttons */}
           <Button
             variant="outline"
             size="icon"
@@ -252,6 +291,7 @@ const HomeFloorPlans = () => {
             <ChevronRight className="h-6 w-6" />
           </Button>
 
+          {/* Scrollable Area */}
           <div
             ref={scrollContainerRef}
             className="flex overflow-x-auto scroll-smooth py-4 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide"
@@ -261,13 +301,14 @@ const HomeFloorPlans = () => {
               {processedData.map((product, index) => (
                 <motion.div
                   key={product.id}
+                  // Mobile Friendly Card Width
                   className="bg-card rounded-2xl overflow-hidden group transition-all duration-300 border-2 border-transparent hover:border-primary hover:shadow-2xl hover:-translate-y-2 flex-shrink-0 w-[85vw] sm:w-[70vw] md:w-[320px] snap-start"
                   initial={{ opacity: 0, y: 50 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  {/* --- TOP IMAGE SECTION --- */}
+                  {/* Image Section */}
                   <div className="relative border-b bg-muted/20">
                     <Link to={`/product/${product.slug}`} className="block p-4">
                       <img
@@ -311,7 +352,7 @@ const HomeFloorPlans = () => {
                     </div>
                   </div>
 
-                  {/* --- 4-GRID ATTRIBUTE SECTION (Like Featured Products) --- */}
+                  {/* ✅ THEME MATCHED STATS GRID (Colored Boxes) */}
                   <div className="p-4 border-b">
                     <div className="grid grid-cols-4 gap-2 text-center">
                       <div className="bg-gray-50 rounded-md p-2">
@@ -341,7 +382,7 @@ const HomeFloorPlans = () => {
                     </div>
                   </div>
 
-                  {/* --- INFO & BUTTONS SECTION --- */}
+                  {/* Info & Buttons */}
                   <div className="p-4">
                     <div className="mb-4">
                       <p className="text-xs text-gray-500 uppercase font-medium">
@@ -394,10 +435,11 @@ const HomeFloorPlans = () => {
           </div>
         </div>
 
+        {/* Mobile View All Button */}
         {/* <div className="mt-8 text-center md:hidden">
-          <Link to="/browse-plans">
+          <Link to="/3d-plans">
             <Button variant="outline" className="w-full">
-              View All Plans
+              View All Designs
             </Button>
           </Link>
         </div> */}
@@ -406,4 +448,4 @@ const HomeFloorPlans = () => {
   );
 };
 
-export default HomeFloorPlans;
+export default HomeElevations;
