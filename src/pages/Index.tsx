@@ -59,9 +59,6 @@ const Index = () => {
       <Testimonials />
       <CTA />
       <Footer />
-
-      {/* ✅ FIX 2: Added Chatbot Component Here */}
-      <WhatsAppChatbot />
     </div>
   );
 };
