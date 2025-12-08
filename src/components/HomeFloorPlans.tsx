@@ -394,13 +394,13 @@ const HomeFloorPlans = () => {
           </div>
         </div>
 
-        <div className="mt-8 text-center md:hidden">
+        {/* <div className="mt-8 text-center md:hidden">
           <Link to="/browse-plans">
             <Button variant="outline" className="w-full">
               View All Plans
             </Button>
           </Link>
-        </div>
+        </div> */}
       </div>
     </section>
   );
