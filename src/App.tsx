@@ -99,6 +99,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import PackagesPage from "./pages/PackagesPage";
 import MarketPlace from "./pages/MarketPlace";
+import CityPartnersPage from "./pages/CityPartnersPage";
 
 const queryClient = new QueryClient();
 
@@ -139,7 +140,7 @@ const App = () => (
                       <Route path="/careers" element={<CareersPage />} />
                       <Route path="/contact" element={<ContactUs />} />
                       <Route path="/marketplace" element={<MarketPlace />} />
-
+                      <Route path="/city-partners" element={<CityPartnersPage />} />
                       <Route path="/register" element={<Register />} />
                       <Route path="/login" element={<Login />} />
                       <Route
