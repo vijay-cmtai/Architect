@@ -78,10 +78,12 @@ const Navbar = () => {
     };
   }, [isMenuOpen, isWishlistOpen]);
 
+  // ✅ Added "City Partner" to Navigation Links
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Ready Made House Plan", path: "/products" },
     { name: "Services", path: "/services" },
+    { name: "City Partner", path: "/city-partners" }, // 🔥 NEW ADDITION
     { name: "Career", path: "/careers" },
     { name: "Package", path: "/packages" },
     { name: "Gallery", path: "/gallery" },
