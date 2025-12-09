@@ -1,57 +1,66 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- <title>housePlanfiles</title> -->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+<link rel="icon" type="image/x-icon" href="/favicon.ico" />
 
-    <!-- Google Tag Manager -->
+<!-- Google Tag Manager -->
+<script>
+(function (w, d, s, l, i) {
+w[l] = w[l] || [];
+w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+var f = d.getElementsByTagName(s)[0],
+j = d.createElement(s),
+dl = l != "dataLayer" ? "&l=" + l : "";
+j.async = true;
+j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+f.parentNode.insertBefore(j, f);
+})(window, document, "script", "dataLayer", "GTM-KCFWJDQK");
+</script>
+<!-- End Google Tag Manager -->
+
+
+    <!-- Google Ads (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-11378419977"></script>
     <script>
-      (function (w, d, s, l, i) {
-        w[l] = w[l] || [];
-        w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
-        var f = d.getElementsByTagName(s)[0],
-          j = d.createElement(s),
-          dl = l != "dataLayer" ? "&l=" + l : "";
-        j.async = true;
-        j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
-        f.parentNode.insertBefore(j, f);
-      })(window, document, "script", "dataLayer", "GTM-KCFWJDQK");
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){ dataLayer.push(arguments); }
+      gtag('js', new Date());
+      gtag('config', 'AW-11378419977');
     </script>
-    <!-- End Google Tag Manager -->
 
-    <!-- <meta
-      name="description"
-      content="Find and purchase architectural house plans for your dream home at houseplanfiles."
-    /> -->
-  </head>
+</head>
 
-  <body>
-    <noscript>
-      <iframe
-        src="https://www.googletagmanager.com/ns.html?id=GTM-KCFWJDQK"
-        height="0"
-        width="0"
+<body>
+
+<!-- Google Tag Manager (noscript) -->
+<noscript>
+<iframe
+src="https://www.googletagmanager.com/ns.html?id=GTM-KCFWJDQK"
+height="0"
+width="0"
         style="display: none; visibility: hidden"
       ></iframe>
-    </noscript>
+        style="display: none; visibility: hidden">
+      </iframe>
+</noscript>
+<!-- End GTM (noscript) -->
 
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+<div id="root"></div>
+    
 
-    <!-- ✅ Logic to load AiSensy Widget after 10 Minutes -->
-    <script>
-      setTimeout(function () {
-        var script = document.createElement("script");
-        script.type = "text/javascript";
-        script.src =
-          "https://d3mkw6s8thqya7.cloudfront.net/integration-plugin.js";
-        script.id = "aisensy-wa-widget";
-        script.setAttribute("widget-id", "aaanf1");
-        document.body.appendChild(script);
-      }, 1000); // 600000 ms = 10 Minutes
+<script type="module" src="/src/main.tsx"></script>
+
+<script
+type="text/javascript"
+src="https://d3mkw6s8thqya7.cloudfront.net/integration-plugin.js"
+id="aisensy-wa-widget"
+      widget-id="aaanf1"
+    ></script>
+      widget-id="aaanf1">
     </script>
-  </body>
+
+</body>
 </html>
