@@ -386,65 +386,118 @@ const MarketplacePage: FC = () => {
 
       <main className="flex-grow max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 -mt-10 md:-mt-16 relative z-20 pb-20">
         {/* --- Filters Card --- */}
-        <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-4 md:p-6 mb-6 md:mb-10">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        <div className="bg-white rounded-lg md:rounded-xl shadow-lg md:shadow-xl border border-gray-100 p-3 md:p-6 mb-4 md:mb-10">
+          <div className="space-y-3 md:space-y-0 md:grid md:grid-cols-4 md:gap-4 md:items-end">
+            {/* Search - Full width on mobile */}
             <div className="md:col-span-2">
-              <Label className="text-xs font-bold text-gray-500 uppercase">
+              <Label className="text-[10px] md:text-xs font-bold text-gray-500 uppercase mb-1 block">
                 Search
               </Label>
-              <div className="relative mt-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <div className="relative">
+                <Search className="absolute left-2.5 md:left-3 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5 md:w-4 md:h-4" />
                 <Input
-                  placeholder="e.g. Cement, Tiles, Steel..."
+                  placeholder="Search products..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 h-11 bg-gray-50 border-gray-200"
+                  className="pl-8 md:pl-10 h-9 md:h-11 bg-gray-50 border-gray-200 text-sm"
                 />
               </div>
             </div>
-            <div>
-              <Label className="text-xs font-bold text-gray-500 uppercase">
-                Category
-              </Label>
-              <Select
-                value={selectedCategory}
-                onValueChange={setSelectedCategory}
-              >
-                <SelectTrigger className="mt-1 h-11 bg-gray-50 border-gray-200">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {uniqueCategories.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs font-bold text-gray-500 uppercase">
-                City
-              </Label>
-              <Select value={selectedCity} onValueChange={setSelectedCity}>
-                <SelectTrigger className="mt-1 h-11 bg-gray-50 border-gray-200">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {uniqueCities.map((c) => (
-                    <SelectItem
-                      key={c}
-                      value={c === "All Cities" ? "all-cities" : c}
-                    >
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+
+            {/* Category & City - Side by side on mobile */}
+            <div className="grid grid-cols-2 gap-2 md:contents">
+              <div>
+                <Label className="text-[10px] md:text-xs font-bold text-gray-500 uppercase mb-1 block">
+                  Category
+                </Label>
+                <Select
+                  value={selectedCategory}
+                  onValueChange={setSelectedCategory}
+                >
+                  <SelectTrigger className="h-9 md:h-11 bg-gray-50 border-gray-200 text-xs md:text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {uniqueCategories.map((c) => (
+                      <SelectItem
+                        key={c}
+                        value={c}
+                        className="text-xs md:text-sm"
+                      >
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-[10px] md:text-xs font-bold text-gray-500 uppercase mb-1 block">
+                  City
+                </Label>
+                <Select value={selectedCity} onValueChange={setSelectedCity}>
+                  <SelectTrigger className="h-9 md:h-11 bg-gray-50 border-gray-200 text-xs md:text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {uniqueCities.map((c) => (
+                      <SelectItem
+                        key={c}
+                        value={c === "All Cities" ? "all-cities" : c}
+                        className="text-xs md:text-sm"
+                      >
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
-        </div>
 
+          {/* Active Filters Pills - Optional but nice to have */}
+          {(selectedCategory !== "All" ||
+            selectedCity !== "all-cities" ||
+            searchTerm) && (
+            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
+              {searchTerm && (
+                <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded-full">
+                  <Search className="w-3 h-3" />
+                  {searchTerm}
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="hover:bg-orange-200 rounded-full p-0.5"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {selectedCategory !== "All" && (
+                <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">
+                  {selectedCategory}
+                  <button
+                    onClick={() => setSelectedCategory("All")}
+                    className="hover:bg-blue-200 rounded-full p-0.5"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {selectedCity !== "all-cities" && (
+                <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
+                  <MapPin className="w-3 h-3" />
+                  {selectedCity}
+                  <button
+                    onClick={() => setSelectedCity("all-cities")}
+                    className="hover:bg-green-200 rounded-full p-0.5"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
         {/* --- Product Grid (Updated for 2 Columns Mobile) --- */}
         {status === "loading" ? (
           <div className="py-20 flex justify-center">
