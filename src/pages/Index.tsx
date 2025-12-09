@@ -41,13 +41,12 @@ const Index = () => {
       <Hero />
       <ReadymadePlansSection />
       <CustomDesignSection />
-      <FeaturedProducts />
+      <CategoriesSection />
       <HomeFloorPlans />
 
       {/* ✅ FIX 1: Uncommented FloorDElevations */}
       <FloorDElevations />
 
-      {/* <CategoriesSection /> */}
       <ConstructionPartnersSection />
       <ContractorsSection />
       <SellersSection />
