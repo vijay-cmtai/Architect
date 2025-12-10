@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { Helmet } from "react-helmet-async";
 import { RootState, AppDispatch } from "@/lib/store";
+import { motion, AnimatePresence } from "framer-motion"; // Added framer-motion
 import {
   createReview as createProductReview,
   fetchProductBySlug,
@@ -23,6 +24,8 @@ import {
   ClipboardList,
   ChevronLeft,
   ChevronRight,
+  Youtube, // Added Youtube Icon
+  X, // Added X Icon
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -34,6 +37,7 @@ import house1 from "@/assets/house-1.jpg";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import DisplayPrice from "@/components/DisplayPrice";
 
+// --- Icon Components (No Changes) ---
 const FacebookIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -129,6 +133,18 @@ const ThreadsIcon = () => (
   </svg>
 );
 
+const YoutubeIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+  </svg>
+);
+
 const StarRating = ({ rating, text }: { rating: number; text?: string }) => (
   <div className="flex items-center gap-2">
     <div className="flex">
@@ -152,6 +168,82 @@ const slugify = (text: any) => {
     .replace(/\s+/g, "-")
     .replace(/[^\w\-]+/g, "")
     .replace(/\-\-+/g, "-");
+};
+
+// --- Video Modal Component (From Products.tsx) ---
+const VideoModal = ({
+  videoUrl,
+  onClose,
+}: {
+  videoUrl: string;
+  onClose: () => void;
+}) => {
+  const getYouTubeEmbedUrl = (url: string) => {
+    if (!url) return null;
+    let videoId;
+    try {
+      const urlObj = new URL(url);
+      if (urlObj.hostname === "youtu.be") {
+        videoId = urlObj.pathname.slice(1);
+      } else {
+        videoId = urlObj.searchParams.get("v");
+      }
+    } catch (e) {
+      const regex =
+        /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+      const match = url.match(regex);
+      videoId = match ? match[1] : null;
+    }
+
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    }
+    return null;
+  };
+
+  const embedUrl = getYouTubeEmbedUrl(videoUrl);
+
+  if (!embedUrl) {
+    onClose();
+    return null;
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.8, y: 50 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.8, y: 50 }}
+        className="relative w-full max-w-4xl bg-black rounded-lg overflow-hidden shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="aspect-video">
+          <iframe
+            width="100%"
+            height="100%"
+            src={embedUrl}
+            title="YouTube video player"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          ></iframe>
+        </div>
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 p-2 bg-black/50 text-white rounded-full hover:bg-black/80 transition-colors"
+          aria-label="Close video player"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </motion.div>
+    </motion.div>
+  );
 };
 
 const DetailPage = () => {
@@ -249,6 +341,9 @@ const ProductDetailContent = ({ product }: { product: any }) => {
   const [comment, setComment] = useState("");
   const [isZooming, setIsZooming] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  // --- Video State ---
+  const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null);
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const isProfessionalPlan = location.pathname.includes("/professional-plan/");
@@ -262,14 +357,18 @@ const ProductDetailContent = ({ product }: { product: any }) => {
 
   const displayData = product;
 
+  // ===================================================================
+  // FINAL CACHE BUSTING LOGIC
+  // ===================================================================
+
   const backendApiUrl =
     import.meta.env.VITE_BACKEND_URL || "https://architect-backend.vercel.app";
 
   const cacheBuster = `?v=${new Date().getTime()}`;
-
+  const shareUrl = `${backendApiUrl}/share/${isProfessionalPlan ? "professional-plan" : "product"}/${slug}${cacheBuster}`;
   const canonicalUrl = `${window.location.origin}${location.pathname}`;
 
-  const shareUrl = `${canonicalUrl}${cacheBuster}`;
+  // ===================================================================
 
   const allProductsAndPlans = useMemo(() => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
@@ -513,6 +612,12 @@ const ProductDetailContent = ({ product }: { product: any }) => {
       href: `https://www.threads.net/share?url=${encodeURIComponent(shareUrl)}&text=${encodedTitle}`,
     },
     {
+      name: "YouTube",
+      icon: <YoutubeIcon />,
+      color: "bg-red-600",
+      href: `https://www.youtube.com/results?search_query=${encodedTitle}`,
+    },
+    {
       name: "Call Us",
       icon: <PhoneIcon />,
       color: "bg-gray-700",
@@ -572,15 +677,28 @@ const ProductDetailContent = ({ product }: { product: any }) => {
       </Helmet>
 
       <Navbar />
+
+      {/* --- Video Modal Render --- */}
+      <AnimatePresence>
+        {playingVideoUrl && (
+          <VideoModal
+            videoUrl={playingVideoUrl}
+            onClose={() => setPlayingVideoUrl(null)}
+          />
+        )}
+      </AnimatePresence>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-8">
           <Link to="/" className="hover:text-primary">
-            Home
-          </Link>
+            {" "}
+            Home{" "}
+          </Link>{" "}
           <span>/</span>
           <Link to="/products" className="hover:text-primary">
-            Products
-          </Link>
+            {" "}
+            Products{" "}
+          </Link>{" "}
           <span>/</span>
           <span className="text-gray-800 font-medium">{productName}</span>
         </nav>
@@ -594,10 +712,11 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                 onMouseLeave={() => setIsZooming(false)}
                 onMouseMove={handleMouseMove}
               >
+                {/* --- IMAGE CLASS KEPT AS 300px FOR MOBILE --- */}
                 <img
                   src={productImages[selectedImageIndex]}
                   alt={displayData.seo?.altText || productName}
-                  className="w-full h-96 lg:h-[500px] object-cover transition-opacity duration-300"
+                  className="w-full h-[300px] sm:h-96 lg:h-[500px] object-cover transition-opacity duration-300"
                   style={{ opacity: isZooming ? 0 : 1 }}
                 />
                 {isZooming && (
@@ -611,7 +730,9 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                     }}
                   />
                 )}
-                <div className="absolute top-4 right-4">
+
+                {/* --- ACTION BUTTONS (Heart + Youtube) --- */}
+                <div className="absolute top-4 right-4 flex flex-col gap-3">
                   <Button
                     variant="outline"
                     size="icon"
@@ -622,7 +743,22 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                       className={`w-6 h-6 transition-all ${isLiked ? "fill-current text-red-500" : "text-gray-600"}`}
                     />
                   </Button>
+
+                  {/* --- YOUTUBE BUTTON ADDED HERE --- */}
+                  {displayData.youtubeLink && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="w-12 h-12 rounded-full bg-red-600 hover:bg-red-700 border-none text-white shadow-md"
+                      onClick={() =>
+                        setPlayingVideoUrl(displayData.youtubeLink)
+                      }
+                    >
+                      <Youtube className="w-6 h-6" />
+                    </Button>
+                  )}
                 </div>
+
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 p-2 bg-black/40 backdrop-blur-sm rounded-full">
                   <Button
                     onClick={handleBuyNow}
@@ -653,7 +789,8 @@ const ProductDetailContent = ({ product }: { product: any }) => {
             <div className="lg:col-span-2 space-y-6">
               <div>
                 <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-2">
-                  {productName}
+                  {" "}
+                  {productName}{" "}
                 </h1>
                 <div className="flex items-center gap-4 mb-4">
                   <StarRating
@@ -664,21 +801,24 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                 <div className="flex items-baseline gap-4 mb-6 flex-wrap">
                   {isSale && parseFloat(String(regularPrice)) > 0 && (
                     <span className="text-xl text-gray-500 line-through">
+                      {" "}
                       <DisplayPrice
                         inrPrice={parseFloat(String(regularPrice))}
-                      />
+                      />{" "}
                     </span>
                   )}
                   <span className="text-4xl font-bold text-primary">
+                    {" "}
                     <DisplayPrice
                       inrPrice={parseFloat(String(currentPrice))}
-                    />
+                    />{" "}
                   </span>
                   {isSale &&
                     parseFloat(String(regularPrice)) > 0 &&
                     parseFloat(String(currentPrice)) > 0 && (
                       <span className="text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full font-semibold">
-                        SAVE {symbol}
+                        {" "}
+                        SAVE {symbol}{" "}
                         {(
                           (parseFloat(String(regularPrice)) -
                             parseFloat(String(currentPrice))) *
@@ -686,52 +826,65 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                         ).toLocaleString("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
-                        })}
+                        })}{" "}
                       </span>
                     )}
                 </div>
                 <div className="mt-6 border-t pt-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <ClipboardList className="w-5 h-5" /> Specifications
+                    {" "}
+                    <ClipboardList className="w-5 h-5" /> Specifications{" "}
                   </h3>
                   <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
                     <div className="flex justify-between border-b pb-2">
+                      {" "}
                       <span className="font-semibold text-gray-700">
-                        Plot Size:
-                      </span>
-                      <span className="text-gray-600">{plotSize}</span>
+                        {" "}
+                        Plot Size:{" "}
+                      </span>{" "}
+                      <span className="text-gray-600">{plotSize}</span>{" "}
                     </div>
                     <div className="flex justify-between border-b pb-2">
+                      {" "}
                       <span className="font-semibold text-gray-700">
-                        Plot Area:
-                      </span>
+                        {" "}
+                        Plot Area:{" "}
+                      </span>{" "}
                       <span className="text-gray-600">
                         {plotArea} sqft
-                      </span>
+                      </span>{" "}
                     </div>
                     <div className="flex justify-between border-b pb-2">
+                      {" "}
                       <span className="font-semibold text-gray-700">
-                        Rooms:
-                      </span>
-                      <span className="text-gray-600">{rooms}</span>
+                        {" "}
+                        Rooms:{" "}
+                      </span>{" "}
+                      <span className="text-gray-600">{rooms}</span>{" "}
                     </div>
                     <div className="flex justify-between border-b pb-2">
+                      {" "}
                       <span className="font-semibold text-gray-700">
-                        Bathrooms:
-                      </span>
-                      <span className="text-gray-600">{bathrooms}</span>
+                        {" "}
+                        Bathrooms:{" "}
+                      </span>{" "}
+                      <span className="text-gray-600">{bathrooms}</span>{" "}
                     </div>
                     <div className="flex justify-between border-b pb-2">
+                      {" "}
                       <span className="font-semibold text-gray-700">
-                        Kitchen:
-                      </span>
-                      <span className="text-gray-600">{kitchen}</span>
+                        {" "}
+                        Kitchen:{" "}
+                      </span>{" "}
+                      <span className="text-gray-600">{kitchen}</span>{" "}
                     </div>
                     <div className="flex justify-between border-b pb-2">
+                      {" "}
                       <span className="font-semibold text-gray-700">
-                        Direction:
-                      </span>
-                      <span className="text-gray-600">{direction}</span>
+                        {" "}
+                        Direction:{" "}
+                      </span>{" "}
+                      <span className="text-gray-600">{direction}</span>{" "}
                     </div>
                   </div>
                 </div>
@@ -746,17 +899,20 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                       className="p-3 disabled:opacity-50"
                       disabled={quantity <= 1}
                     >
-                      <Minus className="w-4 h-4" />
+                      {" "}
+                      <Minus className="w-4 h-4" />{" "}
                     </button>
                     <span className="px-6 py-2 font-bold text-lg">
-                      {quantity}
+                      {" "}
+                      {quantity}{" "}
                     </span>
                     <button
                       type="button"
                       onClick={() => setQuantity(quantity + 1)}
                       className="p-3"
                     >
-                      <Plus className="w-4 h-4" />
+                      {" "}
+                      <Plus className="w-4 h-4" />{" "}
                     </button>
                   </div>
                 </div>
@@ -766,7 +922,8 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                     variant="outline"
                     className="w-full py-6 text-lg font-bold"
                   >
-                    Add to Cart
+                    {" "}
+                    Add to Cart{" "}
                   </Button>
                   <a
                     href={whatsappLink}
@@ -778,14 +935,16 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                       variant="secondary"
                       className="bg-green-500 hover:bg-green-600 text-white w-full py-6 text-lg font-bold flex items-center justify-center gap-2"
                     >
-                      <WhatsAppIcon /> Modify Plan
+                      {" "}
+                      <WhatsAppIcon /> Modify Plan{" "}
                     </Button>
                   </a>
                 </div>
               </div>
               <div className="pt-4">
                 <h3 className="font-bold text-gray-700 mb-2">
-                  Share this plan
+                  {" "}
+                  Share this plan{" "}
                 </h3>
                 <div className="flex items-center gap-2 flex-wrap">
                   {socialPlatforms.map((p) => (
@@ -797,7 +956,8 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                       title={p.name}
                       className={`w-9 h-9 flex items-center justify-center rounded-md text-white ${p.color} transition-opacity hover:opacity-80`}
                     >
-                      {p.icon}
+                      {" "}
+                      {p.icon}{" "}
                     </a>
                   ))}
                 </div>
@@ -806,7 +966,8 @@ const ProductDetailContent = ({ product }: { product: any }) => {
           </div>
           <div className="mt-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-              <FileText className="w-6 h-6" /> Description
+              {" "}
+              <FileText className="w-6 h-6" /> Description{" "}
             </h2>
             <div
               className="text-gray-600 text-base leading-relaxed prose max-w-none"
@@ -816,7 +977,8 @@ const ProductDetailContent = ({ product }: { product: any }) => {
         </div>
         <div className="mt-16">
           <h2 className="text-3xl font-extrabold text-gray-800 mb-8 text-center">
-            Customer Feedback
+            {" "}
+            Customer Feedback{" "}
           </h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div>
@@ -830,26 +992,30 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                     >
                       <div className="flex items-center justify-between">
                         <h4 className="font-bold text-gray-900">
-                          {review.name}
-                        </h4>
+                          {" "}
+                          {review.name}{" "}
+                        </h4>{" "}
                         <StarRating rating={review.rating} />
                       </div>
                       <p className="text-gray-600 mt-2">{review.comment}</p>
                       <p className="text-xs text-gray-400 mt-2">
-                        {new Date(review.createdAt).toLocaleDateString()}
+                        {" "}
+                        {new Date(review.createdAt).toLocaleDateString()}{" "}
                       </p>
                     </div>
                   ))}
                 </div>
               ) : (
                 <p className="text-gray-500 bg-white p-6 rounded-lg text-center">
-                  No reviews yet. Be the first to review!
+                  {" "}
+                  No reviews yet. Be the first to review!{" "}
                 </p>
               )}
             </div>
             <div>
               <h3 className="text-2xl font-bold text-gray-800 mb-6">
-                Write a Review
+                {" "}
+                Write a Review{" "}
               </h3>
               {userInfo ? (
                 <form
@@ -858,7 +1024,8 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                 >
                   <div>
                     <label className="font-bold text-gray-700">
-                      Your Rating
+                      {" "}
+                      Your Rating{" "}
                     </label>
                     <div className="flex mt-2">
                       {[1, 2, 3, 4, 5].map((star) => (
@@ -875,7 +1042,8 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                       htmlFor="comment"
                       className="font-bold text-gray-700"
                     >
-                      Your Comment
+                      {" "}
+                      Your Comment{" "}
                     </label>
                     <Textarea
                       id="comment"
@@ -900,14 +1068,16 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                 </form>
               ) : (
                 <p className="text-gray-600 bg-white p-6 rounded-lg text-center">
-                  Please
+                  {" "}
+                  Please{" "}
                   <Link
                     to="/login"
                     className="text-primary underline font-bold"
                   >
-                    log in
-                  </Link>
-                  to write a review.
+                    {" "}
+                    log in{" "}
+                  </Link>{" "}
+                  to write a review.{" "}
                 </p>
               )}
             </div>
@@ -916,7 +1086,8 @@ const ProductDetailContent = ({ product }: { product: any }) => {
         {relatedProducts && relatedProducts.length > 0 && (
           <div className="border-t pt-16 mt-16">
             <h2 className="text-3xl font-extrabold text-gray-800 mb-8 text-center">
-              Related Products
+              {" "}
+              Related Products{" "}
             </h2>
             <div className="relative">
               <Button
@@ -925,7 +1096,8 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                 className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full shadow-md hover:bg-white"
                 onClick={() => handleScroll("left")}
               >
-                <ChevronLeft className="h-6 w-6" />
+                {" "}
+                <ChevronLeft className="h-6 w-6" />{" "}
               </Button>
               <div
                 ref={scrollContainerRef}
@@ -954,18 +1126,21 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                       />
                       <div className="p-4">
                         <h3 className="text-lg font-bold text-gray-900 mb-1 truncate">
-                          {relatedProductName}
+                          {" "}
+                          {relatedProductName}{" "}
                         </h3>
                         <p className="text-sm text-gray-600 mb-2">
+                          {" "}
                           {relatedProd.plotSize ||
-                            relatedProd["Attribute 1 value(s)"]}
+                            relatedProd["Attribute 1 value(s)"]}{" "}
                         </p>
                         <div className="text-xl font-bold text-primary">
+                          {" "}
                           <DisplayPrice
                             inrPrice={parseFloat(
                               String(relatedProd.displayPrice)
                             )}
-                          />
+                          />{" "}
                         </div>
                       </div>
                     </Link>
@@ -978,7 +1153,8 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                 className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full shadow-md hover:bg-white"
                 onClick={() => handleScroll("right")}
               >
-                <ChevronRight className="h-6 w-6" />
+                {" "}
+                <ChevronRight className="h-6 w-6" />{" "}
               </Button>
             </div>
           </div>
