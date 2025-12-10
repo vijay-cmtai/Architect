@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/lib/store";
@@ -121,10 +121,9 @@ const Hero = () => {
 
   const handleSearch = () => {
     const queryParams = new URLSearchParams();
-    // Use selectedCategory if available, otherwise it can be ignored
     if (selectedCategory) queryParams.append("category", selectedCategory);
     if (searchTerm) queryParams.append("search", searchTerm);
-    setSuggestions([]); // Close suggestions on search
+    setSuggestions([]);
     navigate(`/products?${queryParams.toString()}`);
   };
 
@@ -135,7 +134,8 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative h-[85vh] min-h-[600px] md:h-screen md:min-h-[700px] flex items-center justify-center text-white overflow-hidden">
+    // Changed: Reduced min-height for mobile to avoid extra scrolling
+    <section className="relative h-[80vh] min-h-[550px] md:h-screen md:min-h-[700px] flex items-center justify-center text-white overflow-hidden">
       {/* Background Image Slider */}
       <div className="absolute inset-0">
         <AnimatePresence>
@@ -154,18 +154,21 @@ const Hero = () => {
       </div>
 
       {/* Hero Content */}
-      <div className="relative z-10 text-center max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 animate-slide-up">
+      <div className="relative z-10 text-center max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center h-full pt-10 md:pt-0">
+        {/* Changed: Text sizes reduced for mobile */}
+        <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-3 sm:mb-6 animate-slide-up leading-tight">
           Find Your Perfect
           <span
-            className="block text-white animate-bounce-in"
+            className="block text-white animate-bounce-in mt-1"
             style={{ animationDelay: "0.3s" }}
           >
             House Plan
           </span>
         </h1>
+
+        {/* Changed: Text size and margin adjusted */}
         <p
-          className="text-lg md:text-xl mb-8 text-white/90 font-light animate-fade-in"
+          className="text-sm sm:text-lg md:text-xl mb-6 md:mb-8 text-white/90 font-light animate-fade-in max-w-lg mx-auto md:max-w-none"
           style={{ animationDelay: "0.6s" }}
         >
           Discover amazing architectural designs for your dream home
@@ -175,10 +178,13 @@ const Hero = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.8 }}
-          className="mb-8"
+          className="mb-6 md:mb-8"
         >
           <Link to="/products">
-            <Button size="lg" className="btn-primary px-10 py-6 text-lg">
+            <Button
+              size="lg"
+              className="btn-primary w-full sm:w-auto px-8 md:px-10 py-4 md:py-6 text-base md:text-lg"
+            >
               Explore The Plans
             </Button>
           </Link>
@@ -187,16 +193,19 @@ const Hero = () => {
         {/* --- Responsive Search Bar --- */}
         <div
           ref={searchContainerRef}
-          className="bg-white rounded-2xl p-3 sm:p-4 shadow-large max-w-2xl w-full mx-auto animate-scale-in relative"
+          // Changed: Padding reduced on mobile (p-2) to save space
+          className="bg-white rounded-xl md:rounded-2xl p-2 sm:p-4 shadow-large max-w-2xl w-full mx-auto animate-scale-in relative"
           style={{ animationDelay: "0.9s" }}
         >
+          {/* Changed: Gap reduced on mobile */}
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <div className="flex-1">
               <Select
                 onValueChange={setSelectedCategory}
                 disabled={listStatus === "loading"}
               >
-                <SelectTrigger className="w-full text-primary-gray border-0 focus:ring-2 focus:ring-primary transition-all duration-300 hover:bg-primary/5">
+                {/* Changed: Height fixed to h-10 for consistency */}
+                <SelectTrigger className="w-full h-10 text-sm text-primary-gray border-0 bg-gray-50 sm:bg-transparent focus:ring-1 focus:ring-primary transition-all duration-300 hover:bg-primary/5">
                   <SelectValue
                     placeholder={
                       listStatus === "loading"
@@ -214,14 +223,17 @@ const Hero = () => {
                 </SelectContent>
               </Select>
             </div>
+
             <div className="flex-1 relative">
+              {/* Changed: Height fixed to h-10 and bg added for better visibility on mobile */}
               <Input
-                placeholder="Search by plot size e.g., 21x"
-                className="border-0 focus:ring-2 focus:ring-primary text-primary-gray transition-all duration-300 hover:bg-primary/5"
+                placeholder="Search plot size e.g. 25x40"
+                className="h-10 text-sm border-0 bg-gray-50 sm:bg-transparent focus:ring-1 focus:ring-primary text-primary-gray transition-all duration-300 hover:bg-primary/5"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 autoComplete="off"
               />
+
               {/* --- Suggestions Dropdown --- */}
               <AnimatePresence>
                 {suggestions.length > 0 && (
@@ -229,47 +241,47 @@ const Hero = () => {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg z-20 text-left"
+                    className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl z-50 text-left border border-gray-100 max-h-48 overflow-y-auto"
                   >
-                    <ul className="py-2">
+                    <ul className="py-1">
                       {suggestions.map((s) => (
                         <li
                           key={s._id}
-                          className="px-4 py-2 cursor-pointer text-gray-700 hover:bg-gray-100"
+                          className="px-3 py-2 cursor-pointer text-sm text-gray-700 hover:bg-gray-100 border-b border-gray-50 last:border-none"
                           onClick={() => handleSuggestionClick(s)}
                         >
-                          {s.plotSize} -{" "}
-                          <span className="text-sm text-gray-500">
-                            {s.name}
-                          </span>
+                          <span className="font-semibold">{s.plotSize}</span> -{" "}
+                          {s.name}
                         </li>
                       ))}
                       <li
-                        className="px-4 py-3 cursor-pointer text-primary font-semibold hover:bg-gray-100 border-t"
+                        className="px-3 py-2 cursor-pointer text-sm text-primary font-semibold hover:bg-gray-100 text-center"
                         onClick={handleSearch}
                       >
-                        See all results for "{searchTerm}"
+                        View all for "{searchTerm}"
                       </li>
                     </ul>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
+
             <Button
-              className="btn-primary w-full sm:w-auto sm:px-8 group"
+              className="btn-primary w-full sm:w-auto sm:px-8 group h-10"
               onClick={handleSearch}
             >
-              <Search className="w-5 h-5 sm:mr-2 group-hover:rotate-12 transition-transform duration-300" />
-              <span className="hidden sm:inline">Search</span>
+              <Search className="w-4 h-4 sm:mr-2 group-hover:rotate-12 transition-transform duration-300" />
+              <span className="inline">Search</span>
             </Button>
           </div>
         </div>
 
         {/* --- Animated Stats (UPDATED) --- */}
-        <div className="grid grid-cols-3 gap-4 md:gap-8 mt-12 max-w-lg mx-auto">
+        {/* Changed: Margin top reduced (mt-8), gap reduced (gap-2) for mobile */}
+        <div className="grid grid-cols-3 gap-2 md:gap-8 mt-8 md:mt-12 max-w-lg mx-auto w-full">
           <AnimatedStat end={1000} suffix="+" label="House Plans" />
-          <AnimatedStat end={1000} suffix="+" label="Happy Customers" />
-          <AnimatedStat end={10} suffix="+" label="Years Experience" />
+          <AnimatedStat end={1000} suffix="+" label="Happy Clients" />
+          <AnimatedStat end={10} suffix="+" label="Years Exp." />
         </div>
       </div>
     </section>
