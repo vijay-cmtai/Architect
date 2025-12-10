@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { motion, AnimatePresence } from "framer-motion"; // AnimatePresence added
+import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   Heart,
@@ -79,7 +79,7 @@ const HomeFloorPlans = () => {
 
   // --- PAGINATION STATE ---
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4; // Showing 4 items per page as requested
+  const itemsPerPage = 4;
 
   const { products, listStatus } = useSelector((state) => state.products);
   const { userInfo } = useSelector((state) => state.user);
@@ -165,7 +165,6 @@ const HomeFloorPlans = () => {
 
   const paginate = (pageNumber) => {
     setCurrentPage(pageNumber);
-    // Smooth scroll to top of section
     const section = document.getElementById("floor-plans-section");
     if (section) {
       section.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -220,44 +219,48 @@ const HomeFloorPlans = () => {
   return (
     <section
       id="floor-plans-section"
-      className="py-8 md:py-12 bg-background border-b"
+      className="py-6 md:py-12 bg-background border-b"
     >
       <VideoModal
         videoId={playingVideoId}
         onClose={() => setPlayingVideoId(null)}
       />
-      <div className="max-w-7xl mx-auto px-2 md:px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-center items-end mb-6 md:mb-8">
+
+      {/* 
+         CHANGED: px-1 (Reduced padding) to make container wider on mobile 
+      */}
+      <div className="max-w-7xl mx-auto px-1 md:px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-center items-end mb-4 md:mb-8">
           <div className="text-center">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+            <h2 className="text-lg md:text-3xl font-bold text-foreground">
               Latest Floor Plans
             </h2>
-            <p className="text-sm md:text-base text-muted-foreground mt-2">
+            <p className="text-[10px] md:text-base text-muted-foreground mt-1 md:mt-2">
               Explore our newest residential layouts
             </p>
-            <div className="mt-3 h-1 w-24 bg-primary mx-auto rounded-full"></div>
+            <div className="mt-2 md:mt-3 h-1 w-16 md:w-24 bg-primary mx-auto rounded-full"></div>
           </div>
         </div>
 
         {/* 
-            GRID LAYOUT:
-            - grid-cols-2: Mobile (2 items side by side)
-            - lg:grid-cols-4: Desktop
+            GRID LAYOUT CHANGES:
+            - gap-2: Reduced gap between cards to make them wider.
         */}
         <div className="min-h-[400px]">
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
             <AnimatePresence mode="wait">
               {currentItems.map((product, index) => (
                 <motion.div
                   key={product.id}
-                  className="bg-card rounded-xl md:rounded-2xl overflow-hidden group transition-all duration-300 border border-gray-100 hover:border-primary hover:shadow-xl w-full flex flex-col"
+                  className="bg-card rounded-lg md:rounded-2xl overflow-hidden group transition-all duration-300 border border-gray-100 hover:border-primary hover:shadow-xl w-full flex flex-col"
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                 >
                   {/* --- TOP IMAGE SECTION --- */}
-                  <div className="relative border-b bg-muted/20 h-32 md:h-56 shrink-0">
+                  {/* CHANGED: h-28 (Height Reduced) */}
+                  <div className="relative border-b bg-muted/20 h-28 md:h-56 shrink-0">
                     <Link
                       to={`/product/${product.slug}`}
                       className="block h-full w-full"
@@ -269,75 +272,75 @@ const HomeFloorPlans = () => {
                       />
                     </Link>
                     {product.isSale && (
-                      <div className="absolute top-2 left-2 md:top-4 md:left-4 bg-red-500 text-white text-[10px] md:text-xs font-semibold px-2 py-0.5 md:px-3 md:py-1 rounded-full shadow-md z-10">
+                      <div className="absolute top-2 left-2 md:top-4 md:left-4 bg-red-500 text-white text-[9px] md:text-xs font-semibold px-1.5 py-0.5 md:px-3 md:py-1 rounded-md shadow-md z-10">
                         Sale
                       </div>
                     )}
                     {product.hasPurchased && (
-                      <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-green-500 text-white text-[10px] md:text-xs font-semibold px-2 py-0.5 rounded-full shadow-md z-10 whitespace-nowrap">
+                      <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-green-500 text-white text-[9px] md:text-xs font-semibold px-1.5 py-0.5 rounded-full shadow-md z-10 whitespace-nowrap">
                         Purchased
                       </div>
                     )}
 
                     {/* Action Buttons (Heart/Video) */}
-                    <div className="absolute top-2 right-2 md:top-4 md:right-4 flex flex-col space-y-2">
+                    <div className="absolute top-2 right-2 md:top-4 md:right-4 flex flex-col space-y-1.5 md:space-y-2">
                       <button
                         onClick={() => handleWishlistToggle(product)}
-                        className={`w-7 h-7 md:w-9 md:h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${
+                        className={`w-6 h-6 md:w-9 md:h-9 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${
                           product.isWishlisted
                             ? "text-red-500"
                             : "text-foreground hover:text-primary"
                         }`}
                       >
                         <Heart
-                          className="w-4 h-4 md:w-5 md:h-5"
+                          className="w-3 h-3 md:w-5 md:h-5"
                           fill={product.isWishlisted ? "currentColor" : "none"}
                         />
                       </button>
                       {product.videoId && (
                         <button
                           onClick={() => setPlayingVideoId(product.videoId)}
-                          className="w-7 h-7 md:w-9 md:h-9 bg-red-500/90 rounded-full flex items-center justify-center shadow-sm text-white hover:bg-red-600"
+                          className="w-6 h-6 md:w-9 md:h-9 bg-red-500/90 rounded-full flex items-center justify-center shadow-sm text-white hover:bg-red-600"
                         >
-                          <Youtube className="w-4 h-4 md:w-5 md:h-5" />
+                          <Youtube className="w-3 h-3 md:w-5 md:h-5" />
                         </button>
                       )}
                     </div>
                   </div>
 
                   {/* --- ATTRIBUTES SECTION --- */}
-                  {/* Mobile: 2 cols, Desktop: 4 cols to save space */}
-                  <div className="p-2 md:p-4 border-b">
+                  {/* CHANGED: p-1.5 (Reduced Padding) */}
+                  <div className="p-1.5 md:p-4 border-b">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-1 md:gap-2 text-center">
                       <div className="bg-gray-50 rounded-md p-1 md:p-2">
-                        <p className="text-[10px] md:text-xs text-gray-500">
+                        <p className="text-[9px] md:text-xs text-gray-500">
                           Area
                         </p>
-                        <p className="text-xs md:text-sm font-semibold text-gray-800 truncate">
+                        <p className="text-[10px] md:text-sm font-semibold text-gray-800 truncate">
                           {product.plotAreaDisplay}
                         </p>
                       </div>
                       <div className="bg-teal-50 rounded-md p-1 md:p-2">
-                        <p className="text-[10px] md:text-xs text-gray-500">
+                        <p className="text-[9px] md:text-xs text-gray-500">
                           BHK
                         </p>
-                        <p className="text-xs md:text-sm font-semibold text-gray-800 truncate">
+                        <p className="text-[10px] md:text-sm font-semibold text-gray-800 truncate">
                           {product.roomsDisplay}
                         </p>
                       </div>
                       <div className="bg-blue-50 rounded-md p-1 md:p-2">
-                        <p className="text-[10px] md:text-xs text-gray-500">
+                        <p className="text-[9px] md:text-xs text-gray-500">
                           Size
                         </p>
-                        <p className="text-xs md:text-sm font-semibold text-gray-800 truncate">
+                        <p className="text-[10px] md:text-sm font-semibold text-gray-800 truncate">
                           {product.plotSizeDisplay}
                         </p>
                       </div>
                       <div className="bg-orange-50 rounded-md p-1 md:p-2">
-                        <p className="text-[10px] md:text-xs text-gray-500">
+                        <p className="text-[9px] md:text-xs text-gray-500">
                           Facing
                         </p>
-                        <p className="text-xs md:text-sm font-semibold text-gray-800 truncate">
+                        <p className="text-[10px] md:text-sm font-semibold text-gray-800 truncate">
                           {product.directionDisplay || "Any"}
                         </p>
                       </div>
@@ -346,14 +349,14 @@ const HomeFloorPlans = () => {
 
                   {/* --- INFO & BUTTONS SECTION --- */}
                   <div className="p-2 md:p-4 flex flex-col flex-grow justify-between">
-                    <div className="mb-3">
-                      <p className="text-[10px] md:text-xs text-gray-500 uppercase font-medium line-clamp-1">
+                    <div className="mb-2 md:mb-3">
+                      <p className="text-[9px] md:text-xs text-gray-500 uppercase font-medium line-clamp-1">
                         {product.categoryDisplay}
                       </p>
-                      <h3 className="text-sm md:text-xl font-bold text-gray-800 mt-1 line-clamp-1">
+                      <h3 className="text-xs md:text-xl font-bold text-gray-800 mt-0.5 md:mt-1 line-clamp-1">
                         {product.displayName}
                       </h3>
-                      <div className="flex items-baseline gap-2 mt-1 flex-wrap">
+                      <div className="flex items-baseline gap-1 md:gap-2 mt-1 flex-wrap">
                         {product.isSale && (
                           <span className="text-[10px] md:text-sm text-gray-400 line-through">
                             <DisplayPrice inrPrice={product.regularPrice} />
@@ -365,11 +368,12 @@ const HomeFloorPlans = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 md:gap-2 mt-auto">
                       <Link to={`/product/${product.slug}`} className="w-full">
+                        {/* CHANGED: h-7 (Reduced button height), text-[10px] */}
                         <Button
                           size="sm"
-                          className="w-full bg-slate-800 text-white hover:bg-slate-700 text-xs md:text-sm h-8 md:h-10"
+                          className="w-full bg-slate-800 text-white hover:bg-slate-700 text-[10px] md:text-sm h-7 md:h-10"
                         >
                           View Details
                         </Button>
@@ -377,7 +381,7 @@ const HomeFloorPlans = () => {
                       <Button
                         size="sm"
                         variant="outline"
-                        className={`w-full text-xs md:text-sm h-8 md:h-10 ${
+                        className={`w-full text-[10px] md:text-sm h-7 md:h-10 ${
                           product.hasPurchased
                             ? "border-green-500 text-green-600"
                             : ""
@@ -387,12 +391,12 @@ const HomeFloorPlans = () => {
                       >
                         {product.hasPurchased ? (
                           <>
-                            <Download className="mr-1 h-3 w-3 md:h-4 md:w-4" />{" "}
+                            <Download className="mr-1 h-2.5 w-2.5 md:h-4 md:w-4" />{" "}
                             PDF
                           </>
                         ) : (
                           <>
-                            <Lock className="mr-1 h-3 w-3 md:h-4 md:w-4" />{" "}
+                            <Lock className="mr-1 h-2.5 w-2.5 md:h-4 md:w-4" />{" "}
                             Download
                           </>
                         )}
@@ -407,22 +411,20 @@ const HomeFloorPlans = () => {
 
         {/* --- PAGINATION CONTROLS --- */}
         {totalPages > 1 && (
-          <div className="mt-8 md:mt-12 flex justify-center items-center gap-2 flex-wrap">
+          <div className="mt-6 md:mt-12 flex justify-center items-center gap-2 flex-wrap">
             <button
               onClick={handlePrev}
               disabled={currentPage === 1}
-              className={`p-2 rounded-lg border ${
+              className={`p-1.5 md:p-2 rounded-lg border ${
                 currentPage === 1
                   ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                   : "bg-white text-gray-700 border-gray-300 hover:bg-primary/10 hover:text-primary hover:border-primary shadow-sm"
               } transition-all duration-300`}
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
             </button>
 
-            {/* Simple Pagination for Mobile (Just showing numbers helps save space) */}
             {Array.from({ length: totalPages }, (_, i) => {
-              // Logic to hide too many pages if there are many (optional, keeping simple here)
               if (
                 totalPages > 5 &&
                 Math.abs(currentPage - (i + 1)) > 2 &&
@@ -431,7 +433,6 @@ const HomeFloorPlans = () => {
               ) {
                 return null;
               }
-              // Add dots
               if (
                 totalPages > 5 &&
                 Math.abs(currentPage - (i + 1)) === 3 &&
@@ -439,7 +440,7 @@ const HomeFloorPlans = () => {
                 i + 1 !== totalPages
               ) {
                 return (
-                  <span key={i} className="px-1 text-gray-400">
+                  <span key={i} className="px-1 text-xs text-gray-400">
                     ...
                   </span>
                 );
@@ -449,7 +450,7 @@ const HomeFloorPlans = () => {
                 <button
                   key={i + 1}
                   onClick={() => paginate(i + 1)}
-                  className={`w-8 h-8 md:w-10 md:h-10 rounded-lg text-xs md:text-sm font-bold border transition-all duration-300 ${
+                  className={`w-7 h-7 md:w-10 md:h-10 rounded-lg text-xs md:text-sm font-bold border transition-all duration-300 ${
                     currentPage === i + 1
                       ? "bg-primary text-primary-foreground border-primary shadow-lg transform scale-110"
                       : "bg-white text-gray-700 border-gray-300 hover:bg-primary/10 hover:text-primary hover:border-primary"
@@ -463,18 +464,18 @@ const HomeFloorPlans = () => {
             <button
               onClick={handleNext}
               disabled={currentPage === totalPages}
-              className={`p-2 rounded-lg border ${
+              className={`p-1.5 md:p-2 rounded-lg border ${
                 currentPage === totalPages
                   ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                   : "bg-white text-gray-700 border-gray-300 hover:bg-primary/10 hover:text-primary hover:border-primary shadow-sm"
               } transition-all duration-300`}
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
             </button>
           </div>
         )}
 
-        <div className="text-center mt-4">
+        <div className="text-center mt-2 md:mt-4">
           <p className="text-[10px] md:text-xs text-muted-foreground">
             Showing {indexOfFirstItem + 1}-
             {Math.min(indexOfLastItem, processedData.length)} of{" "}
