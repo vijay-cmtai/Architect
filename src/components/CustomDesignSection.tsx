@@ -47,59 +47,64 @@ const customServices = [
 
 const CustomDesignSection = () => {
   return (
-    <section className="py-20 bg-soft-teal">
-      <div className="container mx-auto px-4">
+    <section className="py-10 md:py-20 bg-soft-teal">
+      <div className="container mx-auto px-2 md:px-4">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-16"
+          className="text-center mb-8 md:mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+          <h2 className="text-2xl md:text-4xl font-bold text-foreground">
             We Design with Your Requirements
           </h2>
-          <div className="mt-4 h-1 w-24 bg-primary mx-auto rounded-full"></div>
+          <div className="mt-3 h-1 w-24 bg-primary mx-auto rounded-full"></div>
         </motion.div>
 
-        {/* Mobile: Horizontal scroll, Desktop: Grid */}
-        <div className="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 -mx-4 px-4 md:mx-0 md:px-0 pb-4 md:pb-0 max-w-7xl mx-auto snap-x snap-mandatory">
-          {/* Hide scrollbar */}
-          <style>{`.overflow-x-auto::-webkit-scrollbar { display: none; } .overflow-x-auto { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
-
+        {/* 
+           GRID SYSTEM:
+           - grid-cols-2: Mobile par 2 cards ek line mein.
+           - gap-3: Mobile par gap kam rakha hai.
+        */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8 max-w-7xl mx-auto">
           {customServices.map((service, index) => (
             <motion.div
               key={service.name}
-              className="flex-shrink-0 w-[85vw] sm:w-[70vw] md:w-auto snap-start"
-              initial={{ opacity: 0, y: 50 }}
+              className="w-full"
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
+              viewport={{ once: true, amount: 0.1 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
               <Link to={service.href} className="group block h-full">
-                <div className="bg-card rounded-2xl shadow-soft overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2 h-full flex flex-col">
-                  <div className="relative overflow-hidden">
+                <div className="bg-card rounded-xl md:rounded-2xl shadow-sm hover:shadow-xl overflow-hidden transition-all duration-300 hover:-translate-y-2 h-full flex flex-col">
+                  {/* Image Section - Height kam ki mobile ke liye */}
+                  <div className="relative overflow-hidden h-32 md:h-56 shrink-0">
                     <img
                       src={service.image}
                       alt={service.name}
-                      className="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 transition-colors duration-300 group-hover:bg-black/30">
+                      {/* Icon Circle - Size adjust kiya mobile ke liye */}
                       <div
-                        className={`p-4 rounded-full ${service.bgColor} transition-transform duration-300 group-hover:scale-110`}
+                        className={`p-2 md:p-4 rounded-full ${service.bgColor} transition-transform duration-300 group-hover:scale-110 shadow-md`}
                       >
                         <service.icon
-                          className={`w-12 h-12 ${service.iconColor}`}
+                          className={`w-6 h-6 md:w-12 md:h-12 ${service.iconColor}`}
                           strokeWidth={1.5}
                         />
                       </div>
                     </div>
                   </div>
-                  <div className="p-6 text-center flex-grow flex flex-col justify-center">
-                    <h3 className="text-xl font-bold text-foreground mb-2">
+
+                  {/* Content Section - Padding & Font adjust kiya */}
+                  <div className="p-3 md:p-6 text-center flex-grow flex flex-col justify-start md:justify-center bg-white">
+                    <h3 className="text-sm md:text-xl font-bold text-foreground mb-1 md:mb-2 leading-tight line-clamp-2 md:line-clamp-none">
                       {service.name}
                     </h3>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-muted-foreground text-xs md:text-sm line-clamp-3 md:line-clamp-none">
                       {service.description}
                     </p>
                   </div>
