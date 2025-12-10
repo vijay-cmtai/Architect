@@ -38,10 +38,10 @@ import {
   UserX,
   ChevronLeft,
   ChevronRight,
-  Download,
-  Search,
   FileSpreadsheet,
-  Filter,
+  Search,
+  FileText, // Icon for Qualification Document
+  MapPin, // Icon for City
 } from "lucide-react";
 
 const professionalSubRoles = [
@@ -98,6 +98,7 @@ const AllUsersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterCity, setFilterCity] = useState(""); // NEW: City Filter
 
   // --- States for Modal Form ---
   const [role, setRole] = useState("");
@@ -117,7 +118,6 @@ const AllUsersPage = () => {
 
   // --- 1. Fetch Users with Filters ---
   const handleFetchUsers = (page = 1) => {
-    // Note: Ensure your fetchUsers action and backend accepts these query params
     dispatch(
       fetchUsers({
         page,
@@ -125,6 +125,7 @@ const AllUsersPage = () => {
         search: searchTerm,
         role: filterRole === "all" ? "" : filterRole,
         status: filterStatus === "all" ? "" : filterStatus,
+        city: filterCity, // Pass City to Backend
       })
     );
   };
@@ -133,10 +134,10 @@ const AllUsersPage = () => {
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       handleFetchUsers(currentPage);
-    }, 500); // Debounce search to avoid too many API calls
+    }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [currentPage, searchTerm, filterRole, filterStatus]);
+  }, [currentPage, searchTerm, filterRole, filterStatus, filterCity]); // Added filterCity dependency
 
   useEffect(() => {
     if (actionStatus === "succeeded" && error) {
@@ -154,6 +155,7 @@ const AllUsersPage = () => {
           selectedUser.companyName,
         email: selectedUser.email,
         phone: selectedUser.phone,
+        city: selectedUser.city, // Populate City in Edit
       });
       setRole(selectedUser.role || "");
       setStatus(selectedUser.status || "");
@@ -166,19 +168,19 @@ const AllUsersPage = () => {
     }
   }, [selectedUser, reset, isEditModalOpen]);
 
-  // --- 2. CSV Export Logic ---
+  // --- CSV Export Logic ---
   const handleExportCSV = () => {
     if (!users || users.length === 0) {
       toast.error("No data available to export.");
       return;
     }
 
-    // Define CSV Headers based on data
     const headers = [
       "ID",
       "Name",
       "Email",
       "Phone",
+      "City", // Added to CSV
       "Role",
       "Profession",
       "Contractor Type",
@@ -186,9 +188,8 @@ const AllUsersPage = () => {
       "Registered Date",
     ];
 
-    // Convert Data to CSV Rows
     const csvRows = [
-      headers.join(","), // Header Row
+      headers.join(","),
       ...users.map((user) => {
         const name =
           user.name || user.businessName || user.companyName || "N/A";
@@ -199,15 +200,15 @@ const AllUsersPage = () => {
         const date = user.createdAt
           ? format(new Date(user.createdAt), "yyyy-MM-dd")
           : "";
-
-        // Escape commas in strings to avoid breaking CSV
         const safeName = `"${name.replace(/"/g, '""')}"`;
+        const safeCity = user.city ? `"${user.city}"` : "N/A";
 
         return [
           user._id,
           safeName,
           user.email,
           user.phone || "",
+          safeCity,
           user.role,
           professionVal,
           contractorVal,
@@ -222,7 +223,7 @@ const AllUsersPage = () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `users_export_${format(new Date(), "yyyyMMdd_HHmm")}.csv`;
+    a.download = `users_export.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
     toast.success("Data exported successfully!");
@@ -323,18 +324,34 @@ const AllUsersPage = () => {
           </div>
         </div>
 
-        {/* --- 3. Filters Section --- */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        {/* --- Filters Section --- */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
           {/* Search */}
           <div className="relative col-span-1 md:col-span-2">
             <Label className="text-xs mb-1 block text-gray-500">Search</Label>
             <Search className="absolute left-3 top-8 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search by Name or Email..."
+              placeholder="Search Name, Email..."
               className="pl-9"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+          </div>
+
+          {/* City Filter - NEW */}
+          <div className="col-span-1">
+            <Label className="text-xs mb-1 block text-gray-500">
+              Filter by City
+            </Label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-2.5 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Enter City"
+                className="pl-9"
+                value={filterCity}
+                onChange={(e) => setFilterCity(e.target.value)}
+              />
+            </div>
           </div>
 
           {/* Role Filter */}
@@ -391,6 +408,7 @@ const AllUsersPage = () => {
                   setSearchTerm("");
                   setFilterRole("all");
                   setFilterStatus("all");
+                  setFilterCity("");
                 }}
               >
                 Clear Filters
@@ -405,19 +423,19 @@ const AllUsersPage = () => {
                       Name
                     </th>
                     <th className="p-4 font-semibold text-sm text-gray-600">
-                      Email
+                      City
                     </th>
                     <th className="p-4 font-semibold text-sm text-gray-600">
                       Role
+                    </th>
+                    <th className="p-4 font-semibold text-sm text-gray-600">
+                      Doc
                     </th>
                     <th className="p-4 font-semibold text-sm text-gray-600">
                       Status
                     </th>
                     <th className="p-4 font-semibold text-sm text-gray-600">
                       Details
-                    </th>
-                    <th className="p-4 font-semibold text-sm text-gray-600">
-                      Registered
                     </th>
                     <th className="p-4 font-semibold text-sm text-gray-600 text-center">
                       Actions
@@ -427,16 +445,37 @@ const AllUsersPage = () => {
                 <tbody>
                   {users.map((user) => (
                     <tr key={user._id} className="border-t hover:bg-gray-50">
-                      <td className="p-4 font-medium text-gray-800">
-                        {user.name || user.businessName || user.companyName}
+                      <td className="p-4">
+                        <div className="font-medium text-gray-800">
+                          {user.name || user.businessName || user.companyName}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {user.email}
+                        </div>
                       </td>
-                      <td className="p-4 text-gray-600">{user.email}</td>
+                      <td className="p-4 text-gray-600">{user.city || "-"}</td>
                       <td className="p-4">
                         <span
                           className={`capitalize px-2 py-1 text-xs font-semibold rounded-full ${getRoleClass(user.role)}`}
                         >
                           {user.role}
                         </span>
+                      </td>
+                      <td className="p-4">
+                        {/* Show Certification Image Link if exists */}
+                        {user.businessCertificationUrl ? (
+                          <a
+                            href={user.businessCertificationUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-xs font-medium"
+                            title="View Qualification/Certificate"
+                          >
+                            <FileText className="w-4 h-4" /> View
+                          </a>
+                        ) : (
+                          <span className="text-gray-400 text-xs">-</span>
+                        )}
                       </td>
                       <td className="p-4">
                         <span
@@ -449,13 +488,6 @@ const AllUsersPage = () => {
                         {user.role === "professional" && user.profession}
                         {user.role === "Contractor" &&
                           `(${user.contractorType || "Normal"})`}
-                        {user.role === "user" && "-"}
-                      </td>
-                      <td className="p-4 text-gray-600">
-                        {user.createdAt &&
-                        !isNaN(new Date(user.createdAt).getTime())
-                          ? format(new Date(user.createdAt), "dd MMM, yyyy")
-                          : "N/A"}
                       </td>
                       <td className="p-4 text-center">
                         <div className="flex justify-center gap-2">
@@ -486,6 +518,7 @@ const AllUsersPage = () => {
           )}
         </div>
 
+        {/* Pagination Controls ... */}
         {pagination && pagination.totalPages > 1 && (
           <div className="flex justify-between items-center mt-6">
             <div className="text-sm text-gray-600">
@@ -512,7 +545,7 @@ const AllUsersPage = () => {
         )}
       </div>
 
-      {/* Edit User Modal (No changes to logic here, just re-rendering) */}
+      {/* Edit Modal ... (includes City input) */}
       {selectedUser && (
         <Dialog
           open={isEditModalOpen}
@@ -538,12 +571,18 @@ const AllUsersPage = () => {
                   {...register("name", { required: "Name is required." })}
                   disabled={isSubmitting}
                 />
-                {errors.name && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {String(errors.name.message)}
-                  </p>
-                )}
               </div>
+
+              {/* Added City Input in Edit Modal */}
+              <div>
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  {...register("city")} // Make sure to register city
+                  disabled={isSubmitting}
+                />
+              </div>
+
               <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -561,6 +600,8 @@ const AllUsersPage = () => {
                   disabled={isSubmitting}
                 />
               </div>
+
+              {/* ... Rest of the form inputs (Role, Profession, etc) ... */}
               <div>
                 <Label>Role</Label>
                 <Select
