@@ -53,7 +53,7 @@ type ContractorType = {
   contractorType?: "Normal" | "Premium";
 };
 
-// --- Contact Modal (No Changes) ---
+// --- Contact Modal ---
 const ContactModal: FC<{
   isOpen: boolean;
   onClose: () => void;
@@ -131,34 +131,21 @@ const ContactModal: FC<{
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="name">Your Name</Label>
-                <Input id="name" name="name" placeholder="John Doe" required />
+                <Input id="name" name="name" required />
               </div>
               <div>
                 <Label htmlFor="email">Your Email</Label>
-                <Input
-                  type="email"
-                  id="email"
-                  name="email"
-                  placeholder="you@example.com"
-                  required
-                />
+                <Input type="email" id="email" name="email" required />
               </div>
               <div>
                 <Label htmlFor="whatsapp">WhatsApp Number</Label>
-                <Input
-                  type="tel"
-                  id="whatsapp"
-                  name="whatsapp"
-                  placeholder="+91..."
-                  required
-                />
+                <Input type="tel" id="whatsapp" name="whatsapp" required />
               </div>
               <div>
                 <Label htmlFor="requirements">Project Details</Label>
                 <Textarea
                   id="requirements"
                   name="requirements"
-                  placeholder="e.g., I need a contractor for a 2-story building..."
                   rows={4}
                   required
                 />
@@ -183,25 +170,22 @@ const ContactModal: FC<{
   );
 };
 
-// --- Contractor Card Component (Optimized for both views) ---
+// --- Contractor Card ---
 const ContractorCard: FC<{
   contractor: ContractorType;
   onContact: (c: ContractorType) => void;
   isMobile?: boolean;
 }> = ({ contractor, onContact, isMobile = false }) => (
   <div
-    className={`bg-white rounded-xl flex flex-col group transition-all duration-300 border border-transparent hover:border-primary hover:shadow-xl hover:-translate-y-2
+    className={`bg-white rounded-xl flex flex-col group transition-all duration-300 border border-gray-100 hover:border-primary hover:shadow-xl overflow-hidden
     ${
       isMobile
-        ? "w-full p-2 shadow-sm border-gray-100" // Mobile: Full width of parent (handled by parent flex width)
-        : "w-[280px] p-4 flex-shrink-0 snap-start" // Desktop
+        ? "w-full p-2 shadow-sm"
+        : "w-[280px] p-4 flex-shrink-0 snap-start hover:-translate-y-2"
     }`}
   >
-    {/* Shop Image */}
     <div
-      className={`bg-gray-100 rounded-lg overflow-hidden shrink-0 ${
-        isMobile ? "h-20" : "h-40"
-      }`}
+      className={`bg-gray-100 rounded-lg overflow-hidden shrink-0 ${isMobile ? "h-20" : "h-40"}`}
     >
       <img
         src={
@@ -212,84 +196,64 @@ const ContractorCard: FC<{
         className="w-full h-full object-cover"
       />
     </div>
-
-    {/* Content */}
     <div
-      className={`relative flex-grow flex flex-col ${isMobile ? "-mt-5" : "-mt-10"}`}
+      className={`relative flex-grow flex flex-col ${isMobile ? "-mt-6 px-1" : "-mt-10"}`}
     >
-      {/* Avatar */}
       <Avatar
-        className={`mx-auto mb-2 border-4 border-white shadow-md bg-white
-        ${isMobile ? "w-10 h-10" : "w-20 h-20 mb-3"}
-      `}
+        className={`mx-auto mb-2 border-4 border-white shadow-md bg-white ${isMobile ? "w-12 h-12" : "w-20 h-20 mb-3"}`}
       >
         <AvatarImage src={contractor.photoUrl} alt={contractor.name} />
         <AvatarFallback className="text-xl font-bold bg-gray-200 text-gray-600">
           {contractor.name?.charAt(0).toUpperCase()}
         </AvatarFallback>
       </Avatar>
-
       <div className="text-center flex-grow">
         <h3
-          className={`font-bold text-gray-800 leading-tight truncate px-1
-          ${isMobile ? "text-xs" : "text-lg"}
-        `}
+          className={`font-bold text-gray-800 leading-tight truncate px-1 ${isMobile ? "text-sm" : "text-lg"}`}
         >
           {contractor.name}
         </h3>
-
         <div
-          className={`flex items-center justify-center gap-1 text-gray-500
-          ${isMobile ? "text-[9px] mt-0.5" : "text-sm mt-1"}
-        `}
+          className={`flex items-center justify-center gap-1 text-gray-500 ${isMobile ? "text-[10px] mt-0.5" : "text-sm mt-1"}`}
         >
           <Building
             className={
               isMobile ? "w-3 h-3 text-primary" : "w-4 h-4 text-primary"
             }
           />
-          <span className="font-medium truncate max-w-[100px]">
+          <span className="font-medium truncate max-w-[120px]">
             {contractor.companyName || "Freelancer"}
           </span>
         </div>
-
-        {/* Details Grid */}
         <div
-          className={`text-left text-gray-500 mx-auto
-          ${isMobile ? "mt-1.5 space-y-0.5 text-[9px] max-w-full" : "mt-4 space-y-1.5 text-sm"}
-        `}
+          className={`text-left text-gray-500 mx-auto ${isMobile ? "mt-2 space-y-1 text-[10px]" : "mt-4 space-y-1.5 text-sm"}`}
         >
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <Briefcase
-              className={`${isMobile ? "w-2.5 h-2.5" : "w-4 h-4"} shrink-0 text-primary`}
+              className={`${isMobile ? "w-3 h-3" : "w-4 h-4"} shrink-0 text-primary`}
             />
             <span className="truncate">{contractor.profession}</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <Star
-              className={`${isMobile ? "w-2.5 h-2.5" : "w-4 h-4"} shrink-0 text-primary`}
+              className={`${isMobile ? "w-3 h-3" : "w-4 h-4"} shrink-0 text-primary`}
             />
             <span className="truncate">{contractor.experience} Exp.</span>
           </div>
-          <div className="flex items-start gap-1">
+          <div className="flex items-start gap-1.5">
             <MapPin
-              className={`${isMobile ? "w-2.5 h-2.5 mt-0.5" : "w-4 h-4 mt-0.5"} shrink-0 text-primary`}
+              className={`${isMobile ? "w-3 h-3 mt-0.5" : "w-4 h-4 mt-0.5"} shrink-0 text-primary`}
             />
-            <span className={`line-clamp-1 ${isMobile ? "leading-tight" : ""}`}>
-              {contractor.city}
-            </span>
+            <span className="line-clamp-1">{contractor.city}</span>
           </div>
         </div>
       </div>
-
       <Button
         onClick={() => onContact(contractor)}
-        className={`w-full btn-primary bg-slate-800 text-white hover:bg-slate-700
-          ${isMobile ? "mt-2 h-7 text-[9px]" : "mt-4 h-10"}
-        `}
+        className={`w-full btn-primary bg-slate-800 text-white hover:bg-slate-700 ${isMobile ? "mt-2 h-7 text-[10px]" : "mt-4 h-10"}`}
         type="button"
       >
-        <Phone className={`${isMobile ? "w-3 h-3 mr-1" : "w-4 h-4 mr-2"}`} />
+        <Phone className={`${isMobile ? "w-3 h-3 mr-1" : "w-4 h-4 mr-2"}`} />{" "}
         Contact
       </Button>
     </div>
@@ -302,7 +266,6 @@ const ConstructionPartnersSection: FC = () => {
     (state: RootState) => state.user
   );
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedContractor, setSelectedContractor] =
     useState<ContractorType | null>(null);
@@ -315,12 +278,11 @@ const ConstructionPartnersSection: FC = () => {
 
   const approvedContractors = useMemo(() => {
     if (!Array.isArray(contractors)) return [];
-    return contractors.filter((c: ContractorType) => {
+    return contractors.filter((c) => {
       const isApproved = c.status === "Approved";
       const isPremium = c.contractorType === "Premium";
       const matchesCity =
         !cityFilter || c.city?.toLowerCase().includes(cityFilter.toLowerCase());
-
       const lowerCaseProfession = c.profession?.toLowerCase() || "";
       const matchesProfession =
         professionFilter === "All" ||
@@ -329,7 +291,6 @@ const ConstructionPartnersSection: FC = () => {
             lowerCaseProfession.includes("general"))) ||
         (professionFilter === "Interior" &&
           lowerCaseProfession.includes("interior"));
-
       return isApproved && isPremium && matchesCity && matchesProfession;
     });
   }, [contractors, cityFilter, professionFilter]);
@@ -341,9 +302,8 @@ const ConstructionPartnersSection: FC = () => {
 
   const scroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
-      const scrollAmount = 320;
       scrollContainerRef.current.scrollBy({
-        left: direction === "left" ? -scrollAmount : scrollAmount,
+        left: direction === "left" ? -320 : 320,
         behavior: "smooth",
       });
     }
@@ -351,47 +311,46 @@ const ConstructionPartnersSection: FC = () => {
 
   return (
     <>
-      <section className="py-8 md:py-16 bg-soft-teal">
+      {/* 
+         ADDED: border-b border-gray-200 to section
+         This adds the bottom line you requested.
+      */}
+      <section className="py-8 md:py-16 bg-soft-teal border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-2 md:px-8">
           <div className="text-center mb-6 md:mb-12">
             <h2 className="text-2xl md:text-4xl font-extrabold text-gray-800 tracking-tight">
               Our City Partners
             </h2>
             <p className="mt-2 md:mt-4 text-xs md:text-lg text-gray-600 max-w-2xl mx-auto">
-              Connect with approved contractors for your project.
+              Connect with approved contractors.
             </p>
           </div>
 
-          {/* Filters - Compact on Mobile */}
-          <div className="max-w-2xl mx-auto mb-6 md:mb-10 bg-white/80 backdrop-blur-sm p-3 md:p-4 rounded-xl shadow-md space-y-3 md:space-y-4">
+          {/* Filters */}
+          <div className="max-w-2xl mx-auto mb-6 bg-white/80 backdrop-blur-sm p-3 rounded-xl shadow-md space-y-3">
             <div>
-              <Label
-                htmlFor="city-filter"
-                className="font-semibold text-gray-700 text-xs md:text-sm"
-              >
+              <Label className="font-semibold text-gray-700 text-xs">
                 Filter by City
               </Label>
-              <div className="relative mt-1 md:mt-2">
+              <div className="relative mt-1">
                 <Input
-                  id="city-filter"
                   placeholder="e.g., Delhi..."
                   value={cityFilter}
                   onChange={(e) => setCityFilter(e.target.value)}
-                  className="pl-9 md:pl-10 h-9 md:h-12 text-sm"
+                  className="pl-9 h-9 text-sm"
                 />
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               </div>
             </div>
-
             <div>
-              <Label className="font-semibold text-gray-700 text-xs md:text-sm">
+              <Label className="font-semibold text-gray-700 text-xs">
                 Filter by Profession
               </Label>
-              <div className="grid grid-cols-3 gap-2 mt-1 md:mt-2">
+              <div className="grid grid-cols-3 gap-2 mt-1">
                 <Button
                   variant={professionFilter === "All" ? "default" : "outline"}
                   onClick={() => setProfessionFilter("All")}
-                  className="h-8 md:h-10 text-xs md:text-sm"
+                  className="h-8 text-xs"
                 >
                   All
                 </Button>
@@ -400,20 +359,18 @@ const ConstructionPartnersSection: FC = () => {
                     professionFilter === "Building" ? "default" : "outline"
                   }
                   onClick={() => setProfessionFilter("Building")}
-                  className="h-8 md:h-10 text-xs md:text-sm px-2"
+                  className="h-8 text-xs"
                 >
-                  <HardHat className="w-3 h-3 md:w-4 md:h-4 mr-1" />
-                  Building
+                  <HardHat className="w-3 h-3 mr-1" /> Building
                 </Button>
                 <Button
                   variant={
                     professionFilter === "Interior" ? "default" : "outline"
                   }
                   onClick={() => setProfessionFilter("Interior")}
-                  className="h-8 md:h-10 text-xs md:text-sm px-2"
+                  className="h-8 text-xs"
                 >
-                  <Paintbrush className="w-3 h-3 md:w-4 md:h-4 mr-1" />
-                  Interior
+                  <Paintbrush className="w-3 h-3 mr-1" /> Interior
                 </Button>
               </div>
             </div>
@@ -429,42 +386,37 @@ const ConstructionPartnersSection: FC = () => {
             <div className="relative">
               {approvedContractors.length === 0 ? (
                 <div className="w-full text-center py-12 text-gray-500 bg-white/50 rounded-xl">
-                  <p className="text-sm">
-                    No approved partners found. Try another city.
-                  </p>
+                  <p className="text-sm">No approved partners found.</p>
                 </div>
               ) : (
                 <>
-                  {/* =====================================
-                      DESKTOP VIEW: Slider
-                     ===================================== */}
+                  {/* DESKTOP VIEW */}
                   <div className="hidden md:block">
                     {approvedContractors.length > 3 && (
                       <>
                         <Button
                           variant="outline"
                           size="icon"
-                          className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 rounded-full h-12 w-12 bg-white/80 backdrop-blur-sm hover:bg-white shadow-md"
+                          className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/80"
                           onClick={() => scroll("left")}
                         >
-                          <ChevronLeft className="h-6 w-6" />
+                          <ChevronLeft />
                         </Button>
                         <Button
                           variant="outline"
                           size="icon"
-                          className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 rounded-full h-12 w-12 bg-white/80 backdrop-blur-sm hover:bg-white shadow-md"
+                          className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/80"
                           onClick={() => scroll("right")}
                         >
-                          <ChevronRight className="h-6 w-6" />
+                          <ChevronRight />
                         </Button>
                       </>
                     )}
-
                     <div
                       ref={scrollContainerRef}
-                      className="flex overflow-x-auto scroll-smooth py-4 -mx-4 px-4 snap-x snap-mandatory"
-                      style={{ scrollbarWidth: "none" }}
+                      className="flex overflow-x-auto scroll-smooth py-4 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide"
                     >
+                      <style>{`.scrollbar-hide::-webkit-scrollbar { display: none; }`}</style>
                       <div className="flex gap-8">
                         {approvedContractors.map((contractor) => (
                           <ContractorCard
@@ -478,18 +430,9 @@ const ConstructionPartnersSection: FC = () => {
                     </div>
                   </div>
 
-                  {/* =====================================
-                      MOBILE VIEW: Horizontal Scroll (2 cards)
-                     ===================================== */}
+                  {/* MOBILE VIEW - Partition Type Scroll */}
                   <div className="md:hidden">
-                    {/* 
-                       CHANGES:
-                       - Removed 'grid'
-                       - Added 'flex overflow-x-auto' for horizontal scrolling
-                       - Added 'snap-x' for better UX
-                       - Cards inside use 'min-w-[45vw]' to show approx 2 cards on screen
-                    */}
-                    <div className="flex overflow-x-auto gap-2.5 pb-2 -mx-2 px-2 snap-x scrollbar-hide">
+                    <div className="flex overflow-x-auto gap-4 pb-4 -mx-2 px-2 snap-x scrollbar-hide">
                       <style>{`.scrollbar-hide::-webkit-scrollbar { display: none; } .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
                       {approvedContractors.map((contractor) => (
                         <div
