@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, FC } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
   Loader2,
@@ -148,57 +148,106 @@ const InquiryModal = ({ product, onClose }) => {
   );
 };
 
-// --- Product Card for Carousel (No changes) ---
-const ProductCard = ({ product, onInquiryClick }) => (
-  <div className="bg-white rounded-xl p-4 flex flex-col group transition-all duration-300 border hover:border-orange-500 hover:shadow-xl hover:-translate-y-2 w-80 flex-shrink-0 snap-start">
+// --- OPTIMIZED PRODUCT CARD (Wider Mobile Look) ---
+const ProductCard = ({ product, onInquiryClick, isMobile = false }) => (
+  <div
+    className={`bg-white rounded-lg flex flex-col group transition-all duration-300 border hover:border-orange-500 hover:shadow-xl hover:-translate-y-2
+    ${
+      isMobile
+        ? "w-full p-2 shadow-sm border-gray-200" // Reduced padding to give more width to content
+        : "w-80 flex-shrink-0 snap-start p-4 shadow-md rounded-xl"
+    }`}
+  >
+    {/* Image Container */}
     <div className="relative">
       <img
         src={product.image || "https://via.placeholder.com/400x300"}
         alt={product.name}
-        className="w-full h-48 object-cover rounded-lg"
+        className={`w-full object-cover rounded-md bg-gray-50
+          ${isMobile ? "h-28" : "h-48"} 
+        `}
       />
-      <div className="absolute top-2 right-2 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold text-gray-800 flex items-center gap-1">
-        <MapPin size={12} /> {product.city}
+      <div
+        className={`absolute top-1.5 right-1.5 bg-white/95 backdrop-blur-sm rounded-full font-semibold text-gray-800 flex items-center gap-1 shadow-sm
+        ${isMobile ? "px-1.5 py-0.5 text-[9px]" : "px-3 py-1 text-xs"}
+      `}
+      >
+        <MapPin className={isMobile ? "w-2 h-2" : "w-3 h-3"} />
+        {product.city}
       </div>
     </div>
-    <div className="pt-3 flex flex-col flex-grow">
-      <p className="text-xs text-orange-600 font-semibold uppercase tracking-wider">
+
+    {/* Content Container */}
+    <div className={`flex flex-col flex-grow ${isMobile ? "pt-2" : "pt-3"}`}>
+      {/* Category */}
+      <p
+        className={`text-orange-600 font-bold uppercase tracking-wider truncate
+        ${isMobile ? "text-[8px] mb-0.5" : "text-xs mb-1"}
+      `}
+      >
         {product.category}
       </p>
-      <h3 className="text-lg font-bold text-gray-900 mt-1 truncate">
+
+      {/* Title - Allowed 2 lines on mobile for better width utilization */}
+      <h3
+        className={`font-bold text-gray-900 leading-tight
+        ${isMobile ? "text-xs line-clamp-2 h-8" : "text-lg truncate"}
+      `}
+        title={product.name}
+      >
         {product.name}
       </h3>
-      <div className="mt-auto pt-3">
-        <div className="flex items-center gap-3 text-sm text-gray-600 border-t pt-3 mt-3">
-          <img
-            src={product.seller?.photoUrl || "https://via.placeholder.com/40"}
-            alt={product.seller?.businessName || "Seller"}
-            className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-          />
-          <div>
-            <p className="text-xs text-gray-400">Sold by:</p>
-            <p className="font-semibold text-gray-700">
-              {product.seller?.businessName || "Trusted Seller"}
-            </p>
-          </div>
+
+      {/* Seller Info */}
+      <div
+        className={`flex items-center text-gray-600 border-t mt-auto
+        ${isMobile ? "gap-1.5 pt-1.5 mt-1.5" : "gap-3 pt-3 mt-3"}
+      `}
+      >
+        <img
+          src={product.seller?.photoUrl || "https://via.placeholder.com/40"}
+          alt={product.seller?.businessName || "Seller"}
+          className={`rounded-full object-cover border border-gray-200
+            ${isMobile ? "w-5 h-5" : "w-10 h-10"}
+          `}
+        />
+        <div className="flex flex-col justify-center overflow-hidden">
+          <p
+            className={`${isMobile ? "text-[8px]" : "text-xs"} text-gray-400 leading-none`}
+          >
+            Sold by:
+          </p>
+          <p
+            className={`font-semibold text-gray-700 truncate
+            ${isMobile ? "text-[10px]" : "text-sm"}
+          `}
+          >
+            {product.seller?.businessName || "Trusted Seller"}
+          </p>
         </div>
-        <div className="flex items-baseline justify-between mt-3">
-          <span className="text-2xl font-extrabold text-gray-800">
-            ₹{product.price.toLocaleString()}
-          </span>
-        </div>
-        <Button
-          onClick={() => onInquiryClick(product)}
-          className="w-full mt-3 bg-gray-800 hover:bg-orange-600 text-white font-semibold"
-        >
-          Send Inquiry
-        </Button>
       </div>
+
+      {/* Price */}
+      <div
+        className={`font-extrabold text-gray-800 ${isMobile ? "mt-1.5 text-sm" : "mt-3 text-2xl"}`}
+      >
+        ₹{product.price.toLocaleString()}
+      </div>
+
+      {/* Action Button */}
+      <Button
+        onClick={() => onInquiryClick(product)}
+        className={`w-full bg-gray-900 hover:bg-orange-600 text-white font-medium rounded-md transition-colors
+          ${isMobile ? "mt-2 h-8 text-xs" : "mt-3 h-10 text-sm rounded-lg"}
+        `}
+      >
+        Send Inquiry
+      </Button>
     </div>
   </div>
 );
 
-// --- Main Carousel Section with Banner ---
+// --- Main Section ---
 const SellersSection: FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const { products, status, error } = useSelector(
@@ -212,10 +261,14 @@ const SellersSection: FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
+  // --- MOBILE PAGINATION STATE ---
+  const [mobilePage, setMobilePage] = useState(1);
+  const mobileItemsPerPage = 4;
+
   useEffect(() => {
     dispatch(
       fetchPublicSellerProducts({
-        limit: 15, // Fetch enough items for a carousel
+        limit: 15,
         city: selectedCity || undefined,
       })
     );
@@ -248,6 +301,19 @@ const SellersSection: FC = () => {
     return items;
   }, [products, searchTerm, selectedCategory]);
 
+  const totalMobilePages = Math.ceil(
+    filteredProducts.length / mobileItemsPerPage
+  );
+  const currentMobileItems = filteredProducts.slice(
+    (mobilePage - 1) * mobileItemsPerPage,
+    mobilePage * mobileItemsPerPage
+  );
+
+  const handleMobilePageChange = (page) => {
+    setMobilePage(page);
+    // Optional: Scroll smooth to grid top
+  };
+
   const handleOpenInquiryModal = (product) => {
     setSelectedProduct(product);
     setIsModalOpen(true);
@@ -255,7 +321,7 @@ const SellersSection: FC = () => {
 
   const scroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
-      const scrollAmount = 344; // Card width (320px) + gap (24px)
+      const scrollAmount = 344;
       scrollContainerRef.current.scrollBy({
         left: direction === "left" ? -scrollAmount : scrollAmount,
         behavior: "smooth",
@@ -265,49 +331,60 @@ const SellersSection: FC = () => {
 
   return (
     <>
-      <section className="py-16 md:py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* --- BANNER ADDED HERE --- */}
-          <div
-            className="relative h-64 md:h-80 rounded-2xl overflow-hidden mb-12 bg-cover bg-center"
-            style={{ backgroundImage: "url(/marketplace.png)" }} // Make sure this image is in your /public folder
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20" />
-            <div className="relative z-10 h-full flex flex-col items-center justify-center text-center text-white p-4">
-              <h2
-                className="text-4xl md:text-5xl font-extrabold tracking-tight"
-                style={{ textShadow: "2px 2px 8px rgba(0,0,0,0.7)" }}
-              >
-                Our Marketplace
-              </h2>
-              <p className="mt-4 max-w-2xl mx-auto text-lg text-gray-200">
-                Discover amazing materials and designs for your dream home.
-              </p>
+      <section className="py-8 md:py-20 bg-gray-50">
+        {/* CHANGED: Reduced side padding on mobile (px-1) to allow cards to be wider */}
+        <div className="max-w-7xl mx-auto px-1 md:px-8">
+          {/* --- BANNER --- */}
+          <div className="px-2 md:px-0 mb-6 md:mb-12">
+            <div
+              className="relative h-40 md:h-80 rounded-lg md:rounded-2xl overflow-hidden bg-cover bg-center shadow-md"
+              style={{ backgroundImage: "url(/marketplace.png)" }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30" />
+              <div className="relative z-10 h-full flex flex-col items-center justify-center text-center text-white p-4">
+                <h2
+                  className="text-2xl md:text-5xl font-extrabold tracking-tight"
+                  style={{ textShadow: "2px 2px 8px rgba(0,0,0,0.7)" }}
+                >
+                  Our Marketplace
+                </h2>
+                <p className="mt-1 md:mt-4 max-w-2xl mx-auto text-xs md:text-lg text-gray-200">
+                  Discover amazing materials and designs for your dream home.
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md mb-10 grid grid-cols-1 md:grid-cols-3 gap-4 items-end max-w-4xl mx-auto border">
+          {/* --- FILTERS (With side margin on mobile) --- */}
+          <div className="mx-2 md:mx-auto bg-white/90 backdrop-blur-sm p-3 md:p-4 rounded-xl shadow-sm mb-6 md:mb-10 grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 items-end max-w-4xl border border-gray-100">
             <div className="md:col-span-1">
-              <Label htmlFor="search-filter">Search Product or Seller</Label>
+              <Label htmlFor="search-filter" className="text-xs md:text-sm">
+                Search
+              </Label>
               <div className="relative mt-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   id="search-filter"
-                  placeholder="e.g., Cement, Tiles..."
+                  placeholder="Product or Seller..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-9 h-9 md:h-10 text-sm"
                 />
               </div>
             </div>
             <div>
-              <Label htmlFor="category-filter">Category</Label>
+              <Label htmlFor="category-filter" className="text-xs md:text-sm">
+                Category
+              </Label>
               <Select
                 value={selectedCategory}
                 onValueChange={setSelectedCategory}
               >
-                <SelectTrigger id="category-filter">
-                  <SelectValue placeholder="All Categories" />
+                <SelectTrigger
+                  id="category-filter"
+                  className="h-9 md:h-10 text-sm"
+                >
+                  <SelectValue placeholder="All" />
                 </SelectTrigger>
                 <SelectContent>
                   {uniqueCategories.map((cat) => (
@@ -319,14 +396,16 @@ const SellersSection: FC = () => {
               </Select>
             </div>
             <div>
-              <Label htmlFor="city-filter">City</Label>
+              <Label htmlFor="city-filter" className="text-xs md:text-sm">
+                City
+              </Label>
               <Select
                 value={selectedCity}
                 onValueChange={(value) =>
                   setSelectedCity(value === "all-cities" ? "" : value)
                 }
               >
-                <SelectTrigger id="city-filter">
+                <SelectTrigger id="city-filter" className="h-9 md:h-10 text-sm">
                   <SelectValue placeholder="All Cities" />
                 </SelectTrigger>
                 <SelectContent>
@@ -360,53 +439,156 @@ const SellersSection: FC = () => {
           )}
 
           {status === "succeeded" && (
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 rounded-full h-12 w-12 bg-white/80 backdrop-blur-sm hover:bg-white hidden md:flex"
-                onClick={() => scroll("left")}
-              >
-                <ChevronLeft className="h-6 w-6" />
-              </Button>
-              <div
-                ref={scrollContainerRef}
-                className="flex overflow-x-auto scroll-smooth py-4 -mx-4 px-4 snap-x snap-mandatory"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-              >
-                <div className="flex gap-6">
-                  {filteredProducts.length > 0 ? (
-                    filteredProducts.map((product) => (
-                      <ProductCard
-                        key={product._id}
-                        product={product}
-                        onInquiryClick={handleOpenInquiryModal}
-                      />
-                    ))
-                  ) : (
-                    <div
-                      className="w-full flex items-center justify-center text-center py-12 text-gray-500 bg-white/50 rounded-xl"
-                      style={{ minWidth: "80vw" }}
+            <>
+              {filteredProducts.length === 0 ? (
+                <div className="w-full flex items-center justify-center text-center py-12 text-gray-500 bg-white/50 rounded-xl border border-dashed mx-2">
+                  <div>
+                    <Package className="mx-auto h-10 w-10 text-gray-400 mb-2" />
+                    <p className="font-semibold text-sm">No products found.</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* =====================================
+                      DESKTOP VIEW: Carousel
+                     ===================================== */}
+                  <div className="hidden md:block relative">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 rounded-full h-12 w-12 bg-white/90 shadow-lg hover:bg-white border-orange-100"
+                      onClick={() => scroll("left")}
                     >
-                      <div>
-                        <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                        <p className="font-semibold">
-                          No products found matching your criteria.
-                        </p>
+                      <ChevronLeft className="h-6 w-6 text-gray-700" />
+                    </Button>
+                    <div
+                      ref={scrollContainerRef}
+                      className="flex overflow-x-auto scroll-smooth py-6 -mx-4 px-4 snap-x snap-mandatory"
+                      style={{
+                        scrollbarWidth: "none",
+                        msOverflowStyle: "none",
+                      }}
+                    >
+                      <div className="flex gap-6">
+                        {filteredProducts.map((product) => (
+                          <ProductCard
+                            key={product._id}
+                            product={product}
+                            onInquiryClick={handleOpenInquiryModal}
+                            isMobile={false}
+                          />
+                        ))}
                       </div>
                     </div>
-                  )}
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 rounded-full h-12 w-12 bg-white/80 backdrop-blur-sm hover:bg-white hidden md:flex"
-                onClick={() => scroll("right")}
-              >
-                <ChevronRight className="h-6 w-6" />
-              </Button>
-            </div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 rounded-full h-12 w-12 bg-white/90 shadow-lg hover:bg-white border-orange-100"
+                      onClick={() => scroll("right")}
+                    >
+                      <ChevronRight className="h-6 w-6 text-gray-700" />
+                    </Button>
+                  </div>
+
+                  {/* =====================================
+                      MOBILE VIEW: Grid + Pagination
+                     ===================================== */}
+                  <div className="md:hidden">
+                    {/* CHANGED: Grid gap reduced to gap-2 and padding removed from container side to maximize width */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <AnimatePresence mode="wait">
+                        {currentMobileItems.map((product) => (
+                          <motion.div
+                            key={product._id}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <ProductCard
+                              product={product}
+                              onInquiryClick={handleOpenInquiryModal}
+                              isMobile={true}
+                            />
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Mobile Pagination Controls */}
+                    {totalMobilePages > 1 && (
+                      <div className="flex justify-center items-center gap-2 mt-8">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleMobilePageChange(Math.max(1, mobilePage - 1))
+                          }
+                          disabled={mobilePage === 1}
+                          className="h-8 w-8 p-0 rounded-full"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+
+                        {Array.from({ length: totalMobilePages }).map(
+                          (_, idx) => {
+                            if (
+                              totalMobilePages > 5 &&
+                              Math.abs(mobilePage - (idx + 1)) > 1 &&
+                              idx !== 0 &&
+                              idx !== totalMobilePages - 1
+                            )
+                              return null;
+                            if (
+                              totalMobilePages > 5 &&
+                              Math.abs(mobilePage - (idx + 1)) === 2 &&
+                              idx !== 0 &&
+                              idx !== totalMobilePages - 1
+                            )
+                              return (
+                                <span
+                                  key={idx}
+                                  className="text-xs text-gray-400"
+                                >
+                                  ..
+                                </span>
+                              );
+
+                            return (
+                              <Button
+                                key={idx}
+                                variant={
+                                  mobilePage === idx + 1 ? "default" : "outline"
+                                }
+                                size="sm"
+                                onClick={() => handleMobilePageChange(idx + 1)}
+                                className={`h-8 w-8 p-0 rounded-full text-xs font-bold ${mobilePage === idx + 1 ? "bg-orange-600 hover:bg-orange-700" : ""}`}
+                              >
+                                {idx + 1}
+                              </Button>
+                            );
+                          }
+                        )}
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleMobilePageChange(
+                              Math.min(totalMobilePages, mobilePage + 1)
+                            )
+                          }
+                          disabled={mobilePage === totalMobilePages}
+                          className="h-8 w-8 p-0 rounded-full"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </>
           )}
         </div>
       </section>
