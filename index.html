@@ -53,12 +53,16 @@ width="0"
 
 <script type="module" src="/src/main.tsx"></script>
 
-<script
-type="text/javascript"
-src="https://d3mkw6s8thqya7.cloudfront.net/integration-plugin.js"
-id="aisensy-wa-widget"
-      widget-id="aaanf1"
-    ></script>
+<script>
+  setTimeout(() => {
+    const s = document.createElement("script");
+    s.type = "text/javascript";
+    s.src = "https://d3mkw6s8thqya7.cloudfront.net/integration-plugin.js";
+    s.id = "aisensy-wa-widget";
+    s.setAttribute("widget-id", "aaanf1");
+    document.body.appendChild(s);
+  }, 180000); // 3 minutes = 180000 ms
+</script>
     </script>
 
 </body>
