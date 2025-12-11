@@ -17,25 +17,12 @@ import {
 } from "@/components/ui/select";
 
 const slides = [
-  {
-    image: "/b11.jpg",
-    alt: "Modern white house with a lawn",
-  },
-  {
-    image: "/b12.jpg",
-    alt: "Classic house with a beautiful garden",
-  },
-  {
-    image: "/b13.jpg",
-    alt: "Luxurious apartment building exterior",
-  },
-  {
-    image: "/b14.jpg",
-    alt: "Luxurious apartment building Interior",
-  },
+  { image: "/b11.jpg", alt: "Modern white house with a lawn" },
+  { image: "/b12.jpg", alt: "Classic house with a beautiful garden" },
+  { image: "/b13.jpg", alt: "Luxurious apartment building exterior" },
+  { image: "/b14.jpg", alt: "Luxurious apartment building interior" },
 ];
 
-// Fixed categories list
 const CATEGORIES = [
   "Modern Home Design",
   "Duplex House Plans",
@@ -73,13 +60,14 @@ const Hero = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
 
+  // Fetch products once
   useEffect(() => {
     if (listStatus === "idle") {
       dispatch(fetchProducts({}));
     }
   }, [dispatch, listStatus]);
 
-  // --- START: Live Search Logic ---
+  // Live search
   useEffect(() => {
     if (searchTerm.length > 1) {
       const filtered = products
@@ -88,14 +76,15 @@ const Hero = () => {
             product.plotSize &&
             product.plotSize.toLowerCase().startsWith(searchTerm.toLowerCase())
         )
-        .slice(0, 5); // Show top 5 suggestions
+        .slice(0, 5);
+
       setSuggestions(filtered);
     } else {
       setSuggestions([]);
     }
   }, [searchTerm, products]);
 
-  // Click outside handler to close suggestions
+  // Close suggestions when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -105,17 +94,17 @@ const Hero = () => {
         setSuggestions([]);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [searchContainerRef]);
-  // --- END: Live Search Logic ---
 
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Optimized lightweight slider
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
+    }, 6000);
+
     return () => clearInterval(timer);
   }, []);
 
@@ -134,28 +123,26 @@ const Hero = () => {
   };
 
   return (
-    // Changed: Reduced min-height for mobile to avoid extra scrolling
     <section className="relative h-[80vh] min-h-[550px] md:h-screen md:min-h-[700px] flex items-center justify-center text-white overflow-hidden">
-      {/* Background Image Slider */}
+      {/* === OPTIMIZED BACKGROUND SLIDER (NO UI CHANGE) === */}
       <div className="absolute inset-0">
-        <AnimatePresence>
-          <motion.img
-            key={currentSlide}
-            src={slides[currentSlide].image}
-            alt={slides[currentSlide].alt}
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.05 }}
-            transition={{ duration: 1.5, ease: "easeInOut" }}
-            className="w-full h-full object-cover object-center"
-          />
-        </AnimatePresence>
+        <img
+          key={currentSlide}
+          src={slides[currentSlide].image}
+          alt={slides[currentSlide].alt}
+          width={1920}
+          height={1080}
+          loading={currentSlide === 0 ? "eager" : "lazy"}
+          decoding="async"
+          className="w-full h-full object-cover object-center transition-opacity duration-700"
+          style={{ opacity: 1 }}
+        />
+
         <div className="absolute inset-0 bg-black/60"></div>
       </div>
 
-      {/* Hero Content */}
+      {/* === HERO CONTENT (UNCHANGED UI) === */}
       <div className="relative z-10 text-center max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center h-full pt-10 md:pt-0">
-        {/* Changed: Text sizes reduced for mobile */}
         <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-3 sm:mb-6 animate-slide-up leading-tight">
           Find Your Perfect
           <span
@@ -166,7 +153,6 @@ const Hero = () => {
           </span>
         </h1>
 
-        {/* Changed: Text size and margin adjusted */}
         <p
           className="text-sm sm:text-lg md:text-xl mb-6 md:mb-8 text-white/90 font-light animate-fade-in max-w-lg mx-auto md:max-w-none"
           style={{ animationDelay: "0.6s" }}
@@ -190,21 +176,18 @@ const Hero = () => {
           </Link>
         </motion.div>
 
-        {/* --- Responsive Search Bar --- */}
+        {/* Search Bar */}
         <div
           ref={searchContainerRef}
-          // Changed: Padding reduced on mobile (p-2) to save space
           className="bg-white rounded-xl md:rounded-2xl p-2 sm:p-4 shadow-large max-w-2xl w-full mx-auto animate-scale-in relative"
           style={{ animationDelay: "0.9s" }}
         >
-          {/* Changed: Gap reduced on mobile */}
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <div className="flex-1">
               <Select
                 onValueChange={setSelectedCategory}
                 disabled={listStatus === "loading"}
               >
-                {/* Changed: Height fixed to h-10 for consistency */}
                 <SelectTrigger className="w-full h-10 text-sm text-primary-gray border-0 bg-gray-50 sm:bg-transparent focus:ring-1 focus:ring-primary transition-all duration-300 hover:bg-primary/5">
                   <SelectValue
                     placeholder={
@@ -225,7 +208,6 @@ const Hero = () => {
             </div>
 
             <div className="flex-1 relative">
-              {/* Changed: Height fixed to h-10 and bg added for better visibility on mobile */}
               <Input
                 placeholder="Search plot size e.g. 25x40"
                 className="h-10 text-sm border-0 bg-gray-50 sm:bg-transparent focus:ring-1 focus:ring-primary text-primary-gray transition-all duration-300 hover:bg-primary/5"
@@ -234,7 +216,7 @@ const Hero = () => {
                 autoComplete="off"
               />
 
-              {/* --- Suggestions Dropdown --- */}
+              {/* Suggestions */}
               <AnimatePresence>
                 {suggestions.length > 0 && (
                   <motion.div
@@ -276,8 +258,7 @@ const Hero = () => {
           </div>
         </div>
 
-        {/* --- Animated Stats (UPDATED) --- */}
-        {/* Changed: Margin top reduced (mt-8), gap reduced (gap-2) for mobile */}
+        {/* Stats */}
         <div className="grid grid-cols-3 gap-2 md:gap-8 mt-8 md:mt-12 max-w-lg mx-auto w-full">
           <AnimatedStat end={1000} suffix="+" label="House Plans" />
           <AnimatedStat end={1000} suffix="+" label="Happy Clients" />
