@@ -35,9 +35,11 @@ import { useNavigate, Link } from "react-router-dom";
 const GalleryImageCard = ({
   items,
   onCardClick,
+  index, // Added index for Priority Loading logic
 }: {
   items: GalleryItem[];
   onCardClick: () => void;
+  index: number;
 }) => {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
   const firstItem = items[0];
@@ -58,6 +60,9 @@ const GalleryImageCard = ({
     [emblaApi]
   );
 
+  // Optimization: First 4 items load eagerly (LCP), rest lazy
+  const isPriority = index < 4;
+
   return (
     <Card
       className="rounded-lg md:rounded-xl overflow-hidden group relative border-2 border-transparent hover:border-orange-500/50 transition-all duration-300 shadow-sm hover:shadow-xl cursor-pointer"
@@ -65,14 +70,20 @@ const GalleryImageCard = ({
     >
       <div className="overflow-hidden relative" ref={emblaRef}>
         <div className="flex">
-          {items.map((item) => (
+          {items.map((item, imgIndex) => (
             <div className="flex-grow-0 flex-shrink-0 w-full" key={item._id}>
               <div className="aspect-square w-full bg-gray-100 relative">
+                {/* CLS & LCP Optimization */}
                 <img
                   src={item.imageUrl}
                   alt={item.altText || item.title}
+                  width="400"
+                  height="400"
                   className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
-                  loading="lazy"
+                  // Only priority load the first image of the first few cards
+                  loading={isPriority && imgIndex === 0 ? "eager" : "lazy"}
+                  // @ts-ignore
+                  fetchPriority={isPriority && imgIndex === 0 ? "high" : "auto"}
                 />
                 {/* Zoom Icon - Hidden on mobile, visible on desktop hover */}
                 <div className="absolute top-4 right-4 bg-black/60 p-2 rounded-full opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
@@ -277,6 +288,8 @@ const GalleryPage: React.FC = () => {
               key={`${group[0].title}-${index}`}
               items={group}
               onCardClick={() => handleCardClick(group)}
+              // Passing index to control loading priority
+              index={index}
             />
           ))}
         </div>
@@ -335,25 +348,25 @@ const GalleryPage: React.FC = () => {
     <div className="bg-[#F7FAFA] min-h-screen">
       <Navbar />
       <main className="pb-16">
-        {/* --- HERO BANNER IMAGE SECTION --- */}
-        <div
-          className="relative w-full h-48 md:h-80 bg-black flex items-center justify-center mb-8 md:mb-12"
-          style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070&auto=format&fit=crop')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        >
-          {/* Dark Overlay */}
-          <div className="absolute inset-0 bg-black/50"></div>
+        {/* --- HERO BANNER IMAGE SECTION (Optimized for LCP) --- */}
+        <div className="relative w-full h-48 md:h-80 overflow-hidden flex items-center justify-center mb-8 md:mb-12 bg-black">
+          {/* LCP Optimization: Use img tag instead of background-image for faster discovery */}
+          <img
+            src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070&auto=format&fit=crop"
+            alt="Interior Design Gallery Banner"
+            width="2070"
+            height="800"
+            // @ts-ignore
+            fetchPriority="high"
+            className="absolute inset-0 w-full h-full object-cover opacity-60"
+          />
 
           {/* Content */}
           <div className="relative z-10 text-center px-4 text-white">
-            <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-2 md:mb-4">
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-2 md:mb-4 drop-shadow-lg">
               Our Project Gallery
             </h1>
-            <p className="text-sm md:text-lg max-w-2xl mx-auto opacity-90 font-light">
+            <p className="text-sm md:text-lg max-w-2xl mx-auto opacity-95 font-light drop-shadow-md">
               Explore a collection of our best designs and projects. Get
               inspired for your next home.
             </p>
@@ -427,6 +440,8 @@ const GalleryPage: React.FC = () => {
                 <img
                   src={selectedGroup[currentImageIndex].imageUrl}
                   alt={selectedGroup[currentImageIndex].altText}
+                  // Modal image can just be responsive, keeping loading lazy unless first
+                  loading="lazy"
                   className="max-w-full max-h-full object-contain"
                 />
 
