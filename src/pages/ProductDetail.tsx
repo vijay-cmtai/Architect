@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { Helmet } from "react-helmet-async";
 import { RootState, AppDispatch } from "@/lib/store";
-import { motion, AnimatePresence } from "framer-motion"; // Added framer-motion
+import { motion, AnimatePresence } from "framer-motion";
 import {
   createReview as createProductReview,
   fetchProductBySlug,
@@ -24,8 +24,8 @@ import {
   ClipboardList,
   ChevronLeft,
   ChevronRight,
-  Youtube, // Added Youtube Icon
-  X, // Added X Icon
+  Youtube,
+  X,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -37,7 +37,7 @@ import house1 from "@/assets/house-1.jpg";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import DisplayPrice from "@/components/DisplayPrice";
 
-// --- Icon Components (No Changes) ---
+// --- Icon Components (SVG) - Keeping as is ---
 const FacebookIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -132,7 +132,6 @@ const ThreadsIcon = () => (
     <path d="M8 12.5c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5-2 4.5-4.5 4.5" />
   </svg>
 );
-
 const YoutubeIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -170,7 +169,7 @@ const slugify = (text: any) => {
     .replace(/\-\-+/g, "-");
 };
 
-// --- Video Modal Component (From Products.tsx) ---
+// --- Video Modal Component ---
 const VideoModal = ({
   videoUrl,
   onClose,
@@ -224,11 +223,13 @@ const VideoModal = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="aspect-video">
+          {/* Optimization: loading lazy for modal iframe */}
           <iframe
             width="100%"
             height="100%"
             src={embedUrl}
             title="YouTube video player"
+            loading="lazy"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -341,7 +342,6 @@ const ProductDetailContent = ({ product }: { product: any }) => {
   const [comment, setComment] = useState("");
   const [isZooming, setIsZooming] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  // --- Video State ---
   const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -356,19 +356,12 @@ const ProductDetailContent = ({ product }: { product: any }) => {
     useSelector((state: RootState) => state.professionalPlans);
 
   const displayData = product;
-
-  // ===================================================================
-  // FINAL CACHE BUSTING LOGIC
-  // ===================================================================
-
   const backendApiUrl =
     import.meta.env.VITE_BACKEND_URL || "https://architect-backend.vercel.app";
 
   const cacheBuster = `?v=${new Date().getTime()}`;
   const shareUrl = `${backendApiUrl}/share/${isProfessionalPlan ? "professional-plan" : "product"}/${slug}${cacheBuster}`;
   const canonicalUrl = `${window.location.origin}${location.pathname}`;
-
-  // ===================================================================
 
   const allProductsAndPlans = useMemo(() => {
     const adminArray = Array.isArray(adminProducts) ? adminProducts : [];
@@ -555,14 +548,12 @@ const ProductDetailContent = ({ product }: { product: any }) => {
   };
 
   const encodedTitle = encodeURIComponent(productName);
-
   const absoluteMainImageUrl = productImages[selectedImageIndex].startsWith(
     "http"
   )
     ? productImages[selectedImageIndex]
     : `${backendApiUrl}${productImages[selectedImageIndex]}`;
   const encodedImage = encodeURIComponent(absoluteMainImageUrl);
-
   const phoneNumber = "+918815939484";
   const whatsappMessage = `Hello, I'm interested in modifying this plan: *${productName}*. \nProduct Link: ${canonicalUrl}`;
   const encodedWhatsappMessage = encodeURIComponent(whatsappMessage);
@@ -615,7 +606,7 @@ const ProductDetailContent = ({ product }: { product: any }) => {
       name: "YouTube",
       icon: <YoutubeIcon />,
       color: "bg-red-600",
-      href: `https://www.youtube.com/results?search_query=${encodedTitle}`,
+      href: "https://www.youtube.com/@houseplansfiles8308",
     },
     {
       name: "Call Us",
@@ -678,7 +669,6 @@ const ProductDetailContent = ({ product }: { product: any }) => {
 
       <Navbar />
 
-      {/* --- Video Modal Render --- */}
       <AnimatePresence>
         {playingVideoUrl && (
           <VideoModal
@@ -712,10 +702,15 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                 onMouseLeave={() => setIsZooming(false)}
                 onMouseMove={handleMouseMove}
               >
-                {/* --- IMAGE CLASS KEPT AS 300px FOR MOBILE --- */}
+                {/* LCP Optimization: High Priority + Eager Loading for Main Image */}
                 <img
                   src={productImages[selectedImageIndex]}
                   alt={displayData.seo?.altText || productName}
+                  width="800"
+                  height="600"
+                  // @ts-ignore
+                  fetchPriority="high"
+                  loading="eager"
                   className="w-full h-[300px] sm:h-96 lg:h-[500px] object-cover transition-opacity duration-300"
                   style={{ opacity: isZooming ? 0 : 1 }}
                 />
@@ -731,7 +726,6 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                   />
                 )}
 
-                {/* --- ACTION BUTTONS (Heart + Youtube) --- */}
                 <div className="absolute top-4 right-4 flex flex-col gap-3">
                   <Button
                     variant="outline"
@@ -744,7 +738,6 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                     />
                   </Button>
 
-                  {/* --- YOUTUBE BUTTON ADDED HERE --- */}
                   {displayData.youtubeLink && (
                     <Button
                       variant="outline"
@@ -776,9 +769,13 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                     className={`relative overflow-hidden rounded-lg ${selectedImageIndex === index ? "ring-2 ring-primary" : "ring-1 ring-gray-200"}`}
                     type="button"
                   >
+                    {/* Thumbnail Images: Lazy Loaded */}
                     <img
                       src={image}
                       alt={`${productName} view ${index + 1}`}
+                      width="150"
+                      height="100"
+                      loading="lazy"
                       className="w-full h-24 object-cover"
                     />
                   </button>
@@ -1115,6 +1112,7 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                       to={relatedLink}
                       className="group block bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden w-72 flex-shrink-0"
                     >
+                      {/* Related Product Image: Lazy Loaded */}
                       <img
                         src={
                           relatedProd.mainImage ||
@@ -1122,6 +1120,9 @@ const ProductDetailContent = ({ product }: { product: any }) => {
                           house1
                         }
                         alt={relatedProductName}
+                        width="300"
+                        height="200"
+                        loading="lazy"
                         className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="p-4">
