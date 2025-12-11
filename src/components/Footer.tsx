@@ -12,9 +12,7 @@ import {
   AtSign,
 } from "lucide-react";
 
-// --- START: ADDED CUSTOM ICONS ---
-
-// Custom WhatsApp Icon
+// Custom Icons optimized
 const WhatsAppIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -31,7 +29,6 @@ const WhatsAppIcon = () => (
   </svg>
 );
 
-// Custom Pinterest Icon
 const PinterestIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -44,8 +41,6 @@ const PinterestIcon = () => (
   </svg>
 );
 
-// --- START: CORRECTED THREADS ICON ---
-// This is the correct SVG for the Threads logo
 const ThreadsIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -63,12 +58,8 @@ const ThreadsIcon = () => (
     <path d="M12 12v6.5" />
   </svg>
 );
-// --- END: CORRECTED THREADS ICON ---
-
-// --- END: ADDED CUSTOM ICONS ---
 
 const Footer = () => {
-  // --- Updated socialLinks array with all icons ---
   const socialLinks = [
     {
       name: "Facebook",
@@ -129,9 +120,13 @@ const Footer = () => {
           {/* About Section */}
           <div className="lg:col-span-1">
             <Link to="/" className="flex items-center space-x-3 mb-6">
+              {/* Lazy Loading + Dimensions for CLS Fix */}
               <img
                 src="/logo.png"
                 alt="Houseplanfile Logo"
+                width="150"
+                height="48"
+                loading="lazy"
                 className="h-12 w-auto object-contain"
               />
               <span className="text-xl font-bold text-white">
@@ -150,6 +145,7 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   title={name}
+                  aria-label={name}
                   className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
                 >
                   <Icon />
@@ -253,16 +249,25 @@ const Footer = () => {
                 <img
                   src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/razorpay-icon.png"
                   alt="Razorpay"
+                  width="60"
+                  height="24"
+                  loading="lazy"
                   className="h-6 object-contain"
                 />
                 <img
                   src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg"
                   alt="PayPal"
+                  width="60"
+                  height="24"
+                  loading="lazy"
                   className="h-6 object-contain"
                 />
                 <img
                   src="https://download.logo.wine/logo/PhonePe/PhonePe-Logo.wine.png"
                   alt="PhonePe"
+                  width="60"
+                  height="24"
+                  loading="lazy"
                   className="h-6 object-contain"
                 />
               </div>
