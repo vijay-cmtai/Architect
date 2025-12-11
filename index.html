@@ -53,15 +53,33 @@ width="0"
 
 <script type="module" src="/src/main.tsx"></script>
 
+<script
+type="text/javascript"
+src="https://d3mkw6s8thqya7.cloudfront.net/integration-plugin.js"
+id="aisensy-wa-widget"
+widget-id="aaanf1"
+></script>
+
+<!-- POPUP CONTROL LOGIC -->
 <script>
-  setTimeout(() => {
-    const s = document.createElement("script");
-    s.type = "text/javascript";
-    s.src = "https://d3mkw6s8thqya7.cloudfront.net/integration-plugin.js";
-    s.id = "aisensy-wa-widget";
-    s.setAttribute("widget-id", "aaanf1");
-    document.body.appendChild(s);
-  }, 180000); // 3 minutes = 180000 ms
+  function openPopup() {
+    if (window.AiSensy) {
+      try {
+        window.AiSensy.open();
+      } catch (e) {
+        console.log("Popup open error:", e);
+      }
+    }
+  }
+
+  window.addEventListener("load", () => {
+    setTimeout(openPopup, 500); 
+  });
+  document.addEventListener("click", function (e) {
+    if (e.target && e.target.getAttribute("aria-label") === "Close") {
+      setTimeout(openPopup, 180000); // 3 minutes
+    }
+  });
 </script>
     </script>
 
