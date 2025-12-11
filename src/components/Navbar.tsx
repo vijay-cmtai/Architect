@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Heart, ShoppingCart, Menu, X, User, LogOut } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
@@ -60,9 +60,19 @@ const Navbar = () => {
     navigate("/login");
   };
 
+  // Optimization: Throttled Scroll Handler for Better INP/Main Thread Performance
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setIsScrolled(window.scrollY > 20);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -78,12 +88,11 @@ const Navbar = () => {
     };
   }, [isMenuOpen, isWishlistOpen]);
 
-  // ✅ Added "City Partner" to Navigation Links
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Ready Made House Plan", path: "/products" },
     { name: "Services", path: "/services" },
-    { name: "City Partner", path: "/city-partners" }, // 🔥 NEW ADDITION
+    { name: "City Partner", path: "/city-partners" },
     { name: "Career", path: "/careers" },
     { name: "Package", path: "/packages" },
     { name: "Gallery", path: "/gallery" },
@@ -104,21 +113,25 @@ const Navbar = () => {
             : "bg-white border-transparent"
         }`}
       >
-        {/* Container increased to 2xl to fit all items properly */}
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Logo Section */}
             <div className="flex-shrink-0 flex items-center">
               <Link to="/" className="flex items-center gap-2">
+                {/* LCP Optimization: fetchPriority high and explicit dimensions to prevent CLS */}
                 <img
                   src="/logo1.png"
                   alt="ArchHome Logo"
+                  width="180"
+                  height="56"
                   className="h-14 w-auto object-contain"
+                  // @ts-ignore
+                  fetchPriority="high"
                 />
               </Link>
             </div>
 
-            {/* Navigation Links - Centered & Optimized Spacing */}
+            {/* Navigation Links */}
             <nav className="hidden xl:flex items-center gap-5 mx-4">
               {navLinks.map((link) => (
                 <Link
@@ -144,13 +157,13 @@ const Navbar = () => {
 
             {/* Right Side Actions */}
             <div className="flex items-center gap-4 flex-shrink-0">
-              {/* Icons Group */}
               <div className="hidden md:flex items-center gap-4 border-r border-gray-200 pr-4 mr-1">
                 {showCartAndWishlist && (
                   <>
                     <button
                       onClick={() => setIsWishlistOpen(true)}
                       className="relative text-gray-600 hover:text-orange-600 transition-colors p-1"
+                      aria-label="Wishlist"
                     >
                       <Heart className="w-6 h-6" />
                       {wishlistItems.length > 0 && (
@@ -162,6 +175,7 @@ const Navbar = () => {
                     <Link
                       to="/cart"
                       className="relative text-gray-600 hover:text-orange-600 transition-colors p-1"
+                      aria-label="Cart"
                     >
                       <ShoppingCart className="w-6 h-6" />
                       {cartState.items.length > 0 && (
@@ -237,6 +251,7 @@ const Navbar = () => {
                 <button
                   onClick={() => setIsMenuOpen(true)}
                   className="text-gray-700 hover:text-orange-600 transition-colors p-1"
+                  aria-label="Open Menu"
                 >
                   <Menu className="w-7 h-7" />
                 </button>
@@ -246,7 +261,6 @@ const Navbar = () => {
         </div>
       </header>
 
-      {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {isMenuOpen && (
           <>
@@ -266,10 +280,18 @@ const Navbar = () => {
               className="fixed top-0 right-0 bottom-0 z-[60] bg-white w-[85%] max-w-sm p-6 xl:hidden flex flex-col shadow-2xl"
             >
               <div className="flex justify-between items-center mb-8 flex-shrink-0">
-                <img src="/logo1.png" alt="Logo" className="h-10 w-auto" />
+                {/* Mobile Menu Logo Optimization */}
+                <img
+                  src="/logo1.png"
+                  alt="Logo"
+                  width="120"
+                  height="40"
+                  className="h-10 w-auto"
+                />
                 <button
                   onClick={() => setIsMenuOpen(false)}
                   className="p-2 bg-gray-100 rounded-full hover:bg-gray-200"
+                  aria-label="Close Menu"
                 >
                   <X className="w-6 h-6 text-gray-600" />
                 </button>
@@ -294,7 +316,6 @@ const Navbar = () => {
               </nav>
 
               <div className="border-t pt-6 mt-4 flex-shrink-0 space-y-4">
-                {/* Mobile Cart/Wishlist */}
                 {showCartAndWishlist && (
                   <div className="grid grid-cols-2 gap-3 mb-4">
                     <Link
