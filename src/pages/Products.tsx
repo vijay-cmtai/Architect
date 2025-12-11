@@ -108,11 +108,13 @@ const VideoModal = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="aspect-video">
+          {/* Optimization: Added title, loading="lazy" for off-screen iframe optimization */}
           <iframe
             width="100%"
             height="100%"
             src={embedUrl}
             title="YouTube video player"
+            loading="lazy"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -207,6 +209,7 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }: any) => (
             </SelectContent>
           </Select>
         </div>
+        {/* ... Rest of the filters remain same ... */}
         <div>
           <Label htmlFor="plotSize" className="font-semibold text-gray-600">
             Plot Size
@@ -369,7 +372,7 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }: any) => (
   </aside>
 );
 
-const ProductCard = ({ product, userOrders, onPlayVideo }: any) => {
+const ProductCard = ({ product, userOrders, onPlayVideo, index }: any) => {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { userInfo } = useSelector((state: RootState) => state.user);
@@ -480,14 +483,23 @@ const ProductCard = ({ product, userOrders, onPlayVideo }: any) => {
     }
   };
 
+  // Optimization: Prioritize first 4 images (LCP fix), lazy load others (bandwidth fix)
+  const isPriority = index < 4;
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
       <div className="relative p-2">
         <Link to={linkTo}>
           <div className="aspect-square w-full bg-gray-100 rounded-md overflow-hidden">
+            {/* CWV Optimization: Added width/height for CLS, fetchPriority for LCP */}
             <img
               src={mainImage}
               alt={productName}
+              width="400"
+              height="400"
+              loading={isPriority ? "eager" : "lazy"}
+              // @ts-ignore
+              fetchPriority={isPriority ? "high" : "auto"}
               className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
             />
           </div>
@@ -712,6 +724,7 @@ const CountryCustomizationForm = ({ countryName }: any) => {
               Customize a Plan for {countryName || "Your Location"}
             </h2>
             <form onSubmit={handleFormSubmit} className="space-y-5">
+              {/* Form fields remain same */}
               <div>
                 <Label htmlFor="country">Country</Label>
                 <Input
@@ -822,9 +835,13 @@ const CountryCustomizationForm = ({ countryName }: any) => {
             </form>
           </div>
           <div className="w-full lg:w-1/2 hidden lg:block">
+            {/* Optimization: Lazy loading + dimensions */}
             <img
               src="/threeDfloor.jpg"
               alt="Beautiful modern house"
+              width="600"
+              height="450"
+              loading="lazy"
               className="w-full h-full object-cover rounded-xl"
             />
           </div>
@@ -912,7 +929,6 @@ const Products = () => {
     filters.sortBy,
   ]);
 
-  // Fix: Store previous filters state to avoid resetting page on refresh
   const prevFiltersRef = useRef({
     ...filters,
     searchTerm: debouncedSearchTerm,
@@ -926,7 +942,6 @@ const Products = () => {
       country: countryQuery,
     };
 
-    // Only reset page if filters ACTUALLY changed from what we tracked last
     if (
       JSON.stringify(currentFiltersState) !==
       JSON.stringify(prevFiltersRef.current)
@@ -936,7 +951,6 @@ const Products = () => {
         prev.set("page", "1");
         return prev;
       });
-      // Update ref to current state
       prevFiltersRef.current = currentFiltersState;
     }
   }, [debouncedSearchTerm, filters, countryQuery, setSearchParams]);
@@ -946,7 +960,6 @@ const Products = () => {
   const handlePageChange = (newPage: number) => {
     if (newPage > 0 && newPage <= totalPages) {
       setCurrentPage(newPage);
-      // Update URL when page changes
       setSearchParams((prev) => {
         prev.set("page", String(newPage));
         return prev;
@@ -1124,12 +1137,14 @@ const Products = () => {
               <div
                 className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}
               >
-                {products.map((product) => (
+                {products.map((product: any, index: number) => (
                   <ProductCard
                     key={product._id}
                     product={product}
                     userOrders={userOrders}
                     onPlayVideo={handlePlayVideo}
+                    // Passing Index for priority loading
+                    index={index}
                   />
                 ))}
               </div>
