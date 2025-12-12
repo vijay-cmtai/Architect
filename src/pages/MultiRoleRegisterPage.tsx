@@ -29,7 +29,6 @@ const userRoles = [
   { id: "professional", label: "Register as a Professional" },
   { id: "seller", label: "Register as a Material Seller" },
   { id: "Contractor", label: "Register as a Contractor and Interior Partners" },
-  // { id: "admin", label: "Register as an Admin" },
 ];
 
 const professionalSubRoles = [
@@ -64,13 +63,7 @@ const materialTypes = [
   "Other",
 ];
 
-const experienceLevels = [
-  // Common for Professional and Contractor
-  "0-2 Years",
-  "2-5 Years",
-  "5-10 Years",
-  "10+ Years",
-];
+const experienceLevels = ["0-2 Years", "2-5 Years", "5-10 Years", "10+ Years"];
 
 const MultiRoleRegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -95,9 +88,15 @@ const MultiRoleRegisterPage = () => {
     materialType: "",
     companyName: "",
     experience: "",
+    // --- Bank & Payment Details ---
+    bankAccountNumber: "",
+    ifscCode: "",
+    upiId: "",
+    // Files
     photo: null,
     businessCertification: null,
     shopImage: null,
+    portfolio: null,
   });
 
   const isLoading = actionStatus === "loading";
@@ -171,9 +170,13 @@ const MultiRoleRegisterPage = () => {
       materialType: "",
       companyName: "",
       experience: "",
+      bankAccountNumber: "",
+      ifscCode: "",
+      upiId: "",
       photo: null,
       businessCertification: null,
       shopImage: null,
+      portfolio: null,
     });
   };
 
@@ -265,7 +268,6 @@ const MultiRoleRegisterPage = () => {
                 </SelectContent>
               </Select>
             </div>
-            {/* --- START: NEW FIELDS FOR PROFESSIONAL --- */}
             <div>
               <Label>City*</Label>
               <Input
@@ -294,32 +296,106 @@ const MultiRoleRegisterPage = () => {
                 </SelectContent>
               </Select>
             </div>
-            {/* --- END: NEW FIELDS FOR PROFESSIONAL --- */}
-            <div>
-              <Label htmlFor="businessCertification">
-                Qualification Certification (Optional)
-              </Label>
-              <Input
-                id="businessCertification"
-                type="file"
-                accept="image/*,.pdf"
-                onChange={handleFileChange}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Upload your professional certification or business license
-              </p>
+
+            {/* --- NEW SECTION: Bank & Payment Details --- */}
+            <div className="pt-4 border-t border-border">
+              <h3 className="text-lg font-semibold mb-4 text-primary">
+                💳 Bank & Payment Details (Optional)
+              </h3>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="bankAccountNumber">Bank Account Number</Label>
+                  <Input
+                    id="bankAccountNumber"
+                    type="text"
+                    placeholder="Enter your account number"
+                    value={formData.bankAccountNumber}
+                    onChange={handleChange}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    For receiving payments from clients
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="ifscCode">IFSC Code</Label>
+                  <Input
+                    id="ifscCode"
+                    type="text"
+                    placeholder="e.g., SBIN0001234"
+                    value={formData.ifscCode}
+                    onChange={handleChange}
+                    style={{ textTransform: "uppercase" }}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="upiId">UPI ID</Label>
+                  <Input
+                    id="upiId"
+                    type="text"
+                    placeholder="yourname@paytm or 9876543210@paytm"
+                    value={formData.upiId}
+                    onChange={handleChange}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Your UPI ID for quick payments
+                  </p>
+                </div>
+              </div>
             </div>
-            <div>
-              <Label htmlFor="shopImage">Shop/Office Image (Optional)</Label>
-              <Input
-                id="shopImage"
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Upload an image of your office or workspace
-              </p>
+
+            {/* --- Portfolio PDF Upload --- */}
+            <div className="pt-4 border-t border-border">
+              <h3 className="text-lg font-semibold mb-4 text-primary">
+                📄 Portfolio & Documents
+              </h3>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="portfolio">Portfolio PDF (Optional)</Label>
+                  <Input
+                    id="portfolio"
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileChange}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Upload your work portfolio (PDF only, max 10MB)
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="businessCertification">
+                    Qualification Certification (Optional)
+                  </Label>
+                  <Input
+                    id="businessCertification"
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={handleFileChange}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Upload your professional certification or license
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="shopImage">
+                    Shop/Office Image (Optional)
+                  </Label>
+                  <Input
+                    id="shopImage"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Upload an image of your office or workspace
+                  </p>
+                </div>
+              </div>
             </div>
           </motion.div>
         );
@@ -537,7 +613,11 @@ const MultiRoleRegisterPage = () => {
                   />
                   <label
                     htmlFor={`${role.id}-radio`}
-                    className={`flex items-center justify-between w-full p-4 rounded-lg cursor-pointer border-2 transition-all duration-300 ${selectedRole === role.id ? "bg-accent text-accent-foreground border-transparent shadow-md" : "bg-input border-border hover:border-primary/50"}`}
+                    className={`flex items-center justify-between w-full p-4 rounded-lg cursor-pointer border-2 transition-all duration-300 ${
+                      selectedRole === role.id
+                        ? "bg-accent text-accent-foreground border-transparent shadow-md"
+                        : "bg-input border-border hover:border-primary/50"
+                    }`}
                   >
                     <span className="font-semibold">{role.label}</span>
                     {selectedRole === role.id && <CheckCircle size={20} />}
