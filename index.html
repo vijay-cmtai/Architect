@@ -21,15 +21,14 @@ f.parentNode.insertBefore(j, f);
 </script>
 <!-- End Google Tag Manager -->
 
-
-    <!-- Google Ads (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-11378419977"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){ dataLayer.push(arguments); }
-      gtag('js', new Date());
-      gtag('config', 'AW-11378419977');
-    </script>
+<!-- Google Ads (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-11378419977"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'AW-11378419977');
+</script>
 
 </head>
 
@@ -41,15 +40,12 @@ f.parentNode.insertBefore(j, f);
 src="https://www.googletagmanager.com/ns.html?id=GTM-KCFWJDQK"
 height="0"
 width="0"
-        style="display: none; visibility: hidden"
-      ></iframe>
-        style="display: none; visibility: hidden">
-      </iframe>
+style="display: none; visibility: hidden"
+></iframe>
 </noscript>
 <!-- End GTM (noscript) -->
 
 <div id="root"></div>
-    
 
 <script type="module" src="/src/main.tsx"></script>
 
@@ -64,26 +60,43 @@ width="0"
 
 <!-- POPUP CONTROL LOGIC -->
 <script>
+  let popupCooldown = false;  // COOL DOWN FLAG
+
   function openPopup() {
+    if (popupCooldown) return; // cooldown me mat kholna
+
     if (window.AiSensy) {
       try {
         window.AiSensy.open();
+        popupCooldown = true; // ab 3 minutes tak band
+
+        setTimeout(() => {
+          popupCooldown = false; // cooldown reset
+        }, 180000); // 3 minutes
+
       } catch (e) {
         console.log("Popup open error:", e);
       }
     }
   }
 
+  // Page load ke 3 sec baad popup kholega
   window.addEventListener("load", () => {
-    setTimeout(openPopup, 500); 
+    setTimeout(openPopup, 3000);
   });
+
+  // User close kare to 3 min baad hi khulega
   document.addEventListener("click", function (e) {
     if (e.target && e.target.getAttribute("aria-label") === "Close") {
-      setTimeout(openPopup, 180000); // 3 minutes
+      popupCooldown = true;
+
+      setTimeout(() => {
+        popupCooldown = false;
+        openPopup(); // 3 min baad hi open
+      }, 180000); // 3 minutes
     }
   });
 </script>
-    </script>
 
 </body>
 </html>
