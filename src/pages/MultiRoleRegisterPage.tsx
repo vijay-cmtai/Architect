@@ -90,6 +90,7 @@ const MultiRoleRegisterPage = () => {
     experience: "",
     // --- Bank & Payment Details ---
     bankAccountNumber: "",
+    bankName: "", // <--- ADDED: Bank Name
     ifscCode: "",
     upiId: "",
     // Files
@@ -171,6 +172,7 @@ const MultiRoleRegisterPage = () => {
       companyName: "",
       experience: "",
       bankAccountNumber: "",
+      bankName: "", // Reset Bank Name
       ifscCode: "",
       upiId: "",
       photo: null,
@@ -304,6 +306,18 @@ const MultiRoleRegisterPage = () => {
               </h3>
 
               <div className="space-y-4">
+                {/* Bank Name Field - ADDED */}
+                <div>
+                  <Label htmlFor="bankName">Bank Name</Label>
+                  <Input
+                    id="bankName"
+                    type="text"
+                    placeholder="e.g. HDFC Bank, SBI"
+                    value={formData.bankName}
+                    onChange={handleChange}
+                  />
+                </div>
+
                 <div>
                   <Label htmlFor="bankAccountNumber">Bank Account Number</Label>
                   <Input
@@ -687,5 +701,4 @@ const MultiRoleRegisterPage = () => {
     </>
   );
 };
-
 export default MultiRoleRegisterPage;
