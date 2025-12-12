@@ -40,8 +40,9 @@ import {
   ChevronRight,
   FileSpreadsheet,
   Search,
-  FileText, // Icon for Qualification Document
-  MapPin, // Icon for City
+  FileText,
+  MapPin,
+  CreditCard,
 } from "lucide-react";
 
 const professionalSubRoles = [
@@ -94,13 +95,11 @@ const AllUsersPage = () => {
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // --- States for Filters ---
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [filterCity, setFilterCity] = useState(""); // NEW: City Filter
+  const [filterCity, setFilterCity] = useState("");
 
-  // --- States for Modal Form ---
   const [role, setRole] = useState("");
   const [status, setStatus] = useState("");
   const [profession, setProfession] = useState("");
@@ -116,7 +115,6 @@ const AllUsersPage = () => {
     formState: { errors },
   } = useForm();
 
-  // --- 1. Fetch Users with Filters ---
   const handleFetchUsers = (page = 1) => {
     dispatch(
       fetchUsers({
@@ -125,19 +123,18 @@ const AllUsersPage = () => {
         search: searchTerm,
         role: filterRole === "all" ? "" : filterRole,
         status: filterStatus === "all" ? "" : filterStatus,
-        city: filterCity, // Pass City to Backend
+        city: filterCity,
       })
     );
   };
 
-  // Re-fetch when page or filters change
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       handleFetchUsers(currentPage);
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [currentPage, searchTerm, filterRole, filterStatus, filterCity]); // Added filterCity dependency
+  }, [currentPage, searchTerm, filterRole, filterStatus, filterCity]);
 
   useEffect(() => {
     if (actionStatus === "succeeded" && error) {
@@ -146,6 +143,7 @@ const AllUsersPage = () => {
     }
   }, [actionStatus, error, dispatch]);
 
+  // --- Fix: Populate Edit Modal with correct flat fields ---
   useEffect(() => {
     if (selectedUser && isEditModalOpen) {
       reset({
@@ -155,7 +153,11 @@ const AllUsersPage = () => {
           selectedUser.companyName,
         email: selectedUser.email,
         phone: selectedUser.phone,
-        city: selectedUser.city, // Populate City in Edit
+        city: selectedUser.city,
+        upiId: selectedUser.upiId, // Flat field
+        bankName: selectedUser.bankName, // Flat field
+        bankAccountNumber: selectedUser.bankAccountNumber, // Flat field
+        ifscCode: selectedUser.ifscCode, // Flat field
       });
       setRole(selectedUser.role || "");
       setStatus(selectedUser.status || "");
@@ -168,7 +170,7 @@ const AllUsersPage = () => {
     }
   }, [selectedUser, reset, isEditModalOpen]);
 
-  // --- CSV Export Logic ---
+  // --- Fix: CSV Export Logic for flat fields ---
   const handleExportCSV = () => {
     if (!users || users.length === 0) {
       toast.error("No data available to export.");
@@ -180,11 +182,15 @@ const AllUsersPage = () => {
       "Name",
       "Email",
       "Phone",
-      "City", // Added to CSV
+      "City",
       "Role",
       "Profession",
       "Contractor Type",
       "Status",
+      "UPI ID",
+      "Bank Name",
+      "Account No",
+      "IFSC Code",
       "Registered Date",
     ];
 
@@ -203,6 +209,14 @@ const AllUsersPage = () => {
         const safeName = `"${name.replace(/"/g, '""')}"`;
         const safeCity = user.city ? `"${user.city}"` : "N/A";
 
+        // Access flat fields directly
+        const upi = user.upiId || "N/A";
+        const bankName = user.bankName || "N/A";
+        const accNo = user.bankAccountNumber
+          ? `"${user.bankAccountNumber}"`
+          : "N/A";
+        const ifsc = user.ifscCode || "N/A";
+
         return [
           user._id,
           safeName,
@@ -213,6 +227,10 @@ const AllUsersPage = () => {
           professionVal,
           contractorVal,
           user.status,
+          upi,
+          bankName,
+          accNo,
+          ifsc,
           date,
         ].join(",");
       }),
@@ -256,10 +274,24 @@ const AllUsersPage = () => {
     }, 200);
   };
 
+  // --- Fix: onSubmit sends flat fields ---
   const onSubmit = async (data: any) => {
     if (!selectedUser) return;
     setIsSubmitting(true);
-    const userData: any = { ...data, role, status };
+
+    const userData: any = {
+      ...data,
+      role,
+      status,
+      // Pass flat fields directly
+      bankName: data.bankName,
+      bankAccountNumber: data.bankAccountNumber, // Note: input name in form is 'accountNumber' below? let's match it.
+      ifscCode: data.ifscCode,
+      upiId: data.upiId,
+    };
+
+    // Ensure form field names match what we are assigning above
+    // In form below I named inputs: bankName, bankAccountNumber, ifscCode
 
     if (status === "Approved") {
       userData.isApproved = true;
@@ -324,9 +356,8 @@ const AllUsersPage = () => {
           </div>
         </div>
 
-        {/* --- Filters Section --- */}
+        {/* Filters Section (Same as before) */}
         <div className="bg-white p-4 rounded-xl shadow-sm border grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-          {/* Search */}
           <div className="relative col-span-1 md:col-span-2">
             <Label className="text-xs mb-1 block text-gray-500">Search</Label>
             <Search className="absolute left-3 top-8 text-gray-400 h-4 w-4" />
@@ -337,8 +368,6 @@ const AllUsersPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-
-          {/* City Filter - NEW */}
           <div className="col-span-1">
             <Label className="text-xs mb-1 block text-gray-500">
               Filter by City
@@ -353,8 +382,6 @@ const AllUsersPage = () => {
               />
             </div>
           </div>
-
-          {/* Role Filter */}
           <div className="col-span-1">
             <Label className="text-xs mb-1 block text-gray-500">
               Filter by Role
@@ -372,8 +399,6 @@ const AllUsersPage = () => {
               </SelectContent>
             </Select>
           </div>
-
-          {/* Status Filter */}
           <div className="col-span-1">
             <Label className="text-xs mb-1 block text-gray-500">
               Filter by Status
@@ -429,6 +454,9 @@ const AllUsersPage = () => {
                       Role
                     </th>
                     <th className="p-4 font-semibold text-sm text-gray-600">
+                      Bank & UPI
+                    </th>
+                    <th className="p-4 font-semibold text-sm text-gray-600">
                       Doc
                     </th>
                     <th className="p-4 font-semibold text-sm text-gray-600">
@@ -461,8 +489,35 @@ const AllUsersPage = () => {
                           {user.role}
                         </span>
                       </td>
+
+                      {/* --- Fix: Table Cell for Bank Details (Use flat fields) --- */}
+                      <td className="p-4 align-top">
+                        <div className="flex flex-col gap-1 text-xs">
+                          {user.upiId ? (
+                            <div className="font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded w-fit">
+                              UPI: {user.upiId}
+                            </div>
+                          ) : (
+                            <div className="text-gray-400">No UPI</div>
+                          )}
+
+                          {user.bankAccountNumber ? (
+                            <div className="mt-1 text-gray-600 border-l-2 border-gray-300 pl-2">
+                              <div className="font-medium">
+                                {user.bankName || "Bank Name N/A"}
+                              </div>
+                              <div>Ac: {user.bankAccountNumber}</div>
+                              <div>IFSC: {user.ifscCode}</div>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 mt-1 block">
+                              No Bank Details
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
                       <td className="p-4">
-                        {/* Show Certification Image Link if exists */}
                         {user.businessCertificationUrl ? (
                           <a
                             href={user.businessCertificationUrl}
@@ -518,7 +573,7 @@ const AllUsersPage = () => {
           )}
         </div>
 
-        {/* Pagination Controls ... */}
+        {/* Pagination Controls */}
         {pagination && pagination.totalPages > 1 && (
           <div className="flex justify-between items-center mt-6">
             <div className="text-sm text-gray-600">
@@ -545,7 +600,7 @@ const AllUsersPage = () => {
         )}
       </div>
 
-      {/* Edit Modal ... (includes City input) */}
+      {/* Edit Modal */}
       {selectedUser && (
         <Dialog
           open={isEditModalOpen}
@@ -573,12 +628,11 @@ const AllUsersPage = () => {
                 />
               </div>
 
-              {/* Added City Input in Edit Modal */}
               <div>
                 <Label htmlFor="city">City</Label>
                 <Input
                   id="city"
-                  {...register("city")} // Make sure to register city
+                  {...register("city")}
                   disabled={isSubmitting}
                 />
               </div>
@@ -601,8 +655,52 @@ const AllUsersPage = () => {
                 />
               </div>
 
-              {/* ... Rest of the form inputs (Role, Profession, etc) ... */}
-              <div>
+              {/* --- Fix: Edit Bank & UPI Fields (Use flat field names) --- */}
+              <div className="border-t pt-4 mt-2">
+                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4" /> Bank & Payment Details
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <Label htmlFor="upiId">UPI ID</Label>
+                    <Input
+                      id="upiId"
+                      placeholder="e.g. user@okhdfcbank"
+                      {...register("upiId")}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="bankName">Bank Name</Label>
+                    <Input
+                      id="bankName"
+                      placeholder="Bank Name"
+                      {...register("bankName")}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="bankAccountNumber">Account No.</Label>
+                    <Input
+                      id="bankAccountNumber"
+                      placeholder="Acc. Number"
+                      {...register("bankAccountNumber")} // Register as flat field
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="ifscCode">IFSC Code</Label>
+                    <Input
+                      id="ifscCode"
+                      placeholder="IFSC Code"
+                      {...register("ifscCode")}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
                 <Label>Role</Label>
                 <Select
                   value={role}
