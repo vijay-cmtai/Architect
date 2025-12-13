@@ -9,19 +9,19 @@
 <!-- Google Tag Manager -->
 <script>
 (function (w, d, s, l, i) {
-w[l] = w[l] || [];
-w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
-var f = d.getElementsByTagName(s)[0],
-j = d.createElement(s),
-dl = l != "dataLayer" ? "&l=" + l : "";
-j.async = true;
-j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
-f.parentNode.insertBefore(j, f);
+  w[l] = w[l] || [];
+  w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+  var f = d.getElementsByTagName(s)[0],
+    j = d.createElement(s),
+    dl = l != "dataLayer" ? "&l=" + l : "";
+  j.async = true;
+  j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+  f.parentNode.insertBefore(j, f);
 })(window, document, "script", "dataLayer", "GTM-KCFWJDQK");
 </script>
 <!-- End Google Tag Manager -->
 
-<!-- Google Ads (gtag.js) -->
+<!-- Google Ads -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=AW-11378419977"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -36,19 +36,20 @@ f.parentNode.insertBefore(j, f);
 
 <!-- Google Tag Manager (noscript) -->
 <noscript>
-<iframe
-src="https://www.googletagmanager.com/ns.html?id=GTM-KCFWJDQK"
-height="0"
-width="0"
-style="display: none; visibility: hidden"
-></iframe>
+  <iframe
+    src="https://www.googletagmanager.com/ns.html?id=GTM-KCFWJDQK"
+    height="0"
+    width="0"
+    style="display:none;visibility:hidden"
+  ></iframe>
 </noscript>
-<!-- End GTM (noscript) -->
+<!-- End GTM -->
 
 <div id="root"></div>
 
 <script type="module" src="/src/main.tsx"></script>
 
+<!-- AiSensy Widget -->
 <script 
   async
   type="text/javascript"
@@ -57,46 +58,45 @@ style="display: none; visibility: hidden"
   widget-id="aaanf1"
 ></script>
 
-
-<!-- POPUP CONTROL LOGIC -->
+<!-- ================= POPUP CONTROL LOGIC (FIXED) ================= -->
 <script>
-  let popupCooldown = false;  // COOL DOWN FLAG
+  const COOLDOWN_TIME = 180000; // 3 minutes
+  const STORAGE_KEY = "aisensy_popup_last_time";
+
+  function canOpenPopup() {
+    const lastTime = localStorage.getItem(STORAGE_KEY);
+    if (!lastTime) return true;
+    return Date.now() - Number(lastTime) > COOLDOWN_TIME;
+  }
+
+  function markPopupTime() {
+    localStorage.setItem(STORAGE_KEY, Date.now());
+  }
 
   function openPopup() {
-    if (popupCooldown) return; // cooldown me mat kholna
+    if (!canOpenPopup()) return;
 
     if (window.AiSensy) {
       try {
         window.AiSensy.open();
-        popupCooldown = true; // ab 3 minutes tak band
-
-        setTimeout(() => {
-          popupCooldown = false; // cooldown reset
-        }, 180000); // 3 minutes
-
-      } catch (e) {
-        console.log("Popup open error:", e);
+        markPopupTime();
+      } catch (err) {
+        console.log("AiSensy popup error:", err);
       }
     }
   }
 
-  // Page load ke 3 sec baad popup kholega
+  // Page load ke 3 sec baad
   window.addEventListener("load", () => {
     setTimeout(openPopup, 3000);
   });
 
-  // User close kare to 3 min baad hi khulega
-  document.addEventListener("click", function (e) {
-    if (e.target && e.target.getAttribute("aria-label") === "Close") {
-      popupCooldown = true;
-
-      setTimeout(() => {
-        popupCooldown = false;
-        openPopup(); // 3 min baad hi open
-      }, 180000); // 3 minutes
-    }
+  // User click kare (close ya kahin bhi) → cooldown start
+  document.addEventListener("click", () => {
+    markPopupTime();
   });
 </script>
+<!-- =============================================================== -->
 
 </body>
 </html>
