@@ -155,12 +155,33 @@ const staticCategories = [
   "Temple & Mosque",
 ];
 
-const FilterSidebar = ({ filters, setFilters, uniqueCategories }: any) => (
-  <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-white rounded-xl shadow-lg border border-gray-200 lg:sticky lg:top-24 h-fit">
-    <h3 className="text-xl font-bold mb-4 flex items-center text-gray-800">
-      <Filter className="w-5 h-5 mr-2 text-gray-500" />
-      Filters
-    </h3>
+// Modified to accept className and onClose for mobile drawer usage
+const FilterSidebar = ({
+  filters,
+  setFilters,
+  uniqueCategories,
+  className = "",
+  onClose,
+}: any) => (
+  <aside
+    className={`w-full p-6 bg-white rounded-xl shadow-lg border border-gray-200 h-fit ${className}`}
+  >
+    <div className="flex justify-between items-center mb-4">
+      <h3 className="text-xl font-bold flex items-center text-gray-800">
+        <Filter className="w-5 h-5 mr-2 text-gray-500" />
+        Filters
+      </h3>
+      {onClose && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="lg:hidden"
+        >
+          <X className="w-5 h-5" />
+        </Button>
+      )}
+    </div>
     <div className="max-h-[calc(100vh-280px)] overflow-y-auto pr-2 -mr-2">
       <div className="space-y-6">
         <div>
@@ -349,7 +370,7 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }: any) => (
           />
         </div>
         <Button
-          onClick={() =>
+          onClick={() => {
             setFilters({
               category: "all",
               searchTerm: "",
@@ -360,8 +381,9 @@ const FilterSidebar = ({ filters, setFilters, uniqueCategories }: any) => (
               propertyType: "all",
               budget: [0, 50000],
               sortBy: "newest",
-            })
-          }
+            });
+            if (onClose) onClose();
+          }}
           variant="outline"
           className="w-full"
         >
@@ -871,6 +893,7 @@ const Products = () => {
   );
 
   const [viewMode, setViewMode] = useState("grid");
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [filters, setFilters] = useState({
     category: categoryQuery || "all",
     searchTerm: searchQuery || "",
@@ -1015,11 +1038,17 @@ const Products = () => {
       </AnimatePresence>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
+        <div className="mb-4 lg:mb-8">
           <h1 className="text-3xl font-bold">{pageTitle}</h1>
-          <p className="text-xl text-muted-foreground">{pageDescription}</p>
+          <p className="text-xl text-muted-foreground hidden lg:block">
+            {pageDescription}
+          </p>
+          <div className="lg:hidden mt-2 text-gray-500">
+            Showing {products.length} of {count} results
+          </div>
+
           {(countryQuery || categoryQuery || searchQuery) && (
-            <div className="mt-4">
+            <div className="mt-4 hidden lg:block">
               <Link to="/products">
                 <Button variant="destructive" size="sm">
                   <X className="w-4 h-4 mr-2" />
@@ -1034,16 +1063,79 @@ const Products = () => {
           <CountryCustomizationForm countryName={countryQuery} />
         )}
 
+        {/* Mobile Filter & Sort Bar */}
+        <div className="lg:hidden flex gap-3 mb-6 items-center">
+          <Button
+            variant="outline"
+            className="flex-1 bg-white h-12 text-base font-normal border-gray-200"
+            onClick={() => setIsMobileFiltersOpen(true)}
+          >
+            <Filter className="mr-2 h-4 w-4" /> Filters
+          </Button>
+          <div className="flex-1">
+            <Select
+              value={filters.sortBy}
+              onValueChange={(value) =>
+                setFilters((prev) => ({ ...prev, sortBy: value }))
+              }
+            >
+              <SelectTrigger className="w-full bg-white h-12 border-gray-200">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Sort by latest</SelectItem>
+                <SelectItem value="price-low">Price: Low to High</SelectItem>
+                <SelectItem value="price-high">Price: High to Low</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         <div
           className={`flex flex-col lg:flex-row gap-12 ${countryQuery ? "pt-0 lg:pt-8" : "pt-0"}`}
         >
-          <FilterSidebar
-            filters={filters}
-            setFilters={setFilters}
-            uniqueCategories={staticCategories}
-          />
+          {/* Desktop Sidebar */}
+          <div className="hidden lg:block w-full lg:w-1/4 xl:w-1/5">
+            <FilterSidebar
+              filters={filters}
+              setFilters={setFilters}
+              uniqueCategories={staticCategories}
+              className="lg:sticky lg:top-24"
+            />
+          </div>
+
+          {/* Mobile Filter Drawer Overlay */}
+          <AnimatePresence>
+            {isMobileFiltersOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 z-50 lg:hidden"
+                onClick={() => setIsMobileFiltersOpen(false)}
+              >
+                <motion.div
+                  initial={{ x: "-100%" }}
+                  animate={{ x: 0 }}
+                  exit={{ x: "-100%" }}
+                  transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                  className="absolute top-0 left-0 bottom-0 w-[85%] max-w-sm bg-white overflow-y-auto"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <FilterSidebar
+                    filters={filters}
+                    setFilters={setFilters}
+                    uniqueCategories={staticCategories}
+                    onClose={() => setIsMobileFiltersOpen(false)}
+                    className="h-full rounded-none border-none shadow-none"
+                  />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <div className="w-full lg:w-3/4 xl:w-4/5">
-            <div className="flex flex-wrap gap-4 justify-between items-center mb-6 border-b pb-4">
+            <div className="hidden lg:flex flex-wrap gap-4 justify-between items-center mb-6 border-b pb-4">
               <div>
                 <h2 className="text-2xl font-bold text-gray-800">All Plans</h2>
                 <p className="text-gray-500 text-sm">
